@@ -7,6 +7,12 @@
     <Compile Include="../libs/core_types.fs" />
     <Compile Include="../libs/util.fs" />
     <Compile Include="parser.fs" />
+    <Compile Include="tests/expression_tests.fs" />
     <Compile Include="main.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Expecto" Version="8.13.1" />
+    <PackageReference Include="Expecto.FsCheck" Version="8.13.1" />
+    <PackageReference Include="FsCheck" Version="2.14.0" />
   </ItemGroup>
 </Project>
