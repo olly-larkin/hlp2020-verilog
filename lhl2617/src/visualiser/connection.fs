@@ -95,12 +95,22 @@ let groupConnections (cons: Connection list) (sourceRange: Range): ConnectionGro
             |> List.unzip
             |> fun (x, y) -> { inputRange=getRangeFromList x; outputRange=getRangeFromList y }
 
+    let getTargetNodeId (con: Connection) =
+        match con.target with 
+        | PinTarget x -> x.pinName
+        | InstanceTarget x -> x.targetNode  
+    
+    let groupTargetConnections (con: Connection) =
+        match con.target with 
+        | PinTarget x -> x.pinName, (con.srcPortIndex, x.pinIndex)
+        | InstanceTarget x -> x.portName, (con.srcPortIndex, x.portIndex)
+    
     cons
-    |> List.groupBy (fun con -> con.targetNode)
+    |> List.groupBy getTargetNodeId
     |> List.map (fun (id, cons) ->
         id,
         cons
-        |> List.map (fun con -> con.portName, (con.srcPortIndex, con.portIndex))
+        |> List.map groupTargetConnections
         |> List.groupBy fst
         |> List.map flattenPortnameGroup
     )
@@ -204,13 +214,7 @@ let getTargetLabelsAndBlobsForNode (sourceRange: Range) (targets: (Identifier * 
     let firstCoord = firstEndpointProp.coord
     let lastTargetIdx = lastEndpointProp.index
 
-    let numberOfInputs = 
-        match targetNode.decl with
-        | Some decl -> 
-            decl.ports
-            |> List.filter (fun (x, _, _) -> x = Input)
-            |> List.length
-        | _ -> 1
+    let numberOfInputs = getNumberOfInputs targetNode
 
     let bendPointOffset = numberOfInputs - lastTargetIdx
 
@@ -338,13 +342,7 @@ let getWiresAndBlobs (source: Identifier) (sourceNode: VisualisedNode) (sourcePo
         |> fst 
         |> getPortPropFromPortProps targetNode.props.inputPortProps
 
-    let numberOfInputs = 
-        match targetNode.decl with
-        | Some decl -> 
-            decl.ports
-            |> List.filter (fun (x, _, _) -> x = Input)
-            |> List.length
-        | _ -> failwith "ERROR: Should not happen, wires not used for non-module instance nodes."
+    let numberOfInputs = getNumberOfInputs targetNode
 
     let bendPointOffset = numberOfInputs - lastTargetEndpointProp.index
     

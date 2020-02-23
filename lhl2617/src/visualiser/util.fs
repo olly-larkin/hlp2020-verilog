@@ -76,6 +76,22 @@ module Functions =
             | _ -> sprintf "[%d:%d]" a b
         | _ -> ""
 
+    let getNumberOfInputs (targetNode: VisualisedNode) = 
+        match targetNode.decl with
+        | Some decl -> 
+            decl.ports
+            |> List.filter (fun (x, _, _) -> x = Input)
+            |> List.length
+        | _ -> 
+            match targetNode.node with
+            | ModuleInstance modInst -> 
+                match modInst.moduleName with 
+                | UOpIdentifier _ -> 1
+                | BOpIdentifier _ -> 2
+                | _ -> failwithf "ERROR: Unable to get number of inputs of module '%A'" modInst.moduleName
+            | InputPin _ | OutputPin _ -> 1
+            
+
     // border
     let getBorderBox xy props className: SVGElement =
         let bwh = props.marginLeft + props.marginRight + props.width, props.height
