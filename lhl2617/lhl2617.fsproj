@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../libs/util.fs" />
+    <Compile Include="../libs/core_types.fs" />
+    <Compile Include="src/svg.fs" />
+    <Compile Include="src/visualiser/util.fs" />
+    <Compile Include="src/visualiser/moduleinstance.fs" />
+    <Compile Include="src/visualiser/pin.fs" />
+    <Compile Include="src/visualiser/connection.fs" />
+    <Compile Include="src/visualiser/visualise.fs" />
+    <Compile Include="src/main.fs" />
+  </ItemGroup>
+</Project>
