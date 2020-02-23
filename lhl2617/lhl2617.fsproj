@@ -6,7 +6,7 @@
   <ItemGroup>
     <Compile Include="../libs/util.fs" />
     <Compile Include="../libs/core_types.fs" />
-    <Compile Include="src/svg.fs" />
+    <Compile Include="../libs/svg.fs" />
     <Compile Include="src/visualiser/util.fs" />
     <Compile Include="src/visualiser/moduleinstance.fs" />
     <Compile Include="src/visualiser/pin.fs" />
