@@ -161,16 +161,16 @@ let main argv =
                                     {| targetNode = "BOpBitwiseAnd-1"
                                        portName = "right"
                                        portIndex = 0 |} }
-                    //  { srcPortIndex = 0
-                    //    target = InstanceTarget
-                    //                 {| targetNode = "reeeeeeeeeeeeee"
-                    //                    portName = "in1"
-                    //                    portIndex = 0 |} }                 
-                    //  { srcPortIndex = 0
-                    //    target = InstanceTarget
-                    //                 {| targetNode = "reeeeeeeeeeeeee"
-                    //                    portName = "in2"
-                    //                    portIndex = 0 |} }                 
+                     { srcPortIndex = 0
+                       target = InstanceTarget
+                                    {| targetNode = "reeeeeeeeeeeeee"
+                                       portName = "in1"
+                                       portIndex = 0 |} }                 
+                     { srcPortIndex = 0
+                       target = InstanceTarget
+                                    {| targetNode = "reeeeeeeeeeeeee"
+                                       portName = "in2"
+                                       portIndex = 0 |} }                 
                                         ]) 
                 InputPin
                     ("in2",
@@ -179,17 +179,18 @@ let main argv =
                                       {| targetNode = "BOpBitwiseAnd-0"
                                          portName = "right"
                                          portIndex = 0 |} }
-                       { srcPortIndex = 0
-                         target = InstanceTarget
-                                      {| targetNode = "BOpBitwiseAnd-1"
-                                         portName = "left"
-                                         portIndex = 0 |} } ])
+                    //    { srcPortIndex = 0
+                    //      target = InstanceTarget
+                    //                   {| targetNode = "BOpBitwiseAnd-1"
+                    //                      portName = "left"
+                    //                      portIndex = 0 |} } 
+                                         ])
                 OutputPin("out1")
                 OutputPin("out2")
-                // ModuleInstance
-                //     ({ moduleName = StringIdentifier "A"
-                //        instanceName = "reeeeeeeeeeeeee"
-                //        connections = Map [] })
+                ModuleInstance
+                    ({ moduleName = StringIdentifier "A"
+                       instanceName = "reeeeeeeeeeeeee"
+                       connections = Map [] })
                 ModuleInstance
                     ({ moduleName = BOpIdentifier BOpBitwiseAnd
                        instanceName = "BOpBitwiseAnd-0"
@@ -197,9 +198,10 @@ let main argv =
                            Map
                                [ "output",
                                  [ { srcPortIndex = 0
-                                     target = PinTarget
-                                                  {| pinName = "out1"
-                                                     pinIndex = 0 |} } ] ] })
+                                     target = InstanceTarget
+                                             {| targetNode = "BOpBitwiseAnd-1"
+                                                portName = "left"
+                                                portIndex = 0 |} } ] ] })
                 ModuleInstance
                     ({ moduleName = BOpIdentifier BOpBitwiseAnd
                        instanceName = "BOpBitwiseAnd-1"

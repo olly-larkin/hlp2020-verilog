@@ -20,11 +20,24 @@ let defaultGraphicsProps =
        maxPortLen = 11 |}
 
 // title
-let getTitle (x, y) props instName modName: SVGElement =
+let getDeclaredModuleTitle (x, y) props instName modName: SVGElement =
     let txy = x + props.marginLeft + props.width / 2., y + (float defaultGraphicsProps.titleHeight) / 2.
     Text
         (txy, truncText instName defaultGraphicsProps.maxTitleLen, [ ("class", "node-mod-title") ],
          Some <| sprintf "Instance: %s\nModule: %s" instName modName)
+
+let getBuiltInModuleTitle (x, y) props instName (modId: ModuleIdentifier): SVGElement =
+    let txy = x + props.marginLeft + props.width / 2., y + (float defaultGraphicsProps.titleHeight)
+    
+    let text = 
+        match modId with 
+        | BOpIdentifier i -> getBinaryOpXMLString i
+        | UOpIdentifier i -> getUnaryOpXMLString i
+        | _ -> failwithf "ERROR: %s is not a built-in module" instName // should never happen
+    
+    Text
+        (txy, text, [("class", "node-mode-title")],
+         Some <| sprintf "Instance: %s\nBuilt-in Module: %s" instName text)
 
 let truncPortText text len ranged =
     match ranged with
@@ -117,7 +130,7 @@ let visualiseDeclaredModuleInstance (elem: ModuleInstance) (modName: string) (de
     let gottenInputPortProps = inPortTextsPC |> List.map snd |> Map.ofList 
     let gottenOutputPortProps = outPortTextsPC |> List.map snd |> Map.ofList
 
-    let title = getTitle xy props elem.instanceName modName
+    let title = getDeclaredModuleTitle xy props elem.instanceName modName
 
     let inPortTexts = inPortTextsPC |> List.map fst |> groupSVG [] None
 
@@ -154,7 +167,7 @@ let visualiseBuiltInModuleInstance (arity: int) (elem: ModuleInstance) (nodeMap:
     
     let props = 
         { defaultModuleInstanceProps with 
-            width=getWidth elem.instanceName inputPorts outputPorts
+            width=getWidth "XXX" inputPorts outputPorts // longest ops are 3chars
             height=getHeight inputPorts outputPorts }
 
     let borderBox = getBorderBox xy props "node-builtin-bord"
@@ -167,7 +180,7 @@ let visualiseBuiltInModuleInstance (arity: int) (elem: ModuleInstance) (nodeMap:
     let gottenInputPortProps = inPortTextsPC |> List.map snd |> Map.ofList 
     let gottenOutputPortProps = outPortTextsPC |> List.map snd |> Map.ofList
 
-    let title = getTitle xy props elem.instanceName "TODO"
+    let title = getBuiltInModuleTitle xy props elem.instanceName elem.moduleName
 
     let inPortTexts = inPortTextsPC |> List.map fst |> groupSVG [] None
 
@@ -175,7 +188,7 @@ let visualiseBuiltInModuleInstance (arity: int) (elem: ModuleInstance) (nodeMap:
 
     let svgElem = 
         [borderBox; actualBox; title; inPortTexts; outPortTexts] 
-        |> groupSVG [] (Some <| sprintf "Module: %s" "TODO")
+        |> groupSVG [] None
 
     let visualisedNode =
         { node=ModuleInstance elem

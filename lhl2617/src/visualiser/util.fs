@@ -3,7 +3,9 @@ namespace Verishot.VisualiserUtil
 open Verishot.Util
 open Verishot.CoreTypes
 open Verishot.CoreTypes.Netlist
+open Verishot.CoreTypes.VerilogAST
 open Verishot.SVG
+open Verishot.VisualiseConsts
 
 type PortProp =
     { index: int
@@ -37,7 +39,7 @@ module ModuleInstance =
         { width = 0. // determined later
           height = 0. // determined later
           marginLeft = 6.
-          marginRight = 4.
+          marginRight = 6.
           inputPortProps = Map.empty // determined later
           outputPortProps = Map.empty }  // determined later
 
@@ -142,3 +144,13 @@ module Functions =
             | Input -> vNode.props.inputPortProps
             | Output -> vNode.props.outputPortProps
         getPortPropFromPortProps portProps id
+
+    let getBinaryOpXMLString (op: BinaryOp) = 
+        match Map.tryFind op BinaryOpXMLMap with 
+        | Some ret -> ret
+        | _ -> failwithf "ERROR: Binary operator '%A' does not exist." op
+
+    let getUnaryOpXMLString (op: UnaryOp) =
+        match Map.tryFind op UnaryOpXMLMap with 
+        | Some ret -> ret
+        | _ -> failwithf "ERROR: Unary operator '%A' does not exist." op
