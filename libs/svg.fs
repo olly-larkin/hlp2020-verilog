@@ -18,31 +18,31 @@ type SVGElement =
         cxy: Coord * 
         r: float * 
         props: PropType *
-        title: string
+        title: string Option
     | Rectangle of 
         xy: Coord * 
         wh: Coord * 
         props: PropType *
-        title: string
+        title: string Option
     | Text of 
         xy: Coord * 
         text: string * 
         props: PropType *
-        title: string
+        title: string Option
     | Polyline of 
         pts: Coord list * 
         props: PropType *
-        title: string
+        title: string Option
     // container element (‘a’, ‘clipPath’, ‘defs’, ‘g’, ‘marker’, ‘mask’, ‘pattern’, ‘svg’, ‘switch’, ‘symbol’ and ‘unknown’.)
     | Group of 
         children: SVGElement list *
         props: PropType *
-        title: string
+        title: string Option
     | Link of // a
         href: string *
         children: SVGElement list *
         props: PropType *
-        title: string
+        title: string Option
       
 
 let unitPx = 12. // pixels per drawing unit
@@ -67,10 +67,10 @@ let (|UPOINTS|) (points: Coord list) =
     |> List.map (fun (x, y) -> sprintf "%s,%s" ((|TOPX|) x) ((|TOPX|) y))
     |> String.concat " "
 
-let (|PTITLE|) (title: string): string =
-    match String.length title with
-    | 0 -> ""
-    | _ -> sprintf "<title>%s</title>" title
+let (|PTITLE|) (title: string Option): string =
+    match title with
+    | Some str -> sprintf "<title>%s</title>" str
+    | _ -> ""
 
 let (|OUTPUTSVGLIST|) (elems: SVGElement list): string =
     elems
@@ -139,11 +139,11 @@ let getGrid ((minX, minY), (maxX, maxY)): SVGElement =
     let ys = [minY .. 1. .. maxY]
 
     let getGridDot (x, y) =
-        Circle((x, y), 0.125, [("style", "fill: #E0E0E0;")], "")
+        Circle((x, y), 0.125, [("style", "fill: #E0E0E0;")], None)
 
     let gridDots = List.allPairs xs ys |> List.map getGridDot 
 
-    Group (gridDots, [], "") 
+    Group (gridDots, [], None) 
 
 let output (elem: SVGElement) (style: string) (grid: bool): string =
     let (minX, minY), (maxX, maxY) = getDimensionElem elem
@@ -163,7 +163,7 @@ let output (elem: SVGElement) (style: string) (grid: bool): string =
             ""
        
     let borderOutput = 
-        Rectangle((minX-margin/2., minY-margin/2.), (maxX-minX+margin, maxY-minY+margin), [("style", "fill: none; stroke: black;")], "")
+        Rectangle((minX-margin/2., minY-margin/2.), (maxX-minX+margin, maxY-minY+margin), [("style", "fill: none; stroke: black;")], None)
         |> outputSVG
 
     let svgOutput = outputSVG elem
