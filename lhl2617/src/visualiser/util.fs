@@ -5,7 +5,7 @@ open Verishot.CoreTypes
 open Verishot.CoreTypes.Netlist
 open Verishot.CoreTypes.VerilogAST
 open Verishot.SVG
-open Verishot.VisualiseConsts
+open Verishot.VisualiseMaps
 
 type PortProp =
     { index: int
@@ -78,20 +78,24 @@ module Functions =
             | _ -> sprintf "[%d:%d]" a b
         | _ -> ""
 
-    let getNumberOfInputs (targetNode: VisualisedNode) = 
+    let getNumberOfInputsFromNode (node: Node) =
+        match node with
+        | ModuleInstance modInst -> 
+            match modInst.moduleName with 
+            | UOpIdentifier _ -> 1
+            | BOpIdentifier _ -> 2
+            | _ -> failwithf "ERROR: Unable to get number of inputs of module '%A'" modInst.moduleName
+        | InputPin _ -> 0
+        | OutputPin _ -> 1
+
+    let getNumberOfInputsFromVNode (targetNode: VisualisedNode) = 
         match targetNode.decl with
         | Some decl -> 
             decl.ports
             |> List.filter (fun (x, _, _) -> x = Input)
             |> List.length
         | _ -> 
-            match targetNode.node with
-            | ModuleInstance modInst -> 
-                match modInst.moduleName with 
-                | UOpIdentifier _ -> 1
-                | BOpIdentifier _ -> 2
-                | _ -> failwithf "ERROR: Unable to get number of inputs of module '%A'" modInst.moduleName
-            | InputPin _ | OutputPin _ -> 1
+            getNumberOfInputsFromNode targetNode.node
             
 
     // border

@@ -155,6 +155,23 @@ let visualiseDeclaredModuleInstance (elem: ModuleInstance) (modName: string) (de
     let newCoord = fst xy + props.marginLeft + props.marginRight + props.width, snd xy
     newNodeMap, 1 + idx, newCoord
 
+let getSrcPortsRangeFromModInst (elem: ModuleInstance) =
+    let srcPortIdxs = 
+        elem.connections
+        |> Map.toList
+        |> List.collect (
+            fun (_, cons) -> 
+            cons 
+            |> List.map (fun con -> con.srcPortIndex)
+        )
+
+    let min = List.min srcPortIdxs
+    let max = List.max srcPortIdxs
+
+    match min = max && min = 0 with
+    | true -> Single
+    | _ -> Range (max, min)
+
 let visualiseBuiltInModuleInstance (arity: int) (elem: ModuleInstance) (nodeMap: NodeMap) idx xy: NodeMap * int * Coord = 
     let inputPorts = 
         match arity with 
@@ -163,7 +180,9 @@ let visualiseBuiltInModuleInstance (arity: int) (elem: ModuleInstance) (nodeMap:
         | _ -> failwithf "ERROR: Built in module only allows 1 or 2 inputs; Invalid: %d" arity
         // we won't know if it's a bus, we take as single, operators should be able to 
         // handle anything.
-    let outputPorts = ["output", Single]
+
+    // we, however, need to get the correct range for outputPorts
+    let outputPorts = [("output", getSrcPortsRangeFromModInst elem)]
     
     let props = 
         { defaultModuleInstanceProps with 

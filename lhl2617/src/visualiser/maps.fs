@@ -1,4 +1,4 @@
-module Verishot.VisualiseConsts
+module Verishot.VisualiseMaps
 open Verishot.CoreTypes
 open Verishot.CoreTypes.VerilogAST
 

@@ -214,7 +214,7 @@ let getTargetLabelsAndBlobsForNode (sourceRange: Range) (targets: (Identifier * 
     let firstCoord = firstEndpointProp.coord
     let lastTargetIdx = lastEndpointProp.index
 
-    let numberOfInputs = getNumberOfInputs targetNode
+    let numberOfInputs = getNumberOfInputsFromVNode targetNode
 
     let bendPointOffset = numberOfInputs - lastTargetIdx
 
@@ -342,7 +342,7 @@ let getWiresAndBlobs (source: Identifier) (sourceNode: VisualisedNode) (sourcePo
         |> fst 
         |> getPortPropFromPortProps targetNode.props.inputPortProps
 
-    let numberOfInputs = getNumberOfInputs targetNode
+    let numberOfInputs = getNumberOfInputsFromVNode targetNode
 
     let bendPointOffset = numberOfInputs - lastTargetEndpointProp.index
     
