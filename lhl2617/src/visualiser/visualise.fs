@@ -76,7 +76,7 @@ let visualiseNetlists (netlists: Netlist list) (decls: ModuleDecl list) styles =
 
     let toSvg = fun netlist -> netlist.moduleName, visualiseNetlist netlist declMap
     let toString = fun (modName, svg) -> modName, output svg styles true
-    let toFile = fun (modName, svgString) -> writeStringToFile (sprintf "outputsvg/%s.svg" modName) svgString
+    let toFile = fun (modName, svgString) -> writeStringToFile (sprintf "./outputsvg/%s.svg" modName) svgString
 
     netlists 
     |> List.map (toSvg >> toString >> toFile)
