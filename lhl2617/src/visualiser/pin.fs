@@ -16,7 +16,7 @@ open Verishot.VisualiserUtil.Functions
 open Verishot.Util
 
 let defaultGraphicsProps =
-    { maxTitleLen=16 }
+    {| maxTitleLen=16 |}
 
 let getArrow (x, y) props dir =
     (* 

@@ -17,11 +17,11 @@ open Verishot.VisualiserUtil.Common
 open Verishot.VisualiserUtil.Functions
 
 let defaultGraphicsProps = 
-    { maxConnectionTextLen=12
-      xSize=0.25
-      varTextOffset=0.2
-      varTextTransformUp=0.1
-      labelTextOffset=0.5 }
+    {| maxConnectionTextLen=12
+       xSize=0.25
+       varTextOffset=0.2
+       varTextTransformUp=0.1
+       labelTextOffset=0.5 |}
 
 // get the X graphic
 let getLabelX (x, y) =

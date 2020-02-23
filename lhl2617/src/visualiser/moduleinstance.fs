@@ -15,9 +15,9 @@ open Verishot.VisualiserUtil.ModuleInstance
 open Verishot.Util
 
 let defaultGraphicsProps =
-    { maxTitleLen = 16
-      titleHeight = 2
-      maxPortLen = 11 }
+    {| maxTitleLen = 16
+       titleHeight = 2
+       maxPortLen = 11 |}
 
 // title
 let getTitle (x, y) props instName modName: SVGElement =
@@ -95,15 +95,17 @@ let getWidth instName inPorts outPorts =
 let getHeight inPorts outPorts =
     defaultGraphicsProps.titleHeight + max (List.length inPorts) (List.length outPorts) + 1 |> float
 
-let visualiseModuleInstance (elem: ModuleInstance) (decl: ModuleDecl) (nodeMap: NodeMap) idx xy: NodeMap * int * Coord =
-    let inputPorts = decl.ports |> List.filter (fun (x, _, _) -> x = Input) |> List.map (fun (_, x, y) -> (x, y))
+let visualiseDeclaredModuleInstance (elem: ModuleInstance) (modName: string) (declMap: Map<Identifier, ModuleDecl>) (nodeMap: NodeMap) idx xy: NodeMap * int * Coord =
+    let decl = getDeclFromDeclMap declMap modName
+    
+    let inputPorts = decl.ports |> List.filter (fun (x, _, _)-> x = Input) |> List.map (fun (_, x, y) -> (x, y))
     let outputPorts = decl.ports |> List.filter (fun (x, _, _) -> x = Output) |> List.map (fun (_, x, y) -> (x, y))
     
     let props = 
         { defaultModuleInstanceProps with 
             width=getWidth elem.instanceName inputPorts outputPorts
-            height = getHeight inputPorts outputPorts
-            marginLeft = float <| List.length inputPorts + 5 (* space to let connections bend *) }
+            height=getHeight inputPorts outputPorts
+            marginLeft=float <| List.length inputPorts + 5 (* space to let connections bend *) }
 
     let borderBox = getBorderBox xy props "node-bord"
     let actualBox = getActualBox xy props "node-actual"
@@ -115,7 +117,7 @@ let visualiseModuleInstance (elem: ModuleInstance) (decl: ModuleDecl) (nodeMap: 
     let gottenInputPortProps = inPortTextsPC |> List.map snd |> Map.ofList 
     let gottenOutputPortProps = outPortTextsPC |> List.map snd |> Map.ofList
 
-    let title = getTitle xy props elem.instanceName elem.moduleName
+    let title = getTitle xy props elem.instanceName modName
 
     let inPortTexts = inPortTextsPC |> List.map fst |> groupSVG [] ""
 
@@ -123,7 +125,7 @@ let visualiseModuleInstance (elem: ModuleInstance) (decl: ModuleDecl) (nodeMap: 
 
     let svgElem = 
         [borderBox; actualBox; title; inPortTexts; outPortTexts] 
-        |> linkSVG (sprintf "%s.svg" elem.moduleName) [] (sprintf "Module: %s" elem.moduleName)
+        |> linkSVG (sprintf "%s.svg" modName) [] (sprintf "Module: %s" modName)
 
     let visualisedNode =
         { node=ModuleInstance elem
@@ -140,11 +142,71 @@ let visualiseModuleInstance (elem: ModuleInstance) (decl: ModuleDecl) (nodeMap: 
     let newCoord = fst xy + props.marginLeft + props.marginRight + props.width, snd xy
     newNodeMap, 1 + idx, newCoord
 
+let visualiseBuiltInModuleInstance (arity: int) (elem: ModuleInstance) (nodeMap: NodeMap) idx xy: NodeMap * int * Coord = 
+    let inputPorts = 
+        match arity with 
+        | 1 -> ["in1", Single]
+        | 2 -> ["in2", Single]
+        | _ -> failwith "ERROR: Not implemented"
+    let outputPorts = ["out", Single]
+    
+    let props = 
+        { defaultModuleInstanceProps with 
+            width=getWidth elem.instanceName inputPorts outputPorts
+            height=getHeight inputPorts outputPorts
+            marginLeft=float <| List.length inputPorts + 5 (* space to let connections bend *) }
+
+    let borderBox = getBorderBox xy props "node-builtin-bord"
+    let actualBox = getActualBox xy props "node-builtin-actual"
+
+    let getPortHelper = getPortTextsAndProps xy props
+    let inPortTextsPC = getPortHelper inputPorts Input
+    let outPortTextsPC = getPortHelper outputPorts Output
+
+    let gottenInputPortProps = inPortTextsPC |> List.map snd |> Map.ofList 
+    let gottenOutputPortProps = outPortTextsPC |> List.map snd |> Map.ofList
+
+    let title = getTitle xy props elem.instanceName "TODO"
+
+    let inPortTexts = inPortTextsPC |> List.map fst |> groupSVG [] ""
+
+    let outPortTexts = outPortTextsPC |> List.map fst |> groupSVG [] ""
+
+    let svgElem = 
+        [borderBox; actualBox; title; inPortTexts; outPortTexts] 
+        |> linkSVG (sprintf "%s.svg" "TODO") [] (sprintf "Module: %s" "TODO")
+
+    let visualisedNode =
+        { node=ModuleInstance elem
+          decl=Some decl
+          svg=svgElem
+          idx=idx
+          coord=xy
+          props=
+            { props with inputPortProps=gottenInputPortProps
+                         outputPortProps=gottenOutputPortProps } }
+
+    let newNodeMap = nodeMap |> (Map.add elem.instanceName visualisedNode)
+
+    let newCoord = fst xy + props.marginLeft + props.marginRight + props.width, snd xy
+    newNodeMap, 1 + idx, newCoord
+
+let visualiseModuleInstance (elem: ModuleInstance) (declMap: Map<Identifier, ModuleDecl>) (nm: NodeMap) idx xy: NodeMap * int * Coord =
+    let f = 
+        match elem.moduleName with 
+        | StringIdentifier modName -> 
+            visualiseDeclaredModuleInstance elem modName declMap
+        | BOpIdentifier _ -> 
+            visualiseBuiltInModuleInstance 2 elem
+        | UOpIdentifier _ -> 
+            visualiseBuiltInModuleInstance 1 elem
+    f nm idx xy
+
 let visualiseModuleInstances (elems: ModuleInstance list) (declMap: Map<Identifier, ModuleDecl>) 
     nodeMap (index: int) (coord: Coord) =
     
     ((nodeMap, index, coord), elems)
     ||> List.fold
             (fun (nm, idx, xy) elem ->
-                visualiseModuleInstance elem (getDeclFromDeclMap declMap elem.moduleName) nm idx xy)
+                visualiseModuleInstance elem declMap nm idx xy)
 

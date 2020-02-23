@@ -29,18 +29,10 @@ type VisualisedNode =
 type NodeMap = Map<Identifier, VisualisedNode>
 
 module Common = 
-    type CommonGraphicsProps = 
-        { blobRadius: float }
-
     let commonGraphicsProps = 
-        { blobRadius=0.15 }
+        {| blobRadius=0.15 |}
 
 module ModuleInstance =
-    type ModuleInstanceGraphicsProps =
-        { maxTitleLen: int
-          titleHeight: int
-          maxPortLen: int }
-    
     let defaultModuleInstanceProps =
         { width = 0. // determined later
           height = 0. // determined later
@@ -50,9 +42,6 @@ module ModuleInstance =
           outputPortProps = Map.empty }  // determined later
 
 module Pin =
-    type PinGraphicsProps =
-        { maxTitleLen: int }
-    
     let defaultPinProps =
         { width = 12.
           height = 1.
@@ -64,13 +53,6 @@ module Pin =
     let defaultPinMargin = 8.
      
 module Connection =
-    type ConnectionGraphicsProps =
-        { maxConnectionTextLen: int
-          xSize: float
-          varTextOffset: float
-          varTextTransformUp: float
-          labelTextOffset: float }
-
     type ConnectionRange = 
         { inputRange: Range
           outputRange: Range }
