@@ -145,8 +145,8 @@ let visualiseDeclaredModuleInstance (elem: ModuleInstance) (modName: string) (de
 let visualiseBuiltInModuleInstance (arity: int) (elem: ModuleInstance) (nodeMap: NodeMap) idx xy: NodeMap * int * Coord = 
     let inputPorts = 
         match arity with 
-        | 1 -> ["in1", Single]
-        | 2 -> ["in2", Single]
+        | 1 -> [("in1", Single)]
+        | 2 -> [("in1", Single); ("in2", Single)]
         | _ -> failwithf "ERROR: Built in module only allows 1 or 2 inputs; Invalid: %d" arity
         // we won't know if it's a bus, we take as single, operators should be able to 
         // handle anything.
@@ -175,7 +175,7 @@ let visualiseBuiltInModuleInstance (arity: int) (elem: ModuleInstance) (nodeMap:
 
     let svgElem = 
         [borderBox; actualBox; title; inPortTexts; outPortTexts] 
-        |> linkSVG (sprintf "%s.svg" "TODO") [] (Some <| sprintf "Module: %s" "TODO")
+        |> groupSVG [] (Some <| sprintf "Module: %s" "TODO")
 
     let visualisedNode =
         { node=ModuleInstance elem

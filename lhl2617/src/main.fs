@@ -12,7 +12,7 @@ open Verishot.VisualiserUtil.Functions
 
 [<EntryPoint>]
 let main argv =
-    // let styles = loadCSSWithUnit "./src/assets/css/styles.css" unitPx
+    let styles = loadCSSWithUnit "./src/assets/css/styles.css" unitPx
 
     // let decls: ModuleDecl list =
     //     [ { name = "mod1"
@@ -140,52 +140,51 @@ let main argv =
     //               OutputPin("out1")
     //               OutputPin("out2") ] } ]
 
-    // let mikenetlist = 
-    //   { moduleName = "A"
-    //     nodes =
-    //         [ InputPin
-    //             ("in1",
-    //                 [ { srcPortIndex = 1
-    //                     targetNode = "BOpBitwiseAnd-0"
-    //                     portName = "left"
-    //                     portIndex = 1 }
-    //                 { srcPortIndex = 1
-    //                     targetNode = "BOpBitwiseAnd-1"
-    //                     portName = "right"
-    //                     portIndex = 1 } ])
-    //             InputPin
-    //                 ("in2",
-    //                 [ { srcPortIndex = 1
-    //                     targetNode = "BOpBitwiseAnd-0"
-    //                     portName = "right"
-    //                     portIndex = 1 }
-    //                     { srcPortIndex = 1
-    //                     targetNode = "BOpBitwiseAnd-1"
-    //                     portName = "left"
-    //                     portIndex = 1 } ])
-    //             OutputPin "out1"
-    //             OutputPin "out2"
-    //             ModuleInstance
-    //                 ({ moduleName = BOpIdentifier BOpBitwiseAnd
-    //                     instanceName = "BOpBitwiseAnd-0"
-    //                     connections =
-    //                         Map
-    //                             [ "output",
-    //                             [ { srcPortIndex = 1
-    //                                 targetNode = "out1"
-    //                                 portName = "out1"
-    //                                 portIndex = 1 } ] ] })
-    //             ModuleInstance
-    //                 ({ moduleName = BOpIdentifier BOpBitwiseAnd
-    //                     instanceName = "BOpBitwiseAnd-1"
-    //                     connections =
-    //                         Map
-    //                             [ "output",
-    //                             [ { srcPortIndex = 1
-    //                                 targetNode = "out2"
-    //                                 portName = "out2"
-    //                                 portIndex = 1 } ] ] }) ] }
+    let mikenetlist = 
+      { moduleName = "A"
+        nodes =
+            [ 
+                InputPin
+                    ("in1",
+                        [ { srcPortIndex = 1
+                            targetNode = "BOpBitwiseAnd-0"
+                            portName = "left"
+                            portIndex = 1 }
+                        { srcPortIndex = 1
+                            targetNode = "BOpBitwiseAnd-1"
+                            portName = "right"
+                            portIndex = 1 } ])
+                InputPin
+                    ("in2",
+                    [ { srcPortIndex = 1
+                        targetNode = "BOpBitwiseAnd-0"
+                        portName = "right"
+                        portIndex = 1 }
+                        { srcPortIndex = 1
+                        targetNode = "BOpBitwiseAnd-1"
+                        portName = "left"
+                        portIndex = 1 } ])
+                OutputPin "out1"
+                OutputPin "out2"
+                ModuleInstance
+                    ({ moduleName = BOpIdentifier BOpBitwiseAnd
+                        instanceName = "BOpBitwiseAnd-0"
+                        connections = Map
+                                [ "output",
+                                [ { srcPortIndex = 1
+                                    targetNode = "out1"
+                                    portName = "out1"
+                                    portIndex = 1 } ] ] })
+                ModuleInstance
+                    ({ moduleName = BOpIdentifier BOpBitwiseAnd
+                        instanceName = "BOpBitwiseAnd-1"
+                        connections = Map
+                                [ "output",
+                                [ { srcPortIndex = 1
+                                    targetNode = "out2"
+                                    portName = "out2"
+                                    portIndex = 1 } ] ] }) ] }
     
-    // visualiseNetlists netlists decls styles |> ignore
+    visualiseNetlists [mikenetlist] [] styles |> ignore
 
     0 // return an integer exit code
