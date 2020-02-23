@@ -53,3 +53,6 @@ release/package-lock\.json
 **/.ionide
 /vendor/.paket/Paket.Restore.targets
 /release-exp/
+
+# visualiser
+*.svg

@@ -12,8 +12,7 @@ type Direction =
 
 type ModuleDecl =
     { name: Identifier
-      inputPorts: (Identifier * Range) list
-      outputPorts: (Identifier * Range) list }
+      ports: (Direction * Identifier * Range) list }
 
 module Netlist =
     (***
@@ -30,24 +29,27 @@ module Netlist =
           portIndex: int }
 
     /// Instance of a module.
-    type ModuleInstance =
-        { /// Name of the module being declared (first identifier in verilog declaration)
-          moduleName: Identifier
-
-          /// Name of the instance (second identifier in verilog declaration)
-          instanceName: Identifier
-
-          /// *Outgoing* connections of the module
-          connections: Map<Identifier, Connection list> }
-
-    type Node =
-        /// An input pin of the *module the netlist refers to*
-        | InputPin of Identifier * Connection list
-        /// An output pin of the *module the netlist refers to*
-        | OutputPin of Identifier
-        | ModuleInstance of ModuleInstance
-
-    type Netlist = Netlist of Node list
+        type ModuleInstance =
+            { /// Name of the module being declared (first identifier in verilog declaration)
+              moduleName: Identifier
+    
+              /// Name of the instance (second identifier in verilog declaration)
+              instanceName: Identifier
+    
+              /// *Outgoing* connections of the module
+              connections: Map<Identifier, Connection list> }
+    
+        type Node =
+            /// An input pin of the *module the netlist refers to*
+            | InputPin of Identifier * Connection list
+            /// An output pin of the *module the netlist refers to*
+            | OutputPin of Identifier
+            | ModuleInstance of ModuleInstance
+    
+        type Netlist = 
+            { nodes: Node list
+              moduleName: Identifier }
+    
 
 
 module VerilogAST =
