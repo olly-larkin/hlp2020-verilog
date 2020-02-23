@@ -76,7 +76,8 @@ let private getIntermediateNodes (allModules: ModuleDecl list) (thisModule: AST.
             exprNodesWithOutput operatorIdx expression
                 (PinTarget
                     {| pinName = targetNodeName
-                       pinIndex = 1 |}))
+                       pinIndex = 1 |})
+        | AST.ItemWireDecl _ -> failwith "Not yet implemented (wires)")
 
 let private finalizeNodes (intermediateNodes: IntermediateNode list): Node list =
     // Defined locally because of peculiar way of handling connections to
@@ -192,3 +193,6 @@ let private exprNodesWithOutput (operatorIdx: int ref) (expr: AST.Expr) (target:
                        portIndex = 1 |})
 
         operatorNode :: exprNodes
+    | AST.ExprNumber _ -> failwith "Not yet implemented (constant expressions)"
+    | AST.ExprIfThenElse _ -> failwith "Not yet implemented (if-then-else expressions)"
+    | AST.ExprConcateneation _ -> failwith "Not yet implemented (concatenation expressions)"
