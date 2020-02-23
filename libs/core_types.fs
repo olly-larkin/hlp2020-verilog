@@ -1,6 +1,12 @@
-namespace Verishot.CoreTypes
+namespace rec Verishot.CoreTypes
 
 type Identifier = string
+
+/// Identifies a module (*not* a module instance)
+type ModuleIdentifier =
+    | StringIdentifier of string
+    | BOpIdentifier of VerilogAST.BinaryOp
+    | UOpIdentifier of VerilogAST.UnaryOp
 
 type Range =
     | Single
@@ -21,35 +27,35 @@ module Netlist =
      *outgoing* connections.
     *)
 
+    type ConnectionTarget =
+        | PinTarget of {| pinName: Identifier; pinIndex: int |}
+        | InstanceTarget of {| targetNode: Identifier; portName: Identifier; portIndex: int |}
+
     type Connection =
         { srcPortIndex: int
-
-          targetNode: Identifier
-          portName: Identifier
-          portIndex: int }
+          target: ConnectionTarget }
 
     /// Instance of a module.
-        type ModuleInstance =
-            { /// Name of the module being declared (first identifier in verilog declaration)
-              moduleName: Identifier
-    
-              /// Name of the instance (second identifier in verilog declaration)
-              instanceName: Identifier
-    
-              /// *Outgoing* connections of the module
-              connections: Map<Identifier, Connection list> }
-    
-        type Node =
-            /// An input pin of the *module the netlist refers to*
-            | InputPin of Identifier * Connection list
-            /// An output pin of the *module the netlist refers to*
-            | OutputPin of Identifier
-            | ModuleInstance of ModuleInstance
-    
-        type Netlist = 
-            { nodes: Node list
-              moduleName: Identifier }
-    
+    type ModuleInstance =
+        { /// Name of the module being declared (first identifier in verilog declaration)
+          moduleName: ModuleIdentifier
+
+          /// Name of the instance (second identifier in verilog declaration)
+          instanceName: Identifier
+
+          /// *Outgoing* connections of the module
+          connections: Map<Identifier, Connection list> }
+
+    type Node =
+        /// An input pin of the *module the netlist refers to*
+        | InputPin of Identifier * Connection list
+        /// An output pin of the *module the netlist refers to*
+        | OutputPin of Identifier
+        | ModuleInstance of ModuleInstance
+
+    type Netlist =
+        { nodes: Node list
+          moduleName: Identifier }
 
 
 module VerilogAST =
@@ -128,7 +134,7 @@ module VerilogAST =
         | BOpArithmeticRightShift
         /// >>>
         | BOpArithmeticLeftShift
-
+        
     type Expr =
         | ExprNumber of int
         | ExprConcateneation of Expr list
@@ -136,6 +142,8 @@ module VerilogAST =
         | ExprBinary of Expr * BinaryOp * Expr
         | ExprUnary of UnaryOp * Expr
         | ExprIfThenElse of Expr * Expr * Expr // <expr> ? <expr> : <expr>
+        | ExprIndex of Expr * int
+        | ExprIndexRange of Expr * int * int
 
     type ModuleItem =
         | ItemPort of Direction * Identifier
