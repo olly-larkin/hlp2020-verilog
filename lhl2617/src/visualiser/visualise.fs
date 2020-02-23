@@ -29,8 +29,8 @@ let visualiseBlocks (inputPins, moduleInstances, outputPins) declMap currDecl =
 let visualiseConnections (inputPins, moduleInstances, _) nodeMap =
     let inputConsSVG, nextId = visualiseInputPinConnections inputPins nodeMap 0
     let moduleConsSVG, _ = visualiseModuleInstanceConnections moduleInstances nodeMap nextId
-    [inputConsSVG; moduleConsSVG] |> groupSVG [("class", "connections")] ""
-    
+    [inputConsSVG; moduleConsSVG] |> groupSVG [("class", "connections")] None
+   
 let splitNodes (nodes: Node list) =
     let inputPins =
         nodes
@@ -66,7 +66,7 @@ let visualiseNetlist netlist declMap: SVGElement =
     let blocksSVG = getSVGFromNodeMap nodeMap [("class", "nodes")]
     let consSVG = visualiseConnections splittedNodes nodeMap
 
-    [blocksSVG; consSVG] |> groupSVG [] ""
+    [blocksSVG; consSVG] |> groupSVG [] None
 
 let visualiseNetlists (netlists: Netlist list) (decls: ModuleDecl list) styles =
     let declMap = 

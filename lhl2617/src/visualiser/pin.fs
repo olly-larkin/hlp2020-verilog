@@ -65,7 +65,7 @@ let getArrow (x, y) props dir =
             let pt5 = fst pt4 - 0.5, snd pt4 - 0.25
             [pt1; pt2; pt3; pt4; pt5; pt1]
 
-    Polyline (pts, [("class", "pin-input-arrow")], "")
+    Polyline (pts, [("class", "pin-input-arrow")], None)
 
 let truncPinText (text: Identifier) len (rangeStr: string) =
     truncText text (len - String.length rangeStr) + rangeStr
@@ -92,7 +92,7 @@ let getTitle (x, y) text dir range props =
             | Output -> sprintf "Output Pin: %s%s" text longRangeStr
         truncPinText text defaultGraphicsProps.maxTitleLen rangeStr, pinStr 
 
-    Text (txy, truncedText, [("class", className)], toolTip)
+    Text (txy, truncedText, [("class", className)], Some toolTip)
 
 let getPortProp (x, y) width dir range =
     match dir with 
@@ -131,7 +131,7 @@ let visualisePin (currDecl: ModuleDecl) (elem: Identifier) (nodeMap: NodeMap) id
     let title = getTitle xy elem dir range props
     let arrow = getArrow xy props dir
 
-    let svgElem = Group ([borderBox; actualBox; title; arrow], [], "")
+    let svgElem = Group ([borderBox; actualBox; title; arrow], [], None)
 
     let node = 
         match dir with

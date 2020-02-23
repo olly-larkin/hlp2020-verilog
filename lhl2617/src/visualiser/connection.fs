@@ -34,8 +34,8 @@ let getLabelX (x, y) =
     let topRight = x + offset, y - offset
 
     Group
-        ([ Polyline([ topLeft; btmRight ], [], "")
-           Polyline([ btmLeft; topRight ], [], "") ], [ ("class", "label-x") ], "")
+        ([ Polyline([ topLeft; btmRight ], [], None)
+           Polyline([ btmLeft; topRight ], [], None) ], [ ("class", "label-x") ], None)
 
 let getBlobs sourceY bendPointX targetYs =
     (*
@@ -66,7 +66,7 @@ let getBlobs sourceY bendPointX targetYs =
         let blobYs =
             if List.last targetYs <> sourceY then tmp.[..tmp.Length - 2] else tmp
 
-        blobYs |> List.map (fun cy -> Circle((bendPointX, cy), commonGraphicsProps.blobRadius, [ ("class", "wire-blob") ], ""))
+        blobYs |> List.map (fun cy -> Circle((bendPointX, cy), commonGraphicsProps.blobRadius, [ ("class", "wire-blob") ], None))
 
 let groupConnections (cons: Connection list) (sourceRange: Range): ConnectionGroup =
     (* group connections by targetNodes and portNames 
@@ -132,14 +132,14 @@ let getSourceLabel (sourcePort: Identifier) (sourceNode: VisualisedNode) (range:
     let rCoord = fst lCoord + sourceNode.props.marginRight - 2. , snd lCoord
     
     let labelStr = "l" + string labelId
-    let varStr = truncConnectionText "" defaultGraphicsProps.maxConnectionTextLen range  // TODO:- Mike where is my varname :(
+    let varStr = truncConnectionText "" defaultGraphicsProps.maxConnectionTextLen range 
     
-    let labelLine = Polyline([lCoord; rCoord], [("class", getLineClassName range)], sprintf "Label: %s" labelStr)
+    let labelLine = Polyline([lCoord; rCoord], [("class", getLineClassName range)], Some <| sprintf "Label: %s" labelStr)
     let labelX = getLabelX rCoord
-    let labelText = Text((fst rCoord + defaultGraphicsProps.labelTextOffset, snd rCoord), labelStr, [("class", "label-output-text")], sprintf "Label: %s" labelStr)
-    let varText = Text((fst lCoord + defaultGraphicsProps.varTextOffset, snd lCoord - defaultGraphicsProps.varTextTransformUp), varStr, [("class", "output-var-text")], sprintf "Bus: %s" varStr)
+    let labelText = Text((fst rCoord + defaultGraphicsProps.labelTextOffset, snd rCoord), labelStr, [("class", "label-output-text")], Some <| sprintf "Label: %s" labelStr)
+    let varText = Text((fst lCoord + defaultGraphicsProps.varTextOffset, snd lCoord - defaultGraphicsProps.varTextTransformUp), varStr, [("class", "output-var-text")], Some <| sprintf "Bus: %s" varStr)
 
-    [labelLine; labelX; labelText; varText] |> groupSVG [] ""
+    [labelLine; labelX; labelText; varText] |> groupSVG [] None
 
 let getLinesAndBlobsToTarget (targets: (Identifier * ConnectionRange) list) (targetNode: VisualisedNode) pt2 =
     (*
@@ -165,11 +165,11 @@ let getLinesAndBlobsToTarget (targets: (Identifier * ConnectionRange) list) (tar
                 
                 let varStr = truncConnectionText "" defaultGraphicsProps.maxConnectionTextLen sourceRange
                 
-                let line = Polyline([pt2; pt3; pt4], [("class", getLineClassName sourceRange)], "")
-                let varText = Text((fst pt4 - defaultGraphicsProps.varTextOffset, snd pt4 - defaultGraphicsProps.varTextTransformUp), varStr, [("class", "input-var-text")], sprintf "Bus: %s" varStr)
+                let line = Polyline([pt2; pt3; pt4], [("class", getLineClassName sourceRange)], None)
+                let varText = Text((fst pt4 - defaultGraphicsProps.varTextOffset, snd pt4 - defaultGraphicsProps.varTextTransformUp), varStr, [("class", "input-var-text")], Some <| sprintf "Bus: %s" varStr)
 
-                [line; varText] |> groupSVG [] "")
-        |> groupSVG [] ""
+                [line; varText] |> groupSVG [] None)
+        |> groupSVG [] None
 
     let targetYs = 
         targets
@@ -180,7 +180,7 @@ let getLinesAndBlobsToTarget (targets: (Identifier * ConnectionRange) list) (tar
                 |> fun x -> x.coord
                 |> snd)
 
-    let blobsSVG = getBlobs (snd pt2) (fst pt2) targetYs |> groupSVG [("class", "wire-blob-group")] ""
+    let blobsSVG = getBlobs (snd pt2) (fst pt2) targetYs |> groupSVG [("class", "wire-blob-group")] None
     
     linesSVG, blobsSVG
 
@@ -225,21 +225,21 @@ let getTargetLabelsAndBlobsForNode (sourceRange: Range) (targets: (Identifier * 
     let pt1 = fst firstCoord - targetNode.props.marginLeft + 2., snd firstCoord
     let pt2 = bendPointX, snd pt1
 
-    let labelLine = Polyline([pt1; pt2], [("class", getLineClassName sourceRange)], "Label: " + labelStr)
+    let labelLine = Polyline([pt1; pt2], [("class", getLineClassName sourceRange)], Some <| "Label: " + labelStr)
     let labelX = getLabelX pt1
-    let labelText = Text((fst pt1 - defaultGraphicsProps.labelTextOffset, snd pt1), labelStr, [("class", "label-input-text")], sprintf "Label: %s" labelStr)
+    let labelText = Text((fst pt1 - defaultGraphicsProps.labelTextOffset, snd pt1), labelStr, [("class", "label-input-text")], Some <| sprintf "Label: %s" labelStr)
     
-    let labelSVG = [labelLine; labelX; labelText] |> groupSVG [] ""
+    let labelSVG = [labelLine; labelX; labelText] |> groupSVG [] None
     
     let linesSVG, blobsSVG = getLinesAndBlobsToTarget targets targetNode pt2
 
-    [labelSVG; linesSVG; blobsSVG] |> groupSVG [] ""
+    [labelSVG; linesSVG; blobsSVG] |> groupSVG [] None
 
 let visualiseInputPinConnection (nodeMap: NodeMap) (source: Identifier) (cons: Connection list) labelId =
     // we don't draw anything if cons is empty
     match List.length cons with 
     | 0 -> 
-        [] |> groupSVG [] "", labelId
+        [] |> groupSVG [] None, labelId
     | _ -> 
         let sourceNode = getNodeFromNodeMap nodeMap source
 
@@ -251,14 +251,14 @@ let visualiseInputPinConnection (nodeMap: NodeMap) (source: Identifier) (cons: C
         let targetSVG = 
             conGroup 
             |> List.map (fun (targetNode, cons) -> getTargetLabelsAndBlobsForNode sourceRange cons (getNodeFromNodeMap nodeMap targetNode) labelId)
-            |> groupSVG [] ""
+            |> groupSVG [] None
 
-        [sourceSVG; targetSVG] |> groupSVG [("class", "label-group")] "", labelId + 1
+        [sourceSVG; targetSVG] |> groupSVG [("class", "label-group")] None, labelId + 1
 
 let visualiseInputPinConnections (elems: (Identifier * Connection list) list) (nodeMap: NodeMap) (labelId: int) =
     (labelId, elems)
     ||> List.mapFold (fun lId (src, cons) -> visualiseInputPinConnection nodeMap src cons lId)
-    |> (fun (svgs, lId) -> svgs |> groupSVG [] "", lId)
+    |> (fun (svgs, lId) -> svgs |> groupSVG [] None, lId)
 
 let labelRequired (sourceNode: VisualisedNode) (sourcePortId: Identifier) (conGroup: ConnectionGroup) (nodeMap: NodeMap): bool = 
     (* true if label required 
@@ -352,14 +352,14 @@ let getWiresAndBlobs (source: Identifier) (sourceNode: VisualisedNode) (sourcePo
     let varStr = truncConnectionText "" defaultGraphicsProps.maxConnectionTextLen sourcePortRange
    
     // draw line from pt1 to pt2 first
-    let sourceLine = Polyline([pt1; pt2], [("class", getLineClassName sourcePortRange)], "")
-    let varText = Text((fst pt1 + defaultGraphicsProps.varTextOffset, snd pt1 - defaultGraphicsProps.varTextTransformUp), varStr, [("class", "output-var-text")], sprintf "Bus: %s" varStr)
+    let sourceLine = Polyline([pt1; pt2], [("class", getLineClassName sourcePortRange)], None)
+    let varText = Text((fst pt1 + defaultGraphicsProps.varTextOffset, snd pt1 - defaultGraphicsProps.varTextTransformUp), varStr, [("class", "output-var-text")], Some <| sprintf "Bus: %s" varStr)
     
-    let sourceSVG = [sourceLine; varText] |> groupSVG [] ""
+    let sourceSVG = [sourceLine; varText] |> groupSVG [] None
 
     let linesSVG, blobsSVG = getLinesAndBlobsToTarget targets targetNode pt2
         
-    [sourceSVG; linesSVG; blobsSVG] |> groupSVG [] ""
+    [sourceSVG; linesSVG; blobsSVG] |> groupSVG [] None
 
 let visualiseModuleInstanceConnection (elem: ModuleInstance) (nodeMap: NodeMap) labelId = 
     let source = elem.instanceName
@@ -381,15 +381,15 @@ let visualiseModuleInstanceConnection (elem: ModuleInstance) (nodeMap: NodeMap) 
                     let targetSVG = 
                         conGroup 
                         |> List.map (fun (targetNode, cons) -> getTargetLabelsAndBlobsForNode sourceRange cons (getNodeFromNodeMap nodeMap targetNode) labelId)
-                        |> groupSVG [] ""
+                        |> groupSVG [] None
                         
-                    [sourceSVG; targetSVG] |> groupSVG [("class", "label-group")] "", lId + 1
+                    [sourceSVG; targetSVG] |> groupSVG [("class", "label-group")] None, lId + 1
                 | false -> 
                     let targetNodeId, targets = conGroup |> List.head
                     let targetNode = getNodeFromNodeMap nodeMap targetNodeId
-                    [getWiresAndBlobs sourcePort sourceNode sourceRange targets targetNode] |> groupSVG [("class", "label-group")] "", lId
+                    [getWiresAndBlobs sourcePort sourceNode sourceRange targets targetNode] |> groupSVG [("class", "label-group")] None, lId
             )
-    svgElems |> groupSVG [] "", finalLabelId
+    svgElems |> groupSVG [] None, finalLabelId
 
 let visualiseModuleInstanceConnections (elems: ModuleInstance list) (nodeMap: NodeMap) (labelId: int) =
     let svgElems, finalLabelId = 
@@ -397,4 +397,4 @@ let visualiseModuleInstanceConnections (elems: ModuleInstance list) (nodeMap: No
         ||> List.mapFold 
             (fun lId elem -> 
                 visualiseModuleInstanceConnection elem nodeMap lId)
-    svgElems |> groupSVG [] "", finalLabelId
+    svgElems |> groupSVG [] None, finalLabelId

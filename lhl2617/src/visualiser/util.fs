@@ -96,14 +96,14 @@ module Functions =
     let getBorderBox xy props className: SVGElement =
         let bwh = props.marginLeft + props.marginRight + props.width, props.height
 
-        Rectangle(xy, bwh, [ ("class", className) ], "")
+        Rectangle(xy, bwh, [ ("class", className) ], None)
 
     // actual
     let getActualBox (x, y) props className: SVGElement =
         let bxy = x + props.marginLeft, y
         let wh = props.width, props.height
 
-        Rectangle(bxy, wh, [ ("class", className) ], "")
+        Rectangle(bxy, wh, [ ("class", className) ], None)
 
     let loadCSSWithUnit (path: string) (unitPx: float): string =
         let cssString = readFileToString path
@@ -114,7 +114,7 @@ module Functions =
         nodeMap
         |> Map.toList
         |> List.map (snd >> fun x -> x.svg)
-        |> groupSVG props "" 
+        |> groupSVG props None
 
     let getNodeFromNodeMap (nodeMap: NodeMap) id =
         match Map.containsKey id nodeMap with

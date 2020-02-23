@@ -24,7 +24,7 @@ let getTitle (x, y) props instName modName: SVGElement =
     let txy = x + props.marginLeft + props.width / 2., y + (float defaultGraphicsProps.titleHeight) / 2.
     Text
         (txy, truncText instName defaultGraphicsProps.maxTitleLen, [ ("class", "node-mod-title") ],
-         sprintf "Instance: %s\nModule: %s" instName modName)
+         Some <| sprintf "Instance: %s\nModule: %s" instName modName)
 
 let truncPortText text len ranged =
     match ranged with
@@ -66,7 +66,7 @@ let getPortTextsAndProps (x, y) props (ports: (Identifier * Range) list) (dir: D
                       sprintf "\nRange: %d:%d" rangeA rangeB
                 | false -> ""
 
-        Text(paddedCoord, truncedText, [ ("class", className) ], toolTip),
+        Text(paddedCoord, truncedText, [ ("class", className) ], Some toolTip),
         (text,
          { index = i
            coord = coord
@@ -119,13 +119,13 @@ let visualiseDeclaredModuleInstance (elem: ModuleInstance) (modName: string) (de
 
     let title = getTitle xy props elem.instanceName modName
 
-    let inPortTexts = inPortTextsPC |> List.map fst |> groupSVG [] ""
+    let inPortTexts = inPortTextsPC |> List.map fst |> groupSVG [] None
 
-    let outPortTexts = outPortTextsPC |> List.map fst |> groupSVG [] ""
+    let outPortTexts = outPortTextsPC |> List.map fst |> groupSVG [] None
 
     let svgElem = 
         [borderBox; actualBox; title; inPortTexts; outPortTexts] 
-        |> linkSVG (sprintf "%s.svg" modName) [] (sprintf "Module: %s" modName)
+        |> linkSVG (sprintf "%s.svg" modName) [] (Some <| sprintf "Module: %s" modName)
 
     let visualisedNode =
         { node=ModuleInstance elem
@@ -169,13 +169,13 @@ let visualiseBuiltInModuleInstance (arity: int) (elem: ModuleInstance) (nodeMap:
 
     let title = getTitle xy props elem.instanceName "TODO"
 
-    let inPortTexts = inPortTextsPC |> List.map fst |> groupSVG [] ""
+    let inPortTexts = inPortTextsPC |> List.map fst |> groupSVG [] None
 
-    let outPortTexts = outPortTextsPC |> List.map fst |> groupSVG [] ""
+    let outPortTexts = outPortTextsPC |> List.map fst |> groupSVG [] None
 
     let svgElem = 
         [borderBox; actualBox; title; inPortTexts; outPortTexts] 
-        |> linkSVG (sprintf "%s.svg" "TODO") [] (sprintf "Module: %s" "TODO")
+        |> linkSVG (sprintf "%s.svg" "TODO") [] (Some <| sprintf "Module: %s" "TODO")
 
     let visualisedNode =
         { node=ModuleInstance elem
