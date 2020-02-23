@@ -2,6 +2,7 @@ module Verishot.Parser
 
 open System.Text.RegularExpressions
 open Verishot.CoreTypes.VerilogAST
+open Verishot.CoreTypes
 
 /// result of parser needs to contain return element, lineNum, char/token Num, remLst (Can use result -- error doesnt need return element but will have message)
 type ParserResult<'a> = Result<'a * char list, string * char list>
@@ -317,6 +318,3 @@ module Expression =
             Token.Symbol.LeftCurlyBra >=> ExpressionListParser >=> Token.Symbol.RightCurlyBra <&> (fun ((_,a),_) -> a)
             ConditionalParser
         ]
-
-
-    
