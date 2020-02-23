@@ -4,49 +4,49 @@ open Expecto
 open Verishot.Test.Util
 open Verishot.SVG
 
-let svg1 = Circle ((1., 2.), 3., ["class", "circ-class"], "svg1")
-let svg2 = Rectangle ((1., 2.), (3.,4.), ["class", "rect-class"], "svg2")
-let svg3 = Text ((1., 2.), "svg3text", ["class", "text-class"], "svg3")
-let svg4 = Polyline ([(0.,0.); (1.,2.); (3.,4.)], ["class", "polyline-class"], "svg4")
-let svg5 = Group ([svg1; svg2; svg3; svg4], ["class", "group-class"], "svg5")
-let svg6 = Link ("/link", [svg1; svg2; svg3; svg4], ["class", "link-class"], "svg6")
+let svg1 = Circle ((1., 2.), 3., ["class", "circ-class"], Some "svg1")
+let svg2 = Rectangle ((1., 2.), (3.,4.), ["class", "rect-class"], Some "svg2")
+let svg3 = Text ((1., 2.), "svg3text", ["class", "text-class"], Some "svg3")
+let svg4 = Polyline ([(0.,0.); (1.,2.); (3.,4.)], ["class", "polyline-class"], Some "svg4")
+let svg5 = Group ([svg1; svg2; svg3; svg4], ["class", "group-class"], Some "svg5")
+let svg6 = Link ("/link", [svg1; svg2; svg3; svg4], ["class", "link-class"], Some "svg6")
 
 let groupSVGTests = 
     [
         "empty",
-            ([], "", []),
-                Group ([], [], "")
+            ([], None, []),
+                Group ([], [], None)
         "test props and title",
-            ([("foo1", "bar1"); ("foo2", "bar2")], "title", []),
-                Group ([], [("foo1", "bar1"); ("foo2", "bar2")], "title")
+            ([("foo1", "bar1"); ("foo2", "bar2")], Some "title", []),
+                Group ([], [("foo1", "bar1"); ("foo2", "bar2")], Some "title")
         "simple 1",
-            ([("foo1", "bar1"); ("foo2", "bar2")], "title", [svg1]),
-                Group ([svg1], [("foo1", "bar1"); ("foo2", "bar2")], "title")
+            ([("foo1", "bar1"); ("foo2", "bar2")], Some "title", [svg1]),
+                Group ([svg1], [("foo1", "bar1"); ("foo2", "bar2")], Some "title")
         "simple 4",
-            ([("foo1", "bar1"); ("foo2", "bar2")], "title", [svg1; svg2; svg3; svg4]),
-                Group ([svg1; svg2; svg3; svg4], [("foo1", "bar1"); ("foo2", "bar2")], "title")
+            ([("foo1", "bar1"); ("foo2", "bar2")], Some "title", [svg1; svg2; svg3; svg4]),
+                Group ([svg1; svg2; svg3; svg4], [("foo1", "bar1"); ("foo2", "bar2")], Some "title")
         "simple 6",
-            ([("foo1", "bar1"); ("foo2", "bar2")], "title", [svg1; svg2; svg3; svg4; svg5; svg6]),
-                Group ([svg1; svg2; svg3; svg4; svg5; svg6], [("foo1", "bar1"); ("foo2", "bar2")], "title")
+            ([("foo1", "bar1"); ("foo2", "bar2")], Some "title", [svg1; svg2; svg3; svg4; svg5; svg6]),
+                Group ([svg1; svg2; svg3; svg4; svg5; svg6], [("foo1", "bar1"); ("foo2", "bar2")], Some "title")
     ]
 
 let linkSVGTests = 
     [
         "empty",
-            ("", [], "", []),
-                Link ("", [], [], "")
+            ("", [], None, []),
+                Link ("", [], [], None)
         "test href, props and title",
-            ("/link", [("foo1", "bar1"); ("foo2", "bar2")], "title", []),
-                Link ("/link", [], [("foo1", "bar1"); ("foo2", "bar2")], "title")
+            ("/link", [("foo1", "bar1"); ("foo2", "bar2")], Some "title", []),
+                Link ("/link", [], [("foo1", "bar1"); ("foo2", "bar2")], Some "title")
         "simple 1",
-            ("/link", [("foo1", "bar1"); ("foo2", "bar2")], "title", [svg1]),
-                Link ("/link", [svg1], [("foo1", "bar1"); ("foo2", "bar2")], "title")
+            ("/link", [("foo1", "bar1"); ("foo2", "bar2")], Some "title", [svg1]),
+                Link ("/link", [svg1], [("foo1", "bar1"); ("foo2", "bar2")], Some "title")
         "simple 4",
-            ("/link", [("foo1", "bar1"); ("foo2", "bar2")], "title", [svg1; svg2; svg3; svg4]),
-                Link ("/link", [svg1; svg2; svg3; svg4], [("foo1", "bar1"); ("foo2", "bar2")], "title")
+            ("/link", [("foo1", "bar1"); ("foo2", "bar2")], Some "title", [svg1; svg2; svg3; svg4]),
+                Link ("/link", [svg1; svg2; svg3; svg4], [("foo1", "bar1"); ("foo2", "bar2")], Some "title")
         "simple 6",
-            ("/link", [("foo1", "bar1"); ("foo2", "bar2")], "title", [svg1; svg2; svg3; svg4; svg5; svg6]),
-                Link ("/link", [svg1; svg2; svg3; svg4; svg5; svg6], [("foo1", "bar1"); ("foo2", "bar2")], "title")
+            ("/link", [("foo1", "bar1"); ("foo2", "bar2")], Some "title", [svg1; svg2; svg3; svg4; svg5; svg6]),
+                Link ("/link", [svg1; svg2; svg3; svg4; svg5; svg6], [("foo1", "bar1"); ("foo2", "bar2")], Some "title")
     ]
 
 (* NB This assumes unitPx = 12. *)
@@ -104,10 +104,10 @@ let UPOINTSTests =
 let PTITLETests =
     [
         "empty",
-            "",
+            None,
                 ""
         "simple ",
-            "foo",
+            Some "foo",
                 "<title>foo</title>"
     ]
 
@@ -126,27 +126,27 @@ let OUTPUTSVGLISTTests =
     ]
     
 let outputSVGTests =
-    let svg1nc = Circle ((1., 2.), 3., [], "svg1")
-    let svg2nc = Rectangle ((1., 2.), (3.,4.), [], "svg2")
-    let svg3nc = Text ((1., 2.), "svg3text", [], "svg3")
-    let svg4nc = Polyline ([(0.,0.); (1.,2.); (3.,4.)], [], "svg4")
-    let svg5nc = Group ([svg1; svg2; svg3; svg4], [], "svg5")
-    let svg6nc = Link ("/link", [svg1; svg2; svg3; svg4], [], "svg6")
+    let svg1nc = Circle ((1., 2.), 3., [], Some "svg1")
+    let svg2nc = Rectangle ((1., 2.), (3.,4.), [], Some "svg2")
+    let svg3nc = Text ((1., 2.), "svg3text", [], Some "svg3")
+    let svg4nc = Polyline ([(0.,0.); (1.,2.); (3.,4.)], [], Some "svg4")
+    let svg5nc = Group ([svg1; svg2; svg3; svg4], [], Some "svg5")
+    let svg6nc = Link ("/link", [svg1; svg2; svg3; svg4], [], Some "svg6")
 
-    let svg1nt = Circle ((1., 2.), 3., ["class", "circ-class"], "")
-    let svg2nt = Rectangle ((1., 2.), (3.,4.), ["class", "rect-class"], "")
-    let svg3nt = Text ((1., 2.), "svg3text", ["class", "text-class"], "")
-    let svg4nt = Polyline ([(0.,0.); (1.,2.); (3.,4.)], ["class", "polyline-class"], "")
-    let svg5nt = Group ([svg1; svg2; svg3; svg4], ["class", "group-class"], "")
-    let svg6nt = Link ("/link", [svg1; svg2; svg3; svg4], ["class", "link-class"], "")
+    let svg1nt = Circle ((1., 2.), 3., ["class", "circ-class"], None)
+    let svg2nt = Rectangle ((1., 2.), (3.,4.), ["class", "rect-class"], None)
+    let svg3nt = Text ((1., 2.), "svg3text", ["class", "text-class"], None)
+    let svg4nt = Polyline ([(0.,0.); (1.,2.); (3.,4.)], ["class", "polyline-class"], None)
+    let svg5nt = Group ([svg1; svg2; svg3; svg4], ["class", "group-class"], None)
+    let svg6nt = Link ("/link", [svg1; svg2; svg3; svg4], ["class", "link-class"], None)
 
-    let emptyGroupChildren = Group ([], ["class", "empty-group-class"], "")
-    let emptyLinkChildren = Link ("/link", [], ["class", "empty-link-class"], "")
+    let emptyGroupChildren = Group ([], ["class", "empty-group-class"], None)
+    let emptyLinkChildren = Link ("/link", [], ["class", "empty-link-class"], None)
 
-    let emptyLink = Link ("", [svg1; svg2; svg3; svg4], ["class", "link-class"], "")
-    let emptyText = Text ((1., 2.), "", ["class", "text-class"], "svg3")
+    let emptyLink = Link ("", [svg1; svg2; svg3; svg4], ["class", "link-class"], None)
+    let emptyText = Text ((1., 2.), "", ["class", "text-class"], Some "svg3")
 
-    let svg1ManyProps = Circle ((1., 2.), 3., [("foo1", "bar1"); ("foo2", "bar2"); ("foo3", "bar3")], "svg1")
+    let svg1ManyProps = Circle ((1., 2.), 3., [("foo1", "bar1"); ("foo2", "bar2"); ("foo3", "bar3")], Some "svg1")
     [
         "circle",
             svg1,
@@ -297,47 +297,47 @@ let getGridTests =
     [
         "basic1",
             ((0., 0.), (2., 2.)),
-                Group ([Circle ((0.0, 0.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((0.0, 1.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((0.0, 2.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((1.0, 0.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((1.0, 1.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((1.0, 2.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((2.0, 0.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((2.0, 1.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((2.0, 2.0),0.125,[("style", "fill: #E0E0E0;")],"")], [], "")
+                Group ([Circle ((0.0, 0.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((0.0, 1.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((0.0, 2.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((1.0, 0.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((1.0, 1.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((1.0, 2.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((2.0, 0.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((2.0, 1.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((2.0, 2.0),0.125,[("style", "fill: #E0E0E0;")], None)], [], None)
         "basic2",
             ((-1., -1.), (1., 1.)),
-                Group ([Circle ((-1.0, -1.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((-1.0, 0.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((-1.0, 1.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((0.0, -1.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((0.0, 0.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((0.0, 1.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((1.0, -1.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((1.0, 0.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((1.0, 1.0),0.125,[("style", "fill: #E0E0E0;")],"")], [], "")
+                Group ([Circle ((-1.0, -1.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((-1.0, 0.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((-1.0, 1.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((0.0, -1.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((0.0, 0.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((0.0, 1.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((1.0, -1.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((1.0, 0.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((1.0, 1.0),0.125,[("style", "fill: #E0E0E0;")], None)], [], None)
         "basic3",
             ((-1., -0.), (2., 1.)),
-                Group ([Circle ((-1.0, 0.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((-1.0, 1.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((0.0, 0.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((0.0, 1.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((1.0, 0.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((1.0, 1.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((2.0, 0.0),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((2.0, 1.0),0.125,[("style", "fill: #E0E0E0;")],"")], [], "")
+                Group ([Circle ((-1.0, 0.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((-1.0, 1.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((0.0, 0.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((0.0, 1.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((1.0, 0.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((1.0, 1.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((2.0, 0.0),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((2.0, 1.0),0.125,[("style", "fill: #E0E0E0;")], None)], [], None)
         "basic4",
             ((-1.5, -1.5), (0.5, 0.5)),
-                Group ([Circle ((-1.5, -1.5),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((-1.5, -0.5),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((-1.5, 0.5),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((-0.5, -1.5),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((-0.5, -0.5),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((-0.5, 0.5),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((0.5, -1.5),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((0.5, -0.5),0.125,[("style", "fill: #E0E0E0;")],"");
-                Circle ((0.5, 0.5),0.125,[("style", "fill: #E0E0E0;")],"")], [], "")
+                Group ([Circle ((-1.5, -1.5),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((-1.5, -0.5),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((-1.5, 0.5),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((-0.5, -1.5),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((-0.5, -0.5),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((-0.5, 0.5),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((0.5, -1.5),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((0.5, -0.5),0.125,[("style", "fill: #E0E0E0;")], None);
+                Circle ((0.5, 0.5),0.125,[("style", "fill: #E0E0E0;")], None)], [], None)
     ]
 
 let outputTests = 

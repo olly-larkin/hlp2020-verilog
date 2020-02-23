@@ -15,5 +15,5 @@ open Verishot.VisualiserUtil.Functions
 [<EntryPoint>]
 let main argv =
     Tests.runTestsInAssembly defaultConfig argv |> ignore
-    Check.QuickAll<VisualiserUtilFsChecks>() |> ignore
+    // Check.QuickAll<VisualiserUtilFsChecks>() |> ignore
     0
