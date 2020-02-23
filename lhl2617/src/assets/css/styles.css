@@ -9,6 +9,15 @@
     fill: #f7f1e3;
     stroke: black;
 }
+.node-builtin-bord {
+    fill: none;
+    /* stroke: pink; */
+}
+.node-builtin-actual {
+    fill: #e8e9ff;
+    rx: 5;
+    stroke: black;
+}
 .inputPin-actual {
     fill: #f7f1e3;
     stroke: black; 
