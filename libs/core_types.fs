@@ -12,8 +12,7 @@ type Direction =
 
 type ModuleDecl =
     { name: Identifier
-      inputPorts: (Identifier * Range) list
-      outputPorts: (Identifier * Range) list }
+      ports: (Direction * Identifier * Range) list }
 
 module Netlist =
     (***
