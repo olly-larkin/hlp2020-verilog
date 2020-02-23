@@ -142,6 +142,8 @@ module VerilogAST =
         | ExprBinary of Expr * BinaryOp * Expr
         | ExprUnary of UnaryOp * Expr
         | ExprIfThenElse of Expr * Expr * Expr // <expr> ? <expr> : <expr>
+        | ExprIndex of Expr * int
+        | ExprIndexRange of Expr * int * int
 
     type ModuleItem =
         | ItemPort of Direction * Identifier
