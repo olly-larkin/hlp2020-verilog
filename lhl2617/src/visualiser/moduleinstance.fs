@@ -153,8 +153,7 @@ let visualiseBuiltInModuleInstance (arity: int) (elem: ModuleInstance) (nodeMap:
     let props = 
         { defaultModuleInstanceProps with 
             width=getWidth elem.instanceName inputPorts outputPorts
-            height=getHeight inputPorts outputPorts
-            marginLeft=float <| List.length inputPorts + 5 (* space to let connections bend *) }
+            height=getHeight inputPorts outputPorts }
 
     let borderBox = getBorderBox xy props "node-builtin-bord"
     let actualBox = getActualBox xy props "node-builtin-actual"
@@ -178,7 +177,7 @@ let visualiseBuiltInModuleInstance (arity: int) (elem: ModuleInstance) (nodeMap:
 
     let visualisedNode =
         { node=ModuleInstance elem
-          decl=Some decl
+          decl=None
           svg=svgElem
           idx=idx
           coord=xy
