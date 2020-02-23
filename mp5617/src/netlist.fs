@@ -173,3 +173,22 @@ let private exprNodesWithOutput (operatorIdx: int ref) (expr: AST.Expr) (target:
                        portIndex = 1 |})
 
         operatorNode :: (leftNodes @ rightNodes)
+    | AST.ExprUnary(op, expr) ->
+        let operatorNodeName = sprintf "%A-%d" op !operatorIdx
+        operatorIdx := !operatorIdx + 1
+
+        let operatorNode =
+            FinalNode
+                (ModuleInstance
+                    { instanceName = operatorNodeName
+                      moduleName = UOpIdentifier op
+                      connections = Map [ ("output", [ finalConnection ]) ] })
+
+        let exprNodes =
+            exprNodesWithOutput operatorIdx expr
+                (InstanceTarget
+                    {| targetNode = operatorNodeName
+                       portName = "input"
+                       portIndex = 1 |})
+
+        operatorNode :: exprNodes

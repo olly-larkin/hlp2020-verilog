@@ -181,7 +181,7 @@ let tests =
               expectNetlist decls moduleAST expectedNetlist
           }
 
-          test "Assign expression to output pin" {
+          test "Assign binary expression to output pin" {
               let decls = []
 
               let moduleAST =
@@ -214,6 +214,42 @@ let tests =
                           ModuleInstance
                               ({ moduleName = BOpIdentifier BOpBitwiseAnd
                                  instanceName = "BOpBitwiseAnd-0"
+                                 connections =
+                                     Map
+                                         [ "output",
+                                           [ { srcPortIndex = 1
+                                               target = PinTarget
+                                                            {| pinName = "out"
+                                                               pinIndex = 1 |} } ] ] }) ] }
+
+              expectNetlist decls moduleAST expectedNetlist
+          }
+
+          test "Assign unary expression to output pin" {
+              let decls = []
+
+              let moduleAST =
+                  { name = "A"
+                    ports = [ "in"; "out" ]
+                    items =
+                        [ ItemPort(Input, "in")
+                          ItemPort(Output, "out")
+                          ItemAssign("out", ExprUnary(UOpBitwiseNegation, (ExprIdentifier "in"))) ] }
+
+              let expectedNetlist =
+                  { moduleName = "A"
+                    nodes =
+                        [ InputPin
+                            ("in",
+                             [ { srcPortIndex = 1
+                                 target = InstanceTarget
+                                              {| targetNode = "UOpBitwiseNegation-0"
+                                                 portName = "input"
+                                                 portIndex = 1 |} } ])
+                          OutputPin("out")
+                          ModuleInstance
+                              ({ moduleName = UOpIdentifier UOpBitwiseNegation
+                                 instanceName = "UOpBitwiseNegation-0"
                                  connections =
                                      Map
                                          [ "output",
