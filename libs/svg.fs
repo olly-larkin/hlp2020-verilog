@@ -98,7 +98,6 @@ let outputSVG (elem: SVGElement): string =
         sprintf "<a href='%s' %s>%s\n%s\n</a>"
             href props title children 
 
-
 let getDimensionElem (elem: SVGElement): Coord * Coord = 
     match elem with
     | Circle ((cx, cy), r, _, _) -> 
@@ -134,6 +133,31 @@ let getDimensionElemList (elems: SVGElement list): Coord * Coord =
         let maxY = (List.map snd >> List.max) maxRange
         ((minX, minY), (maxX, maxY))
 
+let translateCoord (xOffset, yOffset) (x, y) = 
+    x + xOffset, y + yOffset
+
+let translateSVGList offset (elems: SVGElement list) : SVGElement list =
+    elems 
+    |> List.map (translateSVG offset)
+
+let translateSVG offset (elem: SVGElement): SVGElement =
+    let (|TRANSCOORD|) = translateCoord offset
+    let (|TRANSCOORDS|) pts = pts |> List.map (|TRANSCOORD|)
+    let (|TRANSSVGLIST|) = translateSVGList offset
+    match elem with
+    | Circle (TRANSCOORD coord , a, b, c) -> 
+        Circle (coord, a, b, c)
+    | Rectangle (TRANSCOORD coord, a, b, c) ->
+        Rectangle (coord, a, b, c)
+    | Text (TRANSCOORD coord, a, b, c) ->
+        Text (coord, a, b, c)
+    | Polyline (TRANSCOORDS pts, a, b) ->
+        Polyline (pts, a, b)
+    | Group (TRANSSVGLIST children, a, b) ->
+        Group (children, a, b)
+    | Link (a, TRANSSVGLIST children, b, c) -> 
+        Link (a, children, b, c)
+    
 let getGrid ((minX, minY), (maxX, maxY)): SVGElement =
     let xs = [minX .. 1. .. maxX]
     let ys = [minY .. 1. .. maxY]
