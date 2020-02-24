@@ -141,7 +141,7 @@ module VerilogAST =
         | IndexRange of int * int
         
     type Expr =
-        | ExprNumber of int
+        | ExprNumber of int option * int
         | ExprConcateneation of Expr list
         | ExprIdentifier of Identifier
         | ExprBinary of Expr * BinaryOp * Expr
