@@ -4,35 +4,51 @@ open System.Text.RegularExpressions
 open Verishot.CoreTypes.VerilogAST
 open Verishot.CoreTypes
 
+/// Error type
+type Err = string * char list
+
+/// Return the furthest Err type
+let furthestErr err1 err2 =
+    match err1, err2 with
+    | (_, lst1), (_, lst2) when List.length lst1 >= List.length lst2 -> err2
+    | _ -> err1
+
+let furthestOpErr err1 err2 =
+    match err1, err2 with
+    | Some _, None -> err1
+    | None, Some _ -> err2
+    | Some err1', Some err2' -> Some <| furthestErr err1' err2'
+    | _ -> None
+
 /// result of parser needs to contain return element, lineNum, char/token Num, remLst (Can use result -- error doesnt need return element but will have message)
-type ParserResult<'a> = Result<'a * char list, string * char list>
+/// Positive result must also contain (as option) the error returned from optional paths
+/// This is so that the error can be more accurate
+/// Error in optional branch could not be reported otherwise
+type ParserResult<'a> = Result<'a * char list * Err option, Err>
 
 /// take as input line num, char num, char list
 type Parser<'a> = char list -> ParserResult<'a>
 
 /// Either p1 or p2 (p1 takes precidence)
-/// If there was an error, take the one that got furthest (p1 takes precidence if the same)
+/// If there was an error, take the one that got furthest (p2 takes precidence if the same)
 let (<|>) (p1: Parser<'a>) (p2: Parser<'a>) : Parser<'a> =
     fun inp ->
         match p1 inp with
         | Ok res -> Ok res
-        | Error (_, rest1) as err1 ->
+        | Error err1 ->
             match p2 inp with
             | Ok res -> Ok res
-            | Error (_, rest2) as err2 ->
-                if List.length rest1 > List.length rest2
-                then err2
-                else err1
+            | Error err2 -> furthestErr err1 err2 |> Error
 
 /// First apply p1 and then p2
 /// Outputs returned in a tuple to be unpacked by user
 let (>=>) (p1: Parser<'a>) (p2: Parser<'b>) : Parser<'a * 'b> =
     fun inp ->
         match p1 inp with
-        | Ok (a, rest) ->
+        | Ok (a, rest, opErr1) ->
             match p2 rest with
-            | Ok (b, rest') -> Ok ((a, b), rest')
-            | Error err -> Error err
+            | Ok (b, rest', opErr2) -> Ok ((a, b), rest', furthestOpErr opErr1 opErr2)
+            | Error err -> furthestOpErr opErr1 (Some err) |> Option.defaultValue err |> Error
         | Error err -> Error err
 
 /// Reverse map function for Parser type
@@ -40,14 +56,14 @@ let (<&>) (p: Parser<'a>) (f: 'a -> 'b) : Parser<'b> =
     p
     >> function
     | Error err -> Error err
-    | Ok (out, rest) -> Ok (f out, rest)
+    | Ok (out, rest, opErr) -> Ok (f out, rest, opErr)
 
 /// Replacement function for Parser type
 let (>|>) (p: Parser<'a>) (newItem: 'b) : Parser<'b> =
     p
     >> function
     | Error err -> Error err
-    | Ok (_, rest) -> Ok (newItem, rest)
+    | Ok (_, rest, opErr) -> Ok (newItem, rest, opErr)
 
 /// Optional combinator (do first, then try second)
 /// This operator removed the needd for memoisation
@@ -56,10 +72,10 @@ let (?=>) (p1: Parser<'a>) (p2: Parser<'b>) : Parser<'a * 'b option> =
     fun inp ->
         match p1 inp with
         | Error err -> Error err
-        | Ok (a, rest) ->
+        | Ok (a, rest, opErr1) ->
             match p2 rest with
-            | Error _ -> Ok ((a, None), rest)
-            | Ok (b, rest') -> Ok ((a, Some b), rest')
+            | Error err -> Ok ((a, None), rest, furthestOpErr opErr1 (Some err))
+            | Ok (b, rest', opErr2) -> Ok ((a, Some b), rest', furthestOpErr opErr1 opErr2)
         
 /// Currently not used but can be added to improve speed if needed
 let MemoiseParser fn =
@@ -92,7 +108,7 @@ module Token =
                 let rec takeWhile pat cLst =
                     match pat, cLst with
                     | hd1::tl1, hd2::tl2 when hd1 = hd2 -> takeWhile tl1 tl2
-                    | [], remaining -> Ok (pattern, remaining)
+                    | [], remaining -> Ok (pattern, remaining, None)
                     | _ -> Error (sprintf "Could not match. Expected \'%s\'." pattern, cLst)
                 cLst |> removeWhitespace |> takeWhile pat
 
@@ -107,7 +123,7 @@ module Token =
                     |> System.String
                     |> reg.Match
                 if regMatch.Success
-                then Ok (regMatch.Value, List.skip regMatch.Length cLst)
+                then Ok (regMatch.Value, List.skip regMatch.Length cLst, None)
                 else Error (sprintf "Could not match. Expected regex of pattern \'%s\'." pattern, cLst)
 
         /// Strict parse will not allow the following character to be something that could be part of an identifier
@@ -116,8 +132,8 @@ module Token =
             fun cLst ->
                 match p pattern cLst with
                 | Error err -> Error err
-                | Ok (res, hd::tl) when not <| List.contains hd followChars -> Ok (res, hd::tl)
-                | Ok (res, []) -> Ok (res, [])
+                | Ok (res, hd::tl, opErr) when not <| List.contains hd followChars -> Ok (res, hd::tl, opErr)
+                | Ok (res, [], opErr) -> Ok (res, [], opErr)
                 | _ -> Error (sprintf "Could not match. Expected pattern: \'%s\'." pattern, cLst)
 
         let charToInt c = int c - int '0'
@@ -393,12 +409,8 @@ module Expression =
 module ModuleDefinition =
 
     let rec SourceParse inp =
-        inp 
-        |> (Token.Keyword.Module >=> Token.Identifier >=> ListOfPortsParser >=> Token.Symbol.Semmicolon >=> ModuleItemListParser >=> Token.Keyword.Endmodule <&> fun (((((_,a),b),_),c),_) -> 
+        inp |> (Token.Keyword.Module >=> Token.Identifier >=> ListOfPortsParser >=> Token.Symbol.Semmicolon >=> ModuleItemListParser >=> Token.Keyword.Endmodule <&> fun (((((_,a),b),_),c),_) -> 
             { name = a; ports = b; items = c })
-        // |> function
-        // | Ok (mod, _) -> Ok (mod,[])
-        // | Error (msg, lst) -> Error (msg, lst)
 
     and ListOfPortsParser inp =
         inp |> (Token.Symbol.LeftRoundBra ?=> PortListParser >=> Token.Symbol.RightRoundBra <&> fun ((_,a),_) ->
@@ -448,11 +460,15 @@ module ModuleDefinition =
             | None -> ItemInstantiation (a, b, [])
             | Some lst -> ItemInstantiation (a, b, lst))
 
-let lineCalc =
-    List.fold (fun state elem -> if elem = '\n' then state + 1 else state) 1
+let lineCalc lst =
+    ((1, 1), lst) ||> List.fold (fun (line, ch) elem ->
+        match elem with
+        | '\n' -> line + 1, 1
+        | _ -> line, ch + 1
+    ) |> fun (l, c) -> {| line = l ; character = c |}
 
-let dropElems n lst =
-    lst |> List.rev |> List.skip n |> List.rev
+let trim n lst =
+    List.truncate (List.length lst - n) lst
 
 let ParseSource inp =
     let inp = inp |> List.ofSeq
@@ -460,5 +476,5 @@ let ParseSource inp =
     |> List.ofSeq
     |> ModuleDefinition.SourceParse
     |> function
-    | Ok (res, _) -> Ok (res)
-    | Error (msg, lst) -> Error (msg, inp |> dropElems (List.length lst) |> lineCalc)
+    | Ok (res, _, _) -> Ok (res)
+    | Error (msg, lst) -> Error (msg, inp |> trim (List.length lst) |> lineCalc)

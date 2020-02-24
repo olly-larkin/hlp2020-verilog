@@ -18,15 +18,15 @@ let stringParseTestsList =
         ([
             "test -> test passes",
                 ("test", List.ofSeq "test") ||> Token.Tools.stringParse,
-                    Ok ("test", [])
+                    Ok ("test", [], None)
 
             "whitespace is removed",
                 ("test", List.ofSeq "   test") ||> Token.Tools.stringParse,
-                    Ok ("test", [])
+                    Ok ("test", [], None)
 
             "strict string positive test",
                 ("test", List.ofSeq "test") ||> Token.Tools.strict Token.Tools.stringParse,
-                    Ok ("test", [])
+                    Ok ("test", [], None)
 
             ] |> List.map equalTestAsync)
 
@@ -48,15 +48,15 @@ let regParseTestsList =
         ([
             "matching plain string",
                 ("test", List.ofSeq "test") ||> Token.Tools.regParse,
-                    Ok ("test", [])
+                    Ok ("test", [], None)
 
             "matching int",
                 ("[0-9]+", List.ofSeq "198.5") ||> Token.Tools.regParse,
-                    Ok ("198", ['.';'5'])
+                    Ok ("198", ['.';'5'], None)
 
             "checking whitespace is removed",
                 ("test", List.ofSeq "   test") ||> Token.Tools.regParse,
-                    Ok ("test", [])
+                    Ok ("test", [], None)
 
             ] |> List.map equalTestAsync)
         ([
@@ -97,30 +97,30 @@ let numberParseTestsList =
         ([
             "correctly matching hex value",
                 List.ofSeq "10'h1A" |> Token.Number.Value,
-                    Ok (26, [])
+                    Ok (26, [], None)
 
             "correctly matching dec value",
                 List.ofSeq "10'd20" |> Token.Number.Value,
-                    Ok (20, [])
+                    Ok (20, [], None)
 
             "correctly matching oct value",
                 List.ofSeq "10'o17" |> Token.Number.Value,
-                    Ok (15, [])
+                    Ok (15, [], None)
 
             "correctly matching bin value",
                 List.ofSeq "4'b1100" |> Token.Number.Value,
-                    Ok (12, [])
+                    Ok (12, [], None)
 
             ] |> List.map equalTestAsync)
         ([
 
             "correctly matching bin expr",
                 List.ofSeq "4'b1100" |> Token.Number.Expr,
-                    Ok (ExprNumber (Some 4, 12), [])
+                    Ok (ExprNumber (Some 4, 12), [], None)
 
             "correctly giving no size",
                 List.ofSeq "100" |> Token.Number.Expr,
-                    Ok (ExprNumber (None, 100), [])
+                    Ok (ExprNumber (None, 100), [], None)
 
             ] |> List.map equalTestAsync)
         ([
@@ -136,23 +136,23 @@ let expressionTestsList =
         ([
             "checking a number gets passed to int from term",
                 List.ofSeq "5" |> Expression.TermParser,
-                    Ok (ExprNumber (None, 5), [])
+                    Ok (ExprNumber (None, 5), [], None)
 
             "checking a string gets passed to identifier from term",
                 List.ofSeq "test" |> Expression.TermParser,
-                    Ok (ExprIdentifier "test", [])
+                    Ok (ExprIdentifier "test", [], None)
 
             "unary successful",
                 List.ofSeq "+10" |> Expression.UnaryOpParser,
-                    Ok (ExprUnary (UOpPlus, ExprNumber (None, 10)), [])
+                    Ok (ExprUnary (UOpPlus, ExprNumber (None, 10)), [], None)
 
             "add sub successful plus",
                 List.ofSeq "5 + 5" |> Expression.AddSubParser,
-                    Ok (ExprBinary (ExprNumber (None, 5), BOpPlus, ExprNumber (None, 5)), [])
+                    Ok (ExprBinary (ExprNumber (None, 5), BOpPlus, ExprNumber (None, 5)), [], Some ("Could not match. Expected '+'.", []))
 
             "test bracketed expression",
                 List.ofSeq "(1+2)*3" |> Expression.ExpressionParser,
-                    Ok (ExprBinary (ExprBinary (ExprNumber (None, 1), BOpPlus, ExprNumber (None, 2)), BOpStar, ExprNumber (None, 3)), [])
+                    Ok (ExprBinary (ExprBinary (ExprNumber (None, 1), BOpPlus, ExprNumber (None, 2)), BOpStar, ExprNumber (None, 3)), [], Some ("Could not match. Expected '+'.", []))
 
             ] |> List.map equalTestAsync)
         ([
