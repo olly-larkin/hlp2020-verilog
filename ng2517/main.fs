@@ -13,7 +13,11 @@ open WaveTypes
 
 
 let testInput = [
-    0;1;0;1;1;1;0;0;1
+    SimWire{portName = "module"; output = [1;0;0;1;0;1;1;0]};
+    SimWire{portName = "module"; output = [0;1;0;1;0;1;0;1]};
+    SimWire{portName = "module"; output = [1;1;1;1;0;0;0;0]};
+    SimBus{portName = "module"; outputList = [(0,[1;0;0;1;0;1;1;0]); (1,[1;1;0;1;0;1;1;0]); (2,[1;0;1;1;0;0;1;0])]};
+    SimBus{portName = "module"; outputList = [(0,[1;1;0;1;1;0;0;1]); (1,[1;0;1;0;0;0;1;0]); (2,[1;1;1;1;1;1;1;0])]};
 ]
 
 
@@ -29,8 +33,8 @@ let toFile (modName, svgString) = writeStringToFile (sprintf "../../../outputsvg
 
 [<EntryPoint>]
 let main argv =    
-    let out = Waveform.ModuleWaveform (testInput,state)
-    let outString = output out.svgVals "" false
+    let svgGroup = testInput |> Waveform.SimOutputToWaveform |> Waveform.SetPosition |> Waveform.GroupWaveformElements
+    let outString =  output svgGroup "" false
     ("Test",outString) |> toFile
 
     0 // return an integer exit code
