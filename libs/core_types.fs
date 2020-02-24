@@ -135,16 +135,19 @@ module VerilogAST =
         | BOpArithmeticRightShift
         /// >>>
         | BOpArithmeticLeftShift
+
+    type Index =
+        | IndexNum of int
+        | IndexRange of int * int
         
     type Expr =
-        | ExprNumber of int
+        | ExprNumber of int option * int
         | ExprConcateneation of Expr list
         | ExprIdentifier of Identifier
         | ExprBinary of Expr * BinaryOp * Expr
         | ExprUnary of UnaryOp * Expr
         | ExprIfThenElse of Expr * Expr * Expr // <expr> ? <expr> : <expr>
-        | ExprIndex of Expr * int
-        | ExprIndexRange of Expr * int * int
+        | ExprIndex of Expr * Index
 
     type ModuleItem =
         | ItemPort of Direction * Identifier
