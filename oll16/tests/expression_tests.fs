@@ -80,6 +80,10 @@ let expressionTestsList =
                 List.ofSeq "5 + 5" |> Expression.AddSubParser,
                     Ok (ExprBinary (ExprNumber 5, BOpPlus, ExprNumber 5), [])
 
+            "test bracketed expression",
+                List.ofSeq "(1+2)*3" |> Expression.ExpressionParser,
+                    Ok (ExprBinary (ExprBinary (ExprNumber 1, BOpPlus, ExprNumber 2), BOpStar, ExprNumber 3), [])
+
             ] |> List.map equalTestAsync)
         ([
 
