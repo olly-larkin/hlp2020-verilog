@@ -50,15 +50,14 @@ let (>|>) (p: Parser<'a>) (newItem: 'b) : Parser<'b> =
     | Ok (_, rest) -> Ok (newItem, rest)
 
 /// Optional combinator (do first, then try second)
-let (?=>) (p1: Parser<'a>) (p2: Parser<'b>) =
-    fun (f: ('a * 'b) -> 'a) ->
-        fun inp ->
-            match p1 inp with
-            | Error err -> Error err
-            | Ok (a, rest) ->
-                match p2 rest with
-                | Error _ -> Ok (a, rest)
-                | Ok (b, rest') -> Ok (f (a,b), rest')
+let (?=>) (p1: Parser<'a>) (p2: Parser<'b>) : Parser<'a * 'b option> =
+    fun inp ->
+        match p1 inp with
+        | Error err -> Error err
+        | Ok (a, rest) ->
+            match p2 rest with
+            | Error _ -> Ok ((a, None), rest)
+            | Ok (b, rest') -> Ok ((a, Some b), rest')
 
 /// Make parser from list
 let buildParser lst =
@@ -177,7 +176,7 @@ module Token =
         Tools.regParse "[0-9]+"
         >> function
         | Error err -> Error err
-        | Ok (numStr, rest) -> Ok (ExprNumber (int numStr), rest)
+        | Ok (numStr, rest) -> Ok (int numStr, rest)
 
 
 /// All parsing instructions for expressions
@@ -185,7 +184,10 @@ module Expression =
 
     module Tools =
         /// To map output of combinator to expected binary expression
-        let BinExprMap (a,(b,c)) = ExprBinary (a,b,c)
+        let OpBinExprMap (a, b) =
+            match b with
+            | None -> a
+            | Some (b, c) -> ExprBinary (a,b,c)
 
         let MemoiseParser fn =
             let mutable cache = Map []
@@ -201,7 +203,7 @@ module Expression =
     let rec TermParser inp =
         inp
         |> buildParser [
-            Token.Number
+            Token.Number <&> ExprNumber
             Token.ExpressionIdentifier
             Token.Symbol.LeftRoundBra >=> ExpressionParser >=> Token.Symbol.RightRoundBra <&> (fun ((_,b),_) -> b)
         ]
@@ -230,7 +232,7 @@ module Expression =
             Token.Symbol.BinPlus
             Token.Symbol.BinMinus
         ]
-        inp |> (Tools.BinExprMap |> (UnaryOpParser ?=> (operator >=> AddSubParser)))
+        inp |> (UnaryOpParser ?=> (operator >=> AddSubParser) <&> Tools.OpBinExprMap)
 
     and MulDivModParser inp =
         let operator = buildParser [
@@ -238,10 +240,10 @@ module Expression =
             Token.Symbol.Divide
             Token.Symbol.Modulus
         ]
-        inp |> (Tools.BinExprMap |> (AddSubParser ?=> (operator >=> MulDivModParser)))
+        inp |> (AddSubParser ?=> (operator >=> MulDivModParser) <&> Tools.OpBinExprMap)
 
     and ExponentParser inp =
-        inp |> (Tools.BinExprMap |> (MulDivModParser ?=> (Token.Symbol.Exponent >=> ExponentParser)))
+        inp |> (MulDivModParser ?=> (Token.Symbol.Exponent >=> ExponentParser) <&> Tools.OpBinExprMap)
 
     and ShiftParser inp =
         let operator = buildParser [
@@ -250,7 +252,7 @@ module Expression =
             Token.Symbol.ArithmaticLeftShift
             Token.Symbol.ArithmaticRightShift
         ]
-        inp |> (Tools.BinExprMap |> (ExponentParser ?=> (operator >=> ShiftParser)))
+        inp |> (ExponentParser ?=> (operator >=> ShiftParser) <&> Tools.OpBinExprMap)
 
     and RelationalParser inp =
         let operator = buildParser [
@@ -259,7 +261,7 @@ module Expression =
             Token.Symbol.GreaterThanOrEqual
             Token.Symbol.LessThanOrEqual
         ]
-        inp |> (Tools.BinExprMap |> (ShiftParser ?=> (operator >=> RelationalParser)))
+        inp |> (ShiftParser ?=> (operator >=> RelationalParser) <&> Tools.OpBinExprMap)
     
     and RelationalEqualityParser inp =
         let operator = buildParser [
@@ -268,39 +270,40 @@ module Expression =
             Token.Symbol.CaseEqual
             Token.Symbol.CaseNotEqual
         ]
-        inp |> (Tools.BinExprMap |> (RelationalParser ?=> (operator >=> RelationalEqualityParser)))
+        inp |> (RelationalParser ?=> (operator >=> RelationalEqualityParser) <&> Tools.OpBinExprMap)
 
     and BitwiseAndParser inp =
         let operator = buildParser [
             Token.Symbol.BitwiseAnd
             Token.Symbol.BitwiseNand
         ]
-        inp |> (Tools.BinExprMap |> (RelationalEqualityParser ?=> (operator >=> BitwiseAndParser)))
+        inp |> (RelationalEqualityParser ?=> (operator >=> BitwiseAndParser) <&> Tools.OpBinExprMap)
 
     and BitwiseXorParser inp =
         let operator = buildParser [
             Token.Symbol.BitwiseExclusiveOr
             Token.Symbol.BitwiseExclusiveNor
         ]
-        inp |> (Tools.BinExprMap |> (BitwiseAndParser ?=> (operator >=> BitwiseXorParser)))
+        inp |> (BitwiseAndParser ?=> (operator >=> BitwiseXorParser) <&> Tools.OpBinExprMap)
 
     and BitwiseOrParser inp =
         let operator = buildParser [
             Token.Symbol.BitwiseOr
             Token.Symbol.BitwiseNor
         ]
-        inp |> (Tools.BinExprMap |> (BitwiseXorParser ?=> (operator >=> BitwiseOrParser)))
+        inp |> (BitwiseXorParser ?=> (operator >=> BitwiseOrParser) <&> Tools.OpBinExprMap)
 
     and LogicalAndParser inp =
-        inp |> (Tools.BinExprMap |> (BitwiseOrParser ?=> (Token.Symbol.LogicalAnd >=> LogicalAndParser)))
+        inp |> (BitwiseOrParser ?=> (Token.Symbol.LogicalAnd >=> LogicalAndParser) <&> Tools.OpBinExprMap)
 
     and LogicalOrParser inp =
-        inp |> (Tools.BinExprMap |> (LogicalAndParser ?=> (Token.Symbol.LogicalOr >=> LogicalOrParser)))
+        inp |> (LogicalAndParser ?=> (Token.Symbol.LogicalOr >=> LogicalOrParser) <&> Tools.OpBinExprMap)
 
     and ConditionalParser inp =
-        inp |> ((LogicalOrParser ?=> (Token.Symbol.QuestionMark >=> ConditionalParser >=> Token.Symbol.Colon >=> ConditionalParser)) (fun (a,(((_,b),_),c)) -> 
-            ExprIfThenElse (a,b,c)
-        ))
+        inp |> (LogicalOrParser ?=> (Token.Symbol.QuestionMark >=> ConditionalParser >=> Token.Symbol.Colon >=> ConditionalParser) <&> (fun (a,b) ->
+            match b with
+            | None -> a
+            | Some (((_,b),_),c) -> ExprIfThenElse (a,b,c)))
 
     and ExpressionListParser inp =
         inp
@@ -312,9 +315,21 @@ module Expression =
             ConditionalParser <&> (fun a -> ExprConcateneation [a])
         ]
 
-    and ExpressionParser inp =
+    and ExpressionConcatParser inp =
         inp
         |> buildParser [
             Token.Symbol.LeftCurlyBra >=> ExpressionListParser >=> Token.Symbol.RightCurlyBra <&> (fun ((_,a),_) -> a)
             ConditionalParser
         ]
+
+    and IndexParser inp =
+        inp |> (Token.Number ?=> (Token.Symbol.Colon >=> Token.Number) <&> fun (a,b) ->
+            match b with
+            | None -> IndexNum a
+            | Some (_, b) -> IndexRange (a,b))
+
+    and ExpressionParser inp =
+        inp |> (ExpressionConcatParser ?=> (Token.Symbol.LeftSquareBra >=> IndexParser >=> Token.Symbol.RightSquareBra) <&> fun (a,b) ->
+            match b with
+            | None -> a
+            | Some ((_,b),_) -> ExprIndex (a,b))
