@@ -6,6 +6,8 @@
   <ItemGroup>
     <Compile Include="../libs/core_types.fs" />
     <Compile Include="../libs/util.fs" />
+    <Compile Include="../libs/svg.fs" />
+    <Compile Include="wave_types.fs" />
     <Compile Include="waveform.fs" />
     <Compile Include="main.fs" />
   </ItemGroup>
