@@ -6,7 +6,8 @@ open WaveTypes
 
 
 let styleprops = [("fill", "none");("stroke","black");("stroke-width","1")]
-let objTextBox name = Rectangle((0.0,0.0),(4.0, 3.0) ,[("fill", "none"); ("stroke","black")], Some name) 
+let objTextBox name = Rectangle((0.0,0.0),(6.0, 2.0) ,[("fill", "none"); ("stroke","black")], Some name) 
+
 module Waveform =
        
     let addXY (inp:Coord) (x:float) (y:float) = 
@@ -101,10 +102,40 @@ module Waveform =
         match inp with
         | SimWire wire -> GenWireWaveform wire.portName wire.output
         | SimBus bus   -> GenBusWaveform bus.portName bus.outputList
+
+    let SetWirePos (offset:float) (port:WireWaveform)  =
+        WireWave{portName = translateSVG (0.5, float(offset) * 3.0 + 0.8 ) port.portName; wave = translateSVG (7.0, offset *  3.0 ) port.wave }, offset + 1.0 
+
+    let SetBusPos (offset:float) (port:BusWaveform) =
+        let setIndexPos (offst:float) (idx:SVGElement*SVGElement) = (translateSVG (0.5, offst * 3.0 + 0.8) (fst(idx)) , translateSVG (7.0, offst * 3.0) (snd(idx))), offst + 1.0 
+        let offsetWaves = List.mapFold setIndexPos (offset+1.1) port.waveList
+        BusWave{portName = translateSVG (0.0, offset * 3.0 + 0.8) port.portName; waveList = fst(offsetWaves)}, snd(offsetWaves)
+
+
+    let SetPortPosition (offset:float) (port:PortWaveform) = 
+        match port with
+        | WireWave wire -> SetWirePos offset wire
+        | BusWave bus -> SetBusPos offset bus
     
+
+    let DrawWire (svg:SVGElement) (port:WireWaveform) = 
+        groupSVG [] None [svg; port.portName; port.wave]
+
+    let DrawBus (svg:SVGElement) (port:BusWaveform) =
+        let indexSVG (_svg:SVGElement ) (subport:SVGElement*SVGElement) =  groupSVG [] None [_svg;fst(subport); snd(subport)]
+        let tmpSVG = groupSVG [] None [svg; port.portName]
+        List.fold indexSVG tmpSVG port.waveList  
+    
+    let DrawPort (svg:SVGElement) (port:PortWaveform) = 
+        match port with
+            | WireWave wire -> DrawWire svg wire
+            | BusWave bus -> DrawBus svg bus
+
     let SimOutputToWaveform (inp:SimulatorPort list) =
         List.map PortToWaveform inp
     
-    let setWavePos state port = 
-        match port with
-        | WireWave wire ->   
+    let SetPosition (portList: PortWaveform list) =
+        List.mapFold SetPortPosition 0.0 portList |> fst
+
+    let GroupWaveformElements (outputList: PortWaveform list) = 
+        List.fold DrawPort (Group([], [],None )) outputList
