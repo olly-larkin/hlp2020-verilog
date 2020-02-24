@@ -293,6 +293,144 @@ let getDimensionElemListTests =
                 ((-2., -1.), (4., 6.))
     ]
 
+let translateCoordTests = 
+    let zeroOffset = 0., 0.
+    let positiveOffset = 1., 2.
+    let negativeOffset = -1., -2.
+    [
+        "basic 0",
+            (zeroOffset, (0., 0.)),
+                (0., 0.)
+        "basic positive",
+            (positiveOffset, (3., 4.)),
+                (4., 6.)
+        "basic negative",
+            (negativeOffset, (-3., -4.)),
+                (-4., -6.)
+    ]
+
+[<Tests>]
+let translateCoordTestList =
+    testList "translateCoord" <| 
+        (translateCoordTests 
+         |> List.map (processIntoAsyncTestList2 translateCoord))
+
+let translateSVGListTests = 
+    let svgList = [svg1; svg2; svg3; svg4]
+    let zeroOffset = 0., 0.
+    let positiveOffset = 1., 2.
+    let negativeOffset = -10., -20.
+    [
+        "0 offset",
+            (zeroOffset, svgList),
+                svgList
+        "positive offset",
+            (positiveOffset, svgList),
+                [
+                    Circle ((2., 4.), 3., ["class", "circ-class"], Some "svg1")
+                    Rectangle ((2., 4.), (3.,4.), ["class", "rect-class"], Some "svg2")
+                    Text ((2., 4.), "svg3text", ["class", "text-class"], Some "svg3")
+                    Polyline ([(1.,2.); (2.,4.); (4.,6.)], ["class", "polyline-class"], Some "svg4")
+                ]
+        "negative offset",
+            (negativeOffset, svgList),
+                [
+                    Circle ((-9., -18.), 3., ["class", "circ-class"], Some "svg1")
+                    Rectangle ((-9., -18.), (3., 4.), ["class", "rect-class"], Some "svg2")
+                    Text ((-9., -18.), "svg3text", ["class", "text-class"], Some "svg3")
+                    Polyline ([(-10., -20.); (-9., -18.); (-7., -16.)], ["class", "polyline-class"], Some "svg4")
+                ]
+    ]
+
+[<Tests>]
+let translateSVGListTestList =
+    testList "translateSVGList" <| 
+        (translateSVGListTests 
+         |> List.map (processIntoAsyncTestList2 translateSVGList))
+
+let translateSVGTests = 
+    let svg1pos = Circle ((2., 4.), 3., ["class", "circ-class"], Some "svg1")
+    let svg2pos = Rectangle ((2., 4.), (3.,4.), ["class", "rect-class"], Some "svg2")
+    let svg3pos = Text ((2., 4.), "svg3text", ["class", "text-class"], Some "svg3")
+    let svg4pos = Polyline ([(1.,2.); (2., 4.); (4., 6.)], ["class", "polyline-class"], Some "svg4")
+    let svg5pos = Group ([svg1pos; svg2pos; svg3pos; svg4pos], ["class", "group-class"], Some "svg5")
+    let svg6pos = Link ("/link", [svg1pos; svg2pos; svg3pos; svg4pos], ["class", "link-class"], Some "svg6")
+    
+    let svg1neg = Circle ((0., 0.), 3., ["class", "circ-class"], Some "svg1")
+    let svg2neg = Rectangle ((0., 0.), (3.,4.), ["class", "rect-class"], Some "svg2")
+    let svg3neg = Text ((0., 0.), "svg3text", ["class", "text-class"], Some "svg3")
+    let svg4neg = Polyline ([(-1., -2.); (0.,0.); (2.,2.)], ["class", "polyline-class"], Some "svg4")
+    let svg5neg = Group ([svg1neg; svg2neg; svg3neg; svg4neg], ["class", "group-class"], Some "svg5")
+    let svg6neg = Link ("/link", [svg1neg; svg2neg; svg3neg; svg4neg], ["class", "link-class"], Some "svg6")
+    
+    let zeroOffset = 0., 0.
+    let positiveOffset = 1., 2.
+    let negativeOffset = -1., -2.
+
+    [
+        "0 offset circ",
+            (zeroOffset, svg1),
+                svg1
+        "0 offset rect",
+            (zeroOffset, svg2),
+                svg2
+        "0 offset text",
+            (zeroOffset, svg3),
+                svg3
+        "0 offset polyline",
+            (zeroOffset, svg4),
+                svg4
+        "0 offset group",
+            (zeroOffset, svg5),
+                svg5
+        "0 offset link",
+            (zeroOffset, svg6),
+                svg6
+        "pos offset circ",
+            (positiveOffset, svg1),
+                svg1pos
+        "pos offset rect",
+            (positiveOffset, svg2),
+                svg2pos
+        "pos offset text",
+            (positiveOffset, svg3),
+                svg3pos
+        "pos offset polyline",
+            (positiveOffset, svg4),
+                svg4pos
+        "pos offset group",
+            (positiveOffset, svg5),
+                svg5pos
+        "pos offset link",
+            (positiveOffset, svg6),
+                svg6pos
+        "neg offset circ",
+            (negativeOffset, svg1),
+                svg1neg
+        "neg offset rect",
+            (negativeOffset, svg2),
+                svg2neg
+        "neg offset text",
+            (negativeOffset, svg3),
+                svg3neg
+        "neg offset polyline",
+            (negativeOffset, svg4),
+                svg4neg
+        "neg offset group",
+            (negativeOffset, svg5),
+                svg5neg
+        "neg offset link",
+            (negativeOffset, svg6),
+                svg6neg
+          
+    ]
+
+[<Tests>]
+let translateSVGTestList =
+    testList "translateSVG" <| 
+        (translateSVGTests 
+         |> List.map (processIntoAsyncTestList2 translateSVG))
+    
 let getGridTests =
     [
         "basic1",
