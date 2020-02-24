@@ -85,9 +85,9 @@ module Functions =
             | UOpIdentifier _ -> 1
             | BOpIdentifier _ -> 2
             | _ -> failwithf "ERROR: Unable to get number of inputs of module '%A'" modInst.moduleName
-        | InputPin _ -> 0
         | OutputPin _ -> 1
-
+        | _ -> 0
+        
     let getNumberOfInputsFromVNode (targetNode: VisualisedNode) = 
         match targetNode.decl with
         | Some decl -> 
