@@ -156,6 +156,6 @@ module VerilogAST =
         | ItemInstantiation of Identifier * Identifier * Expr list
 
     type Module =
-        { name: string
+        { name: Identifier
           ports: Identifier list
           items: ModuleItem list }

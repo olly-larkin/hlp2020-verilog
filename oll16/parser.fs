@@ -60,6 +60,17 @@ let (?=>) (p1: Parser<'a>) (p2: Parser<'b>) : Parser<'a * 'b option> =
             match p2 rest with
             | Error _ -> Ok ((a, None), rest)
             | Ok (b, rest') -> Ok ((a, Some b), rest')
+        
+/// Currently not used but can be added to improve speed if needed
+let MemoiseParser fn =
+    let mutable cache = Map []
+    fun inp -> 
+        if Map.containsKey inp cache
+        then cache.[inp] 
+        else 
+            let res = fn inp
+            cache <- Map.add inp res cache
+            res
 
 /// Make parser from list
 let buildParser lst =
@@ -129,29 +140,12 @@ module Token =
     let ExpressionIdentifier = Identifier <&> ExprIdentifier
 
     module Keyword =
-        let And = Tools.stringParse "and"
         let Assign = Tools.stringParse "assign"
-        let Begin = Tools.stringParse "begin"
-        let Case = Tools.stringParse "case"
-        let Deassign = Tools.stringParse "deassign"
-        let Default = Tools.stringParse "default"
-        let Defparam = Tools.stringParse "defparam"
-        let Disable = Tools.stringParse "disable"
-        let Else = Tools.stringParse "else"
-        let End = Tools.stringParse "end"
-        let Endcase = Tools.stringParse "endcase"
         let Endmodule = Tools.stringParse "endmodule"
-        let For = Tools.stringParse "for"
-        let Forever = Tools.stringParse "forever"
-        let If = Tools.stringParse "if"
-        let Ifnone = Tools.stringParse "ifnone"
-        let Include = Tools.stringParse "include"
-        let Instance = Tools.stringParse "instance"
-        let Initial = Tools.stringParse "initial"
-        let Inout = Tools.stringParse "inout"
         let Input = Tools.stringParse "input"
-        let Integer = Tools.stringParse "integer"
-        let Library = Tools.stringParse "library"
+        let Module = Tools.stringParse "module"
+        let Output = Tools.stringParse "output"
+        let Wire = Tools.stringParse "wire"
 
     module Symbol =
         let LeftRoundBra = Tools.stringParse "("
@@ -199,12 +193,8 @@ module Token =
         let QuestionMark = Tools.stringParse "?"
         let Colon = Tools.stringParse ":"
         let Comma = Tools.stringParse ","
+        let Semmicolon = Tools.stringParse ";"
 
-    // let Number = 
-    //     Tools.regParse "[0-9]+"
-    //     >> function
-    //     | Error err -> Error err
-    //     | Ok (numStr, rest) -> Ok (int numStr, rest)
     module Number =
         let numParse =
             let unsignedNumParse = Tools.regParse "[0-9]+"
@@ -245,16 +235,6 @@ module Expression =
             match b with
             | None -> a
             | Some (b, c) -> ExprBinary (a,b,c)
-
-        let MemoiseParser fn =
-            let mutable cache = Map []
-            fun inp -> 
-                if Map.containsKey inp cache
-                then cache.[inp] 
-                else 
-                    let res = fn inp
-                    cache <- Map.add inp res cache
-                    res
 
     /// Removing the inp from this definition creates an annoying warning
     let rec TermParser inp =
@@ -362,10 +342,10 @@ module Expression =
             | None -> a
             | Some (((_,b),_),c) -> ExprIfThenElse (a,b,c)))
 
-    and ExpressionListParser inp =
+    and SubExpressionListParser inp =
         inp
         |> buildParser [
-            ConditionalParser >=> Token.Symbol.Comma >=> ExpressionListParser <&> 
+            ConditionalParser >=> Token.Symbol.Comma >=> SubExpressionListParser <&> 
                 function
                 | ((a, _), ExprConcateneation b) -> ExprConcateneation (a::b)
                 | _ -> failwithf "can't reach"
@@ -375,7 +355,7 @@ module Expression =
     and ExpressionConcatParser inp =
         inp
         |> buildParser [
-            Token.Symbol.LeftCurlyBra >=> ExpressionListParser >=> Token.Symbol.RightCurlyBra <&> (fun ((_,a),_) -> a)
+            Token.Symbol.LeftCurlyBra >=> SubExpressionListParser >=> Token.Symbol.RightCurlyBra <&> (fun ((_,a),_) -> a)
             ConditionalParser
         ]
 
@@ -391,4 +371,64 @@ module Expression =
             | None -> a
             | Some ((_,b),_) -> ExprIndex (a,b))
 
+    and ExpressionListParser inp =
+        inp |> (ExpressionParser ?=> (Token.Symbol.Comma >=> ExpressionListParser) <&> fun (a,b) ->
+            match b with
+            | None -> [a]
+            | Some (_, lst) -> a::lst)
 
+
+/// All parsing istructions for the module definition
+module ModuleDefinition =
+
+    let rec SourceParse inp =
+        inp |> (Token.Keyword.Module >=> Token.Identifier >=> ListOfPortsParser >=> Token.Symbol.Semmicolon >=> ModuleItemListParser >=> Token.Keyword.Endmodule <&> fun (((((_,a),b),_),c),_) -> 
+            { name = a; ports = b; items = c })
+
+    and ListOfPortsParser inp =
+        inp |> (Token.Symbol.LeftRoundBra ?=> PortListParser >=> Token.Symbol.RightRoundBra <&> fun ((_,a),_) ->
+            match a with
+            | None -> []
+            | Some (a) -> a)
+
+    and PortListParser inp =
+        inp |> (Token.Identifier ?=> (Token.Symbol.Comma >=> PortListParser) <&> fun (a, b) ->
+            match b with
+            | None -> [a]
+            | Some (_, lst) -> a::lst)
+
+    and ModuleItemListParser inp =
+        inp |> (ModuleItemParser ?=> ModuleItemListParser <&> fun (a,b) ->
+            match b with
+            | None -> [a]
+            | Some lst -> a::lst)
+
+    and ModuleItemParser inp =
+        inp |> (buildParser [ 
+                PortDeclarationParser 
+                AssignParser 
+                WireDeclarationParser
+                ItemInstantiationParser
+            ] >=> Token.Symbol.Semmicolon <&> fun (a,_) -> a)
+
+    and PortDeclarationParser inp =
+        inp |> buildParser [ 
+            Token.Keyword.Input >=> Token.Identifier <&> fun (_,a) -> ItemPort (Input, a) 
+            Token.Keyword.Output >=> Token.Identifier <&> fun (_,a) -> ItemPort (Output, a) 
+        ]
+
+    and AssignParser inp =
+        inp |> (Token.Keyword.Assign >=> Token.Identifier >=> Token.Symbol.LogicalEqual >=> Expression.ExpressionParser <&> fun (((_,a),_),b) -> 
+            ItemAssign (a,b))
+
+    and WireDeclarationParser inp =
+        inp |> (Token.Keyword.Wire ?=> (Token.Symbol.LeftSquareBra >=> Token.Number.Value >=> Token.Symbol.Colon >=> Token.Number.Value >=> Token.Symbol.RightSquareBra) >=> Token.Identifier <&> fun ((_,range),iden) ->
+            match range with
+            | None -> ItemWireDecl (Single, iden)
+            | Some ((((_,a),_),b),_) -> ItemWireDecl (Range (a,b), iden))
+
+    and ItemInstantiationParser inp =
+        inp |> (Token.Identifier >=> Token.Identifier >=> Token.Symbol.LeftRoundBra ?=> Expression.ExpressionListParser >=> Token.Symbol.RightRoundBra <&> fun ((((a,b),_),c),_) ->
+            match c with
+            | None -> ItemInstantiation (a, b, [])
+            | Some lst -> ItemInstantiation (a, b, lst))
