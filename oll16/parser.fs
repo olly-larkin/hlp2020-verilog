@@ -110,6 +110,16 @@ module Token =
                 then Ok (regMatch.Value, List.skip regMatch.Length cLst)
                 else Error (sprintf "Could not match. Expected regex of pattern \'%s\'." pattern, cLst)
 
+        /// Strict parse will not allow the following character to be something that could be part of an identifier
+        let strict (p: string -> Parser<'a>) (pattern: string) : Parser<'a> =
+            let followChars = ['a'..'z'] @ ['A'..'Z'] @ ['0'..'9'] @ ['\'';'_']
+            fun cLst ->
+                match p pattern cLst with
+                | Error err -> Error err
+                | Ok (res, hd::tl) when not <| List.contains hd followChars -> Ok (res, hd::tl)
+                | Ok (res, []) -> Ok (res, [])
+                | _ -> Error (sprintf "Could not match. Expected pattern: \'%s\'." pattern, cLst)
+
         let charToInt c = int c - int '0'
 
         let binToDec str =
@@ -136,16 +146,16 @@ module Token =
             (0.0, inp) ||> List.fold folder |> int
             
 
-    let Identifier = Tools.regParse "[a-zA-Z_]+[a-zA-Z'_0-9]*"
+    let Identifier = Tools.strict Tools.regParse "[a-zA-Z_]+[a-zA-Z'_0-9]*"
     let ExpressionIdentifier = Identifier <&> ExprIdentifier
 
     module Keyword =
-        let Assign = Tools.stringParse "assign"
-        let Endmodule = Tools.stringParse "endmodule"
-        let Input = Tools.stringParse "input"
-        let Module = Tools.stringParse "module"
-        let Output = Tools.stringParse "output"
-        let Wire = Tools.stringParse "wire"
+        let Assign = Tools.strict Tools.stringParse "assign"
+        let Endmodule = Tools.strict Tools.stringParse "endmodule"
+        let Input = Tools.strict Tools.stringParse "input"
+        let Module = Tools.strict Tools.stringParse "module"
+        let Output = Tools.strict Tools.stringParse "output"
+        let Wire = Tools.strict Tools.stringParse "wire"
 
     module Symbol =
         let LeftRoundBra = Tools.stringParse "("
@@ -194,6 +204,7 @@ module Token =
         let Colon = Tools.stringParse ":"
         let Comma = Tools.stringParse ","
         let Semmicolon = Tools.stringParse ";"
+        let AssignEqual = Tools.stringParse "="
 
     module Number =
         let numParse =
@@ -382,8 +393,12 @@ module Expression =
 module ModuleDefinition =
 
     let rec SourceParse inp =
-        inp |> (Token.Keyword.Module >=> Token.Identifier >=> ListOfPortsParser >=> Token.Symbol.Semmicolon >=> ModuleItemListParser >=> Token.Keyword.Endmodule <&> fun (((((_,a),b),_),c),_) -> 
+        inp 
+        |> (Token.Keyword.Module >=> Token.Identifier >=> ListOfPortsParser >=> Token.Symbol.Semmicolon >=> ModuleItemListParser >=> Token.Keyword.Endmodule <&> fun (((((_,a),b),_),c),_) -> 
             { name = a; ports = b; items = c })
+        // |> function
+        // | Ok (mod, _) -> Ok (mod,[])
+        // | Error (msg, lst) -> Error (msg, lst)
 
     and ListOfPortsParser inp =
         inp |> (Token.Symbol.LeftRoundBra ?=> PortListParser >=> Token.Symbol.RightRoundBra <&> fun ((_,a),_) ->
@@ -418,7 +433,7 @@ module ModuleDefinition =
         ]
 
     and AssignParser inp =
-        inp |> (Token.Keyword.Assign >=> Token.Identifier >=> Token.Symbol.LogicalEqual >=> Expression.ExpressionParser <&> fun (((_,a),_),b) -> 
+        inp |> (Token.Keyword.Assign >=> Token.Identifier >=> Token.Symbol.AssignEqual >=> Expression.ExpressionParser <&> fun (((_,a),_),b) -> 
             ItemAssign (a,b))
 
     and WireDeclarationParser inp =
@@ -432,3 +447,18 @@ module ModuleDefinition =
             match c with
             | None -> ItemInstantiation (a, b, [])
             | Some lst -> ItemInstantiation (a, b, lst))
+
+let lineCalc =
+    List.fold (fun state elem -> if elem = '\n' then state + 1 else state) 1
+
+let dropElems n lst =
+    lst |> List.rev |> List.skip n |> List.rev
+
+let ParseSource inp =
+    let inp = inp |> List.ofSeq
+    inp
+    |> List.ofSeq
+    |> ModuleDefinition.SourceParse
+    |> function
+    | Ok (res, _) -> Ok (res)
+    | Error (msg, lst) -> Error (msg, inp |> dropElems (List.length lst) |> lineCalc)

@@ -24,12 +24,19 @@ let stringParseTestsList =
                 ("test", List.ofSeq "   test") ||> Token.Tools.stringParse,
                     Ok ("test", [])
 
+            "strict string positive test",
+                ("test", List.ofSeq "test") ||> Token.Tools.strict Token.Tools.stringParse,
+                    Ok ("test", [])
+
             ] |> List.map equalTestAsync)
 
         ([
 
             "test -> not test fails",
                 ("test", List.ofSeq "not test") ||> Token.Tools.stringParse
+
+            "strict string failure",
+                ("test", List.ofSeq "testa") ||> Token.Tools.strict Token.Tools.stringParse
         
             ] |> List.map errorTestAsync)
     ] |> List.collect id)
@@ -155,6 +162,7 @@ let expressionTestsList =
 
             ] |> List.map errorTestAsync)
     ] |> List.collect id)
+
 
 let runExpressionTests() =
     runTests defaultConfig stringParseTestsList |> ignore
