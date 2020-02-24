@@ -5,7 +5,8 @@ open Verishot.SVG
 open WaveTypes
 
 
-
+let styleprops = [("fill", "none");("stroke","black");("stroke-width","1")]
+let objTextBox name = Rectangle((0.0,0.0),(4.0, 3.0) ,[("fill", "none"); ("stroke","black")], Some name) 
 module Waveform =
        
     let addXY (inp:Coord) (x:float) (y:float) = 
@@ -81,6 +82,29 @@ module Waveform =
         | 1,1 -> High2High state
         | _ -> state // DEFO NEEDS TO BE CHANGED ADD ERROS
 
-    let ModuleWaveform (moduleSim:int list, initialState:WaveformState) = 
+    let GenPortWaveform (initialState:WaveformState) (portVals:int list) = 
         //returns a list of 
-        (initialState, moduleSim) ||> List.fold SingleCycle
+        (initialState, portVals) ||> List.fold SingleCycle
+
+    let GenWireWaveform (portName:string) (vals:int list) : PortWaveform =
+        let initState:WaveformState = {prevVal=0; svgVals = Polyline([0.0, 3.0], styleprops, None)}
+        let waveform = GenPortWaveform initState vals
+        WireWave{portName = objTextBox portName ; wave = waveform.svgVals}
+
+    let GenBusWaveform (portName:string) (vals:(int * int list)list) =
+        let initState:WaveformState = {prevVal=0; svgVals = Polyline([0.0, 3.0], styleprops, None)}
+        let partialWaveform = GenPortWaveform initState
+        let toWaveform (inp:(int * int list)) = (objTextBox(portName + string (fst(inp))), (partialWaveform (snd(inp))).svgVals)
+        BusWave{portName = objTextBox portName; waveList = List.map toWaveform vals}
+
+    let PortToWaveform (inp:SimulatorPort) =
+        match inp with
+        | SimWire wire -> GenWireWaveform wire.portName wire.output
+        | SimBus bus   -> GenBusWaveform bus.portName bus.outputList
+    
+    let SimOutputToWaveform (inp:SimulatorPort list) =
+        List.map PortToWaveform inp
+    
+    let setWavePos state port = 
+        match port with
+        | WireWave wire ->   
