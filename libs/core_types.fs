@@ -52,6 +52,7 @@ module Netlist =
         /// An output pin of the *module the netlist refers to*
         | OutputPin of Identifier
         | ModuleInstance of ModuleInstance
+        | Constant of {| value: int; width: int |}
 
     type Netlist =
         { nodes: Node list
