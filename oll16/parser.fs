@@ -50,6 +50,8 @@ let (>|>) (p: Parser<'a>) (newItem: 'b) : Parser<'b> =
     | Ok (_, rest) -> Ok (newItem, rest)
 
 /// Optional combinator (do first, then try second)
+/// This operator removed the needd for memoisation
+/// Memoisation was very resource intensive bc of the large number of layers
 let (?=>) (p1: Parser<'a>) (p2: Parser<'b>) : Parser<'a * 'b option> =
     fun inp ->
         match p1 inp with
