@@ -61,12 +61,75 @@ let regParseTestsList =
     ] |> List.collect id)
 
 [<Tests>]
+let baseConversionsTestList =
+    testList "baseConversionTests tests" ([
+        ([
+            "hex to dec",
+                "1A" |> Token.Tools.hexToDec,
+                    26
+
+            "bin to dec",
+                "1100" |> Token.Tools.binToDec,
+                    12
+
+            "oct to dec",
+                "17" |> Token.Tools.octToDec,
+                    15
+
+            ] |> List.map equalTestAsync)
+        ([
+
+            // failure tests
+
+            ] |> List.map errorTestAsync)
+    ] |> List.collect id)
+
+[<Tests>]
+let numberParseTestsList =
+    testList "number parse tests" ([
+        ([
+            "correctly matching hex value",
+                List.ofSeq "10'h1A" |> Token.Number.Value,
+                    Ok (26, [])
+
+            "correctly matching dec value",
+                List.ofSeq "10'd20" |> Token.Number.Value,
+                    Ok (20, [])
+
+            "correctly matching oct value",
+                List.ofSeq "10'o17" |> Token.Number.Value,
+                    Ok (15, [])
+
+            "correctly matching bin value",
+                List.ofSeq "4'b1100" |> Token.Number.Value,
+                    Ok (12, [])
+
+            ] |> List.map equalTestAsync)
+        ([
+
+            "correctly matching bin expr",
+                List.ofSeq "4'b1100" |> Token.Number.Expr,
+                    Ok (ExprNumber (Some 4, 12), [])
+
+            "correctly giving no size",
+                List.ofSeq "100" |> Token.Number.Expr,
+                    Ok (ExprNumber (None, 100), [])
+
+            ] |> List.map equalTestAsync)
+        ([
+
+            // failure tests
+
+            ] |> List.map errorTestAsync)
+    ] |> List.collect id)
+
+[<Tests>]
 let expressionTestsList =
     testList "expression tests" ([
         ([
             "checking a number gets passed to int from term",
                 List.ofSeq "5" |> Expression.TermParser,
-                    Ok (ExprNumber 5, [])
+                    Ok (ExprNumber (None, 5), [])
 
             "checking a string gets passed to identifier from term",
                 List.ofSeq "test" |> Expression.TermParser,
@@ -74,15 +137,15 @@ let expressionTestsList =
 
             "unary successful",
                 List.ofSeq "+10" |> Expression.UnaryOpParser,
-                    Ok (ExprUnary (UOpPlus, ExprNumber 10), [])
+                    Ok (ExprUnary (UOpPlus, ExprNumber (None, 10)), [])
 
             "add sub successful plus",
                 List.ofSeq "5 + 5" |> Expression.AddSubParser,
-                    Ok (ExprBinary (ExprNumber 5, BOpPlus, ExprNumber 5), [])
+                    Ok (ExprBinary (ExprNumber (None, 5), BOpPlus, ExprNumber (None, 5)), [])
 
             "test bracketed expression",
                 List.ofSeq "(1+2)*3" |> Expression.ExpressionParser,
-                    Ok (ExprBinary (ExprBinary (ExprNumber 1, BOpPlus, ExprNumber 2), BOpStar, ExprNumber 3), [])
+                    Ok (ExprBinary (ExprBinary (ExprNumber (None, 1), BOpPlus, ExprNumber (None, 2)), BOpStar, ExprNumber (None, 3)), [])
 
             ] |> List.map equalTestAsync)
         ([
@@ -96,4 +159,6 @@ let expressionTestsList =
 let runExpressionTests() =
     runTests defaultConfig stringParseTestsList |> ignore
     runTests defaultConfig regParseTestsList |> ignore
+    runTests defaultConfig baseConversionsTestList |> ignore
+    runTests defaultConfig numberParseTestsList |> ignore
     runTests defaultConfig expressionTestsList |> ignore

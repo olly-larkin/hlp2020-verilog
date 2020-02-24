@@ -99,6 +99,32 @@ module Token =
                 then Ok (regMatch.Value, List.skip regMatch.Length cLst)
                 else Error (sprintf "Could not match. Expected regex of pattern \'%s\'." pattern, cLst)
 
+        let charToInt c = int c - int '0'
+
+        let binToDec str =
+            let inp = str |> List.ofSeq |> List.rev |> List.indexed
+            let folder state elem =
+                state + (2.0 ** float (fst elem)) * float (snd elem |> charToInt)
+            (0.0, inp) ||> List.fold folder |> int
+
+        let octToDec str =
+            let inp = str |> List.ofSeq |> List.rev |> List.indexed
+            let folder state elem =
+                state + (8.0 ** float (fst elem)) * float (snd elem |> charToInt)
+            (0.0, inp) ||> List.fold folder |> int
+           
+        let hexToDec str =
+            let hexDigtoDex =
+                function
+                | c when c >= '0' && c <= '9' -> int c - int '0'
+                | c when c >= 'A' && c <= 'F' -> int c - int 'A' + 10
+                | c -> int c - int 'a' + 10
+            let inp = str |> List.ofSeq |> List.rev |> List.indexed
+            let folder state elem =
+                state + (16.0 ** float (fst elem)) * float (snd elem |> hexDigtoDex)
+            (0.0, inp) ||> List.fold folder |> int
+            
+
     let Identifier = Tools.regParse "[a-zA-Z_]+[a-zA-Z'_0-9]*"
     let ExpressionIdentifier = Identifier <&> ExprIdentifier
 
@@ -174,11 +200,40 @@ module Token =
         let Colon = Tools.stringParse ":"
         let Comma = Tools.stringParse ","
 
-    let Number = 
-        Tools.regParse "[0-9]+"
-        >> function
-        | Error err -> Error err
-        | Ok (numStr, rest) -> Ok (int numStr, rest)
+    // let Number = 
+    //     Tools.regParse "[0-9]+"
+    //     >> function
+    //     | Error err -> Error err
+    //     | Ok (numStr, rest) -> Ok (int numStr, rest)
+    module Number =
+        let numParse =
+            let unsignedNumParse = Tools.regParse "[0-9]+"
+            let decimalNumParse = 
+                let decimalBaseStr = buildParser [ Tools.stringParse "'d" ; Tools.stringParse "'D" ]
+                unsignedNumParse >=> decimalBaseStr >=> unsignedNumParse <&> fun ((a,_),b) -> Some (int a), int b
+            let binaryNumParse =
+                let unsignedBinNum = Tools.regParse "[01]+"
+                let binaryBaseStr = buildParser [ Tools.stringParse "'b" ; Tools.stringParse "'B" ]
+                unsignedNumParse >=> binaryBaseStr >=> unsignedBinNum <&> fun ((a,_),b) -> Some (int a), Tools.binToDec b
+            let octalNumParse =
+                let unsignedOctNum = Tools.regParse "[0-7]+"
+                let octalBaseStr = buildParser [ Tools.stringParse "'o" ; Tools.stringParse "'O" ]
+                unsignedNumParse >=> octalBaseStr >=> unsignedOctNum <&> fun ((a,_),b) -> Some (int a), Tools.octToDec b
+            let hexNumParse =
+                let unsignedHexNum = Tools.regParse "[0-9a-fA-F]+"
+                let hexBaseStr = buildParser [ Tools.stringParse "'h" ; Tools.stringParse "'H" ]
+                unsignedNumParse >=> hexBaseStr >=> unsignedHexNum <&> fun ((a,_),b) -> Some (int a), Tools.hexToDec b
+            buildParser [
+                decimalNumParse
+                binaryNumParse
+                octalNumParse
+                hexNumParse
+                unsignedNumParse <&> fun a -> None, int a
+            ]
+        
+        let Expr = numParse <&> ExprNumber
+
+        let Value = numParse <&> fun (_, a) -> a
 
 
 /// All parsing instructions for expressions
@@ -205,7 +260,7 @@ module Expression =
     let rec TermParser inp =
         inp
         |> buildParser [
-            Token.Number <&> ExprNumber
+            Token.Number.Expr
             Token.ExpressionIdentifier
             Token.Symbol.LeftRoundBra >=> ExpressionParser >=> Token.Symbol.RightRoundBra <&> (fun ((_,b),_) -> b)
         ]
@@ -325,7 +380,7 @@ module Expression =
         ]
 
     and IndexParser inp =
-        inp |> (Token.Number ?=> (Token.Symbol.Colon >=> Token.Number) <&> fun (a,b) ->
+        inp |> (Token.Number.Value ?=> (Token.Symbol.Colon >=> Token.Number.Value) <&> fun (a,b) ->
             match b with
             | None -> IndexNum a
             | Some (_, b) -> IndexRange (a,b))
@@ -335,3 +390,5 @@ module Expression =
             match b with
             | None -> a
             | Some ((_,b),_) -> ExprIndex (a,b))
+
+
