@@ -31,10 +31,6 @@ type VisualisedNode =
 
 type NodeMap = Map<Identifier, VisualisedNode>
 
-module Common = 
-    let commonGraphicsProps = 
-        {| blobRadius=0.15 |}
-
 module ModuleInstance =
     let defaultModuleInstanceProps =
         { width = 0. // determined later

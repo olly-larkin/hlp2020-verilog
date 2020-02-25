@@ -11,7 +11,7 @@
     <Compile Include="./svg_test.fs" />
     <Compile Include="./visualiser/util_test.fs" />
     <Compile Include="./visualiser/visualise_test.fs" />
-    <Compile Include="./visualiser/pin_test.fs" />
+    <Compile Include="./visualiser/node/types/pin_test.fs" />
     <Compile Include="main.fs" />
   </ItemGroup>
 

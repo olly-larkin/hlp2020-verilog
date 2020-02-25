@@ -13,7 +13,6 @@ open Verishot.CoreTypes.Netlist
 open Verishot.Util
 open Verishot.VisualiserUtil
 open Verishot.VisualiserUtil.Connection
-open Verishot.VisualiserUtil.Common
 open Verishot.VisualiserUtil.Functions
 
 let defaultGraphicsProps = 
@@ -21,7 +20,8 @@ let defaultGraphicsProps =
        xSize=0.25
        varTextOffset=0.2
        varTextTransformUp=0.1
-       labelTextOffset=0.5 |}
+       labelTextOffset=0.5
+       blobRadius=0.15 |}
 
 // get the X graphic
 let getLabelX (x, y) =
@@ -66,7 +66,7 @@ let getBlobs sourceY bendPointX targetYs =
         let blobYs =
             if List.last targetYs <> sourceY then tmp.[..tmp.Length - 2] else tmp
 
-        blobYs |> List.map (fun cy -> Circle((bendPointX, cy), commonGraphicsProps.blobRadius, [ ("class", "wire-blob") ], None))
+        blobYs |> List.map (fun cy -> Circle((bendPointX, cy), defaultGraphicsProps.blobRadius, [ ("class", "wire-blob") ], None))
 
 let groupConnections (cons: Connection list) (sourceRange: Range): ConnectionGroup =
     (* group connections by targetNodes and portNames 

@@ -53,6 +53,8 @@ let truncTextTests =
         "trunc1", ("abcd", 3), "..."
         "trunc2", ("abcdef", 4), "a..."
         "notrunc1", ("abcdef", 20), "abcdef"
+        "zerolen", ("fasasdf", 0), "..."
+        "neglen", ("asdfadsf", -1), "..."
     ]
 
 let getRangeStrTests = 
