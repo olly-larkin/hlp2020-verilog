@@ -169,7 +169,7 @@ let getGrid ((minX, minY), (maxX, maxY)): SVGElement =
 
     Group (gridDots, [], None) 
 
-let output (elem: SVGElement) (style: string) (grid: bool): string =
+let output (elem: SVGElement) (style: string Option) (script: string Option) (grid: bool): string =
     let (minX, minY), (maxX, maxY) = getDimensionElem elem
 
     let margin = 4.
@@ -192,15 +192,22 @@ let output (elem: SVGElement) (style: string) (grid: bool): string =
 
     let svgOutput = outputSVG elem
 
+    let styleStr = match style with | Some s -> s | _ -> ""
+    let scriptStr = match script with | Some s -> s | _ -> ""
+
     let viewBoxStr = viewBox |> List.map (|TOPX|) |> String.concat " "
     sprintf
         "<?xml version='1.0' encoding='UTF-8'?>\n"
         + "<!-- SVG Output - Verishot Simulator -->\n"
-        + sprintf "<svg xmlns='http://www.w3.org/2000/svg' width='%s' height='%s' viewBox='%s'>\n" ((|TOPX|) w) ((|TOPX|) h) viewBoxStr
+        + sprintf "<svg class='global' xmlns='http://www.w3.org/2000/svg' width='%s' height='%s' viewBox='%s'>\n" ((|TOPX|) w) ((|TOPX|) h) viewBoxStr
         + "<style type='text/css'>\n"
-        + sprintf "%s\n" style
+        + sprintf "%s\n" styleStr
         + "</style>\n"
+        + "<script>\n"
+        + sprintf "%s\n" scriptStr
+        + "</script>\n"
         + sprintf "%s\n" gridOutput
         + sprintf "%s\n" borderOutput
         + sprintf "%s\n" svgOutput
+        + "<use id='use' href='#none'/>\n"
         + "</svg>"
