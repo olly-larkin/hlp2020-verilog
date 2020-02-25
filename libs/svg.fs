@@ -98,7 +98,6 @@ let outputSVG (elem: SVGElement): string =
         sprintf "<a href='%s' %s>%s\n%s\n</a>"
             href props title children 
 
-
 let getDimensionElem (elem: SVGElement): Coord * Coord = 
     match elem with
     | Circle ((cx, cy), r, _, _) -> 
@@ -134,6 +133,31 @@ let getDimensionElemList (elems: SVGElement list): Coord * Coord =
         let maxY = (List.map snd >> List.max) maxRange
         ((minX, minY), (maxX, maxY))
 
+let translateCoord (xOffset, yOffset) (x, y) = 
+    x + xOffset, y + yOffset
+
+let translateSVGList offset (elems: SVGElement list) : SVGElement list =
+    elems 
+    |> List.map (translateSVG offset)
+
+let translateSVG offset (elem: SVGElement): SVGElement =
+    let (|TRANSCOORD|) = translateCoord offset
+    let (|TRANSCOORDS|) pts = pts |> List.map (|TRANSCOORD|)
+    let (|TRANSSVGLIST|) = translateSVGList offset
+    match elem with
+    | Circle (TRANSCOORD coord , a, b, c) -> 
+        Circle (coord, a, b, c)
+    | Rectangle (TRANSCOORD coord, a, b, c) ->
+        Rectangle (coord, a, b, c)
+    | Text (TRANSCOORD coord, a, b, c) ->
+        Text (coord, a, b, c)
+    | Polyline (TRANSCOORDS pts, a, b) ->
+        Polyline (pts, a, b)
+    | Group (TRANSSVGLIST children, a, b) ->
+        Group (children, a, b)
+    | Link (a, TRANSSVGLIST children, b, c) -> 
+        Link (a, children, b, c)
+    
 let getGrid ((minX, minY), (maxX, maxY)): SVGElement =
     let xs = [minX .. 1. .. maxX]
     let ys = [minY .. 1. .. maxY]
@@ -145,7 +169,7 @@ let getGrid ((minX, minY), (maxX, maxY)): SVGElement =
 
     Group (gridDots, [], None) 
 
-let output (elem: SVGElement) (style: string) (grid: bool): string =
+let output (elem: SVGElement) (style: string Option) (script: string Option) (grid: bool): string =
     let (minX, minY), (maxX, maxY) = getDimensionElem elem
 
     let margin = 4.
@@ -168,15 +192,22 @@ let output (elem: SVGElement) (style: string) (grid: bool): string =
 
     let svgOutput = outputSVG elem
 
+    let styleStr = match style with | Some s -> s | _ -> ""
+    let scriptStr = match script with | Some s -> s | _ -> ""
+
     let viewBoxStr = viewBox |> List.map (|TOPX|) |> String.concat " "
     sprintf
         "<?xml version='1.0' encoding='UTF-8'?>\n"
         + "<!-- SVG Output - Verishot Simulator -->\n"
-        + sprintf "<svg xmlns='http://www.w3.org/2000/svg' width='%s' height='%s' viewBox='%s'>\n" ((|TOPX|) w) ((|TOPX|) h) viewBoxStr
+        + sprintf "<svg class='global' xmlns='http://www.w3.org/2000/svg' width='%s' height='%s' viewBox='%s'>\n" ((|TOPX|) w) ((|TOPX|) h) viewBoxStr
         + "<style type='text/css'>\n"
-        + sprintf "%s\n" style
+        + sprintf "%s\n" styleStr
         + "</style>\n"
+        + "<script>\n"
+        + sprintf "%s\n" scriptStr
+        + "</script>\n"
         + sprintf "%s\n" gridOutput
         + sprintf "%s\n" borderOutput
         + sprintf "%s\n" svgOutput
+        + "<use id='use' href='#none'/>\n"
         + "</svg>"
