@@ -152,7 +152,7 @@ module VerilogAST =
         | ExprIndex of Expr * Index
 
     type ModuleItem =
-        | ItemPort of Direction * Identifier
+        | ItemPort of Direction * Range * Identifier
         | ItemAssign of Identifier * Expr
         | ItemWireDecl of Range * Identifier
         | ItemInstantiation of Identifier * Identifier * Expr list
