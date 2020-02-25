@@ -2,7 +2,8 @@
 
 open System
 open Tests.ExpressionTests
-open Parser
+open Verishot.Parser
+open Verishot.Expression
 
 let testString = "module testModule (a, b, clk);
 
@@ -20,6 +21,7 @@ let testString2 = "assign test_wire = a + clk;"
 [<EntryPoint>]
 let main argv =
     runExpressionTests()
+    // "5 <<< 6" |> List.ofSeq |> ShiftParser |> printfn "%A"
     // testString |> ParseSource |> printfn "%A"
     // Console.ReadKey() |> ignore
     0

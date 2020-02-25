@@ -217,12 +217,44 @@ let expressionTestsList =
                     Ok (ExprUnary (UOpPlus, ExprNumber (None, 10)), [])
 
             "add sub successful plus",
-                List.ofSeq "5 + 5" |> AddSubParser,
-                    Ok (ExprBinary (ExprNumber (None, 5), BOpPlus, ExprNumber (None, 5)), [])
+                List.ofSeq "5 + 6" |> AddSubParser,
+                    Ok (ExprBinary (ExprNumber (None, 5), BOpPlus, ExprNumber (None, 6)), [])
 
             "add sub successful minus",
-                List.ofSeq "5 - 5" |> AddSubParser,
-                    Ok (ExprBinary (ExprNumber (None, 5), BOpMinus, ExprNumber (None, 5)), [])
+                List.ofSeq "5 - 6" |> AddSubParser,
+                    Ok (ExprBinary (ExprNumber (None, 5), BOpMinus, ExprNumber (None, 6)), [])
+
+            "mul div mod parser successful mul",
+                List.ofSeq "5 * 6" |> MulDivModParser,
+                    Ok (ExprBinary (ExprNumber (None, 5), BOpStar, ExprNumber (None, 6)), [])
+
+            "mul div mod parser successful div",
+                List.ofSeq "5 / 6" |> MulDivModParser,
+                    Ok (ExprBinary (ExprNumber (None, 5), BOpDiv, ExprNumber (None, 6)), [])
+
+            "mul div mod parser successful mod",
+                List.ofSeq "5 % 6" |> MulDivModParser,
+                    Ok (ExprBinary (ExprNumber (None, 5), BOpMod, ExprNumber (None, 6)), [])
+
+            "exponent parser",
+                List.ofSeq "5 ** 6" |> ExponentParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpExponent, ExprNumber (None,6)), [])
+
+            "shift parser logical left",
+                List.ofSeq "5 << 6" |> ShiftParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpLogicLeftShift, ExprNumber (None,6)), [])
+
+            "shift parser logical right",
+                List.ofSeq "5 >> 6" |> ShiftParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpLogicRightShift, ExprNumber (None,6)), [])
+
+            "shift parser arithmatic left",
+                List.ofSeq "5 <<< 6" |> ShiftParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpArithmeticLeftShift, ExprNumber (None,6)), [])
+
+            "shift parser arithmatic right",
+                List.ofSeq "5 >>> 6" |> ShiftParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpArithmeticRightShift, ExprNumber (None,6)), [])
 
             "test bracketed expression",
                 List.ofSeq "(1+2)*3" |> ExpressionParser,

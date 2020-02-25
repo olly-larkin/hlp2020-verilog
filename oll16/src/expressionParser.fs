@@ -59,10 +59,10 @@ and ExponentParser inp =
 
 and ShiftParser inp =
     let operator = buildParser [
-        Symbol.LogicalLeftShift
-        Symbol.LogicalRightShift
         Symbol.ArithmaticLeftShift
         Symbol.ArithmaticRightShift
+        Symbol.LogicalLeftShift
+        Symbol.LogicalRightShift
     ]
     inp |> (ExponentParser ?=> (operator >=> ShiftParser) <&> ExprTools.OpBinExprMap)
 

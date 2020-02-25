@@ -87,13 +87,3 @@ let MemoiseParser fn =
 /// Make parser from list
 let buildParser lst =
     List.reduce (<|>) lst
-
-
-
-
-
-
-
-
-
-
