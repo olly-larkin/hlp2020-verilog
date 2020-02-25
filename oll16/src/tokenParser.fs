@@ -35,15 +35,25 @@ module TokTools =
             then Ok (regMatch.Value, List.skip regMatch.Length cLst, None)
             else Error (sprintf "Could not match. Expected regex of pattern \'%s\'." pattern, cLst)
 
-    /// Strict parse will not allow the following character to be something that could be part of an identifier
-    let strict (p: string -> Parser<'a>) (pattern: string) : Parser<'a> =
-        let followChars = ['a'..'z'] @ ['A'..'Z'] @ ['0'..'9'] @ ['\'';'_']
+    let strictListIn (followChars: char list) (p: string -> Parser<'a>) (pattern: string) =
         fun cLst ->
             match p pattern cLst with
             | Error err -> Error err
             | Ok (res, hd::tl, opErr) when not <| List.contains hd followChars -> Ok (res, hd::tl, opErr)
             | Ok (res, [], opErr) -> Ok (res, [], opErr)
             | _ -> Error (sprintf "Could not match. Expected pattern: \'%s\'." pattern, cLst)
+
+    /// Strict parse will not allow the following character to be something that could be part of an identifier
+    let strict =
+        ['a'..'z'] @ ['A'..'Z'] @ ['0'..'9'] @ ['\'';'_'] |> strictListIn
+
+    /// Bitwise and cannot be followed by an ampersand
+    let strictAnd (p: string -> Parser<'a>) (pattern: string) =
+        (p, pattern) ||> strictListIn ['&']
+
+    /// Bitwise or cannot be followed by an pipe
+    let strictOr (p: string -> Parser<'a>) (pattern: string) =
+        (p, pattern) ||> strictListIn ['|']
 
     let charToInt c = int c - int '0'
 
@@ -108,9 +118,9 @@ module Symbol =
     let CaseEqual = TokTools.stringParse "===" >|> BOpTripleEquals
     let CaseNotEqual = TokTools.stringParse "!==" >|> BOpBangTripleEquals
     let BitwiseNegation = TokTools.stringParse "~" >|> UOpBitwiseNegation
-    let BitwiseAnd = TokTools.stringParse "&" >|> BOpBitwiseAnd
+    let BitwiseAnd = TokTools.strictAnd TokTools.stringParse "&" >|> BOpBitwiseAnd
     let BitwiseNand = TokTools.stringParse "~&" >|> BOpBitwiseNAnd
-    let BitwiseOr = TokTools.stringParse "|" >|> BOpBitwiseOr
+    let BitwiseOr = TokTools.strictOr TokTools.stringParse "|" >|> BOpBitwiseOr
     let BitwiseNor = TokTools.stringParse "~|" >|> BOpBitwiseNOr
     let BitwiseExclusiveOr = TokTools.stringParse "^" >|> BOpXor
     let BitwiseExclusiveNor = (TokTools.stringParse "^~" <|> TokTools.stringParse "~^") >|> BOpXNor

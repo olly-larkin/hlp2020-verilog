@@ -2,6 +2,7 @@ module Tests.ExpressionTests
 
 open Expecto
 open Verishot.CoreTypes.VerilogAST
+open Verishot.CoreTypes
 open Verishot.ParserUtils
 open Verishot.Token
 open Verishot.Expression
@@ -256,9 +257,110 @@ let expressionTestsList =
                 List.ofSeq "5 >>> 6" |> ShiftParser,
                     Ok (ExprBinary (ExprNumber (None,5), BOpArithmeticRightShift, ExprNumber (None,6)), [])
 
+            "relational parser >=",
+                List.ofSeq "5 >= 6" |> RelationalParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpGreaterThanEqual, ExprNumber (None,6)), [])
+
+            "relational parser >",
+                List.ofSeq "5 > 6" |> RelationalParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpGreaterThan, ExprNumber (None,6)), [])
+
+            "relational parser <=",
+                List.ofSeq "5 <= 6" |> RelationalParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpLessThanEqual, ExprNumber (None,6)), [])
+
+            "relational parser <",
+                List.ofSeq "5 < 6" |> RelationalParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpLessThan, ExprNumber (None,6)), [])
+
+            "relational equality parser ===",
+                List.ofSeq "5 === 6" |> RelationalEqualityParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpTripleEquals, ExprNumber (None,6)), [])
+
+            "relational equality parser !==",
+                List.ofSeq "5 !== 6" |> RelationalEqualityParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpBangTripleEquals, ExprNumber (None,6)), [])
+
+            "relational equality parser ==",
+                List.ofSeq "5 == 6" |> RelationalEqualityParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpEquals, ExprNumber (None,6)), [])
+
+            "relational equality parser !=",
+                List.ofSeq "5 != 6" |> RelationalEqualityParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpBangEquals, ExprNumber (None,6)), [])
+
+            "bitwise and parser &",
+                List.ofSeq "5 & 6" |> BitwiseAndParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpBitwiseAnd, ExprNumber (None,6)), [])
+
+            "bitwise and parser ~&",
+                List.ofSeq "5 ~& 6" |> BitwiseAndParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpBitwiseNAnd, ExprNumber (None,6)), [])
+
+            "bitwise xor parser ^",
+                List.ofSeq "5 ^ 6" |> BitwiseXorParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpXor, ExprNumber (None,6)), [])
+
+            "bitwise xor parser ~^",
+                List.ofSeq "5 ~^ 6" |> BitwiseXorParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpXNor, ExprNumber (None,6)), [])
+
+            "bitwise or parser |",
+                List.ofSeq "5 | 6" |> BitwiseOrParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpBitwiseOr, ExprNumber (None,6)), [])
+
+            "bitwise or parser ~|",
+                List.ofSeq "5 ~| 6" |> BitwiseOrParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpBitwiseNOr, ExprNumber (None,6)), [])
+
+            "logical and parser",
+                List.ofSeq "5 && 6" |> LogicalAndParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpLogicalAnd, ExprNumber (None,6)), [])
+
+            "logical or parser",
+                List.ofSeq "5 || 6" |> LogicalOrParser,
+                    Ok (ExprBinary (ExprNumber (None,5), BOpLogicalOr, ExprNumber (None,6)), [])
+
+            "conditional parser",
+                List.ofSeq "1 ? 5 : 6" |> ConditionalParser,
+                    Ok (ExprIfThenElse (ExprNumber (None, 1), ExprNumber (None, 5), ExprNumber (None, 6)), [])
+
+            "sub expression list parser",
+                List.ofSeq "1, 2, 3" |> SubExpressionListParser,
+                    Ok (ExprConcateneation [ExprNumber (None, 1);ExprNumber (None, 2);ExprNumber (None, 3)], [])
+
+            "concat parser",
+                List.ofSeq "{1, 2, 3}" |> ExpressionConcatParser,
+                    Ok (ExprConcateneation [ExprNumber (None, 1);ExprNumber (None, 2);ExprNumber (None, 3)], [])
+
+            "expression parser indexed",
+                List.ofSeq "a[1]" |> ExpressionParser,
+                    Ok (ExprIndex (ExprIdentifier "a", IndexNum 1), [])
+
             "test bracketed expression",
                 List.ofSeq "(1+2)*3" |> ExpressionParser,
                     Ok (ExprBinary (ExprBinary (ExprNumber (None, 1), BOpPlus, ExprNumber (None, 2)), BOpStar, ExprNumber (None, 3)), [])
+
+            ] |> List.map parserEqualTestAsync)
+
+        ([
+
+            "index parser individual",
+                List.ofSeq "1" |> IndexParser,
+                    Ok (IndexNum 1, [])
+
+            "index parser range",
+                List.ofSeq "1:0" |> IndexParser,
+                    Ok (IndexRange (1,0), [])
+
+            ] |> List.map parserEqualTestAsync)
+
+        ([
+            
+            /// Testing with index to check it conforms to precidence
+            "expression list parser",
+                List.ofSeq "a[1], a[2]" |> ExpressionListParser,
+                    Ok ([ExprIndex (ExprIdentifier "a", IndexNum 1) ; ExprIndex (ExprIdentifier "a", IndexNum 2)], [])
 
             ] |> List.map parserEqualTestAsync)
 
@@ -269,6 +371,29 @@ let expressionTestsList =
 
             ] |> List.map errorTestAsync)
 
+    ] |> List.collect id)
+
+[<Tests>]
+let moduleDefinitionTestsList =
+    testList "module definitions tests" ([
+        ([
+            
+            "basic module",
+                List.ofSeq "module test (); endmodule" |> ParseModuleDefinition,
+                    Ok ({name="test"; ports=[]; items=[]}, [])
+
+            "less basic module",
+                List.ofSeq "module test (a); input a; endmodule" |> ParseModuleDefinition,
+                    Ok ({name="test"; ports=["a"]; items=[ItemPort (Input, "a")]}, [])
+
+            ] |> List.map parserEqualTestAsync)
+
+        ([
+
+            "misspelling of module does not parse",
+                List.ofSeq "modul hsd (asd, dfg); endmodule" |> ParseModuleDefinition
+
+            ] |> List.map errorTestAsync)
     ] |> List.collect id)
 
 [<Tests>]
@@ -289,4 +414,5 @@ let runExpressionTests() =
     runTests defaultConfig numberParseTestsList |> ignore
     runTests defaultConfig keywordTestsList |> ignore
     runTests defaultConfig expressionTestsList |> ignore
+    runTests defaultConfig moduleDefinitionTestsList |> ignore
     runTests defaultConfig somePropertyTests |> ignore
