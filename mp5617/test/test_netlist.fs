@@ -45,7 +45,7 @@ let tests =
               let moduleAST =
                   { name = "A"
                     ports = [ "inpin" ]
-                    items = [ ItemPort(Input, "inpin") ] }
+                    items = [ ItemPort(Input, Single, "inpin") ] }
 
               let expectedNetlist =
                   { moduleName = "A"
@@ -60,7 +60,7 @@ let tests =
               let moduleAST =
                   { name = "A"
                     ports = [ "outpin" ]
-                    items = [ ItemPort(Output, "outpin") ] }
+                    items = [ ItemPort(Output, Single, "outpin") ] }
 
               let expectedNetlist =
                   { moduleName = "A"
@@ -78,7 +78,7 @@ let tests =
                   { name = "A"
                     ports = [ "aOut" ]
                     items =
-                        [ ItemPort(Output, "aOut")
+                        [ ItemPort(Output, Single, "aOut")
                           ItemInstantiation("B", "theB", [ ExprIdentifier "aOut" ]) ] }
 
               let expectedNetlist =
@@ -109,7 +109,7 @@ let tests =
                   { name = "A"
                     ports = [ "aIn" ]
                     items =
-                        [ ItemPort(Input, "aIn")
+                        [ ItemPort(Input, Single, "aIn")
                           ItemInstantiation("B", "theB", [ ExprIdentifier "aIn" ]) ] }
 
               let expectedNetlist =
@@ -139,8 +139,8 @@ let tests =
                   { name = "A"
                     ports = [ "aIn1"; "aIn2" ]
                     items =
-                        [ ItemPort(Input, "aIn1")
-                          ItemPort(Input, "aIn2")
+                        [ ItemPort(Input, Single, "aIn1")
+                          ItemPort(Input, Single, "aIn2")
                           ItemInstantiation
                               ("B", "theB",
                                [ ExprBinary((ExprIdentifier "aIn1"), BOpBitwiseAnd, (ExprIdentifier "aIn2")) ]) ] }
@@ -188,9 +188,9 @@ let tests =
                   { name = "A"
                     ports = [ "in1"; "in2"; "out" ]
                     items =
-                        [ ItemPort(Input, "in1")
-                          ItemPort(Input, "in2")
-                          ItemPort(Output, "out")
+                        [ ItemPort(Input, Single, "in1")
+                          ItemPort(Input, Single, "in2")
+                          ItemPort(Output, Single, "out")
                           ItemAssign("out", ExprBinary((ExprIdentifier "in1"), BOpBitwiseAnd, (ExprIdentifier "in2"))) ] }
 
               let expectedNetlist =
@@ -232,8 +232,8 @@ let tests =
                   { name = "A"
                     ports = [ "in"; "out" ]
                     items =
-                        [ ItemPort(Input, "in")
-                          ItemPort(Output, "out")
+                        [ ItemPort(Input, Single, "in")
+                          ItemPort(Output, Single, "out")
                           ItemAssign("out", ExprUnary(UOpBitwiseNegation, (ExprIdentifier "in"))) ] }
 
               let expectedNetlist =
@@ -268,10 +268,10 @@ let tests =
                   { name = "A"
                     ports = [ "in1"; "in2"; "out1"; "out2" ]
                     items =
-                        [ ItemPort(Input, "in1")
-                          ItemPort(Input, "in2")
-                          ItemPort(Output, "out1")
-                          ItemPort(Output, "out2")
+                        [ ItemPort(Input, Single, "in1")
+                          ItemPort(Input, Single, "in2")
+                          ItemPort(Output, Single, "out1")
+                          ItemPort(Output, Single, "out2")
                           ItemAssign("out1", ExprBinary((ExprIdentifier "in1"), BOpBitwiseAnd, (ExprIdentifier "in2")))
                           ItemAssign("out2", ExprBinary((ExprIdentifier "in2"), BOpBitwiseAnd, (ExprIdentifier "in1"))) ] }
 
@@ -326,4 +326,4 @@ let tests =
                                                                pinIndex = 1 |} } ] ] }) ] }
 
               expectNetlist decls moduleAST expectedNetlist
-          } ]
+          }]

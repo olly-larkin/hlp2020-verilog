@@ -32,8 +32,8 @@ let private getIntermediateNodes (allModules: ModuleDecl list) (thisModule: AST.
     // We need to use collect because each item can require multiple nodes (e.g. expressions)
     |> List.collect
         (function
-        | AST.ItemPort(Output, name) -> [ FinalNode(Netlist.OutputPin(name)) ]
-        | AST.ItemPort(Input, name) -> [ FinalNode(Netlist.InputPin(name, [])) ]
+        | AST.ItemPort(Output, _range, name) -> [ FinalNode(Netlist.OutputPin(name)) ]
+        | AST.ItemPort(Input, _range, name) -> [ FinalNode(Netlist.InputPin(name, [])) ]
         | AST.ItemInstantiation(moduleName, instanceName, connectionExpressions) ->
             // Find the ports of the instantiated module from its declaration
             let ports =
