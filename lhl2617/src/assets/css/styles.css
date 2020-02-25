@@ -120,3 +120,7 @@
 .output-var-text {
     text-anchor: start;
 }
+
+.const-text {
+    text-anchor: end;
+}

@@ -12,12 +12,14 @@ open Verishot.CoreTypes
 open Verishot.CoreTypes.Netlist
 open Verishot.VisualiserUtil
 open Verishot.VisualiserUtil.Functions
-open Verishot.VisualiserUtil.ModuleInstance
 open Verishot.Util
 
-type Constant = int * int * (Connection list)
+type Constant = {| connections: Connection list; value: int; width: int |}
 
-let defaultGraphicsProps = {| diamondOffset = 0.25 |}
+let defaultGraphicsProps = 
+    {| diamondOffset = 0.25
+       varTextOffset=0.2
+       varTextTransformUp=0.1 |}
 
 let verifyConstantConnections (cons: Connection list) = 
     (* true if pass tests *)
@@ -57,7 +59,7 @@ let rec intToBinary i =
         let bit = string (i % 2)
         (intToBinary (i / 2)) + bit
 
-let getLabelDiamond (x, y) = 
+let getDiamond (x, y) = 
     let o = defaultGraphicsProps.diamondOffset
     let top = (x, y - o)
     let right = (x + o, y)
@@ -67,17 +69,31 @@ let getLabelDiamond (x, y) =
     Polyline ([top; right; btm; left; top], ["class", "label-diamond"], None)
 
 
-let visualiseConstant (value, width, cons) (nodeMap: NodeMap): SVGElement =
+let visualiseConstant (nodeMap: NodeMap) (elem: Constant): SVGElement =
+    let value, width, cons = elem.value, elem.width, elem.connections    
     let targetNodeId, portId = verifyConstantConnections cons 
     let targetNode = getNodeFromNodeMap nodeMap targetNodeId
 
-    let binStr = intToBinary value
+    (*
+    marginLeft                [const]
+            |  (2u)  o---------------|
+                     ^pt1            ^pt2
+    *)              
 
+    let binStr = string width + "'b" + intToBinary value
 
+    let endpointProp = getPortPropFromVNode targetNode Input portId 
+    let pt2 = endpointProp.coord
+    let pt1 = fst pt2 - targetNode.props.marginLeft + 2., snd pt2
+
+    let diamond = getDiamond pt1 
+    let line = Polyline ([pt1; pt2], [], None)
+    let text = Text((fst pt2 - defaultGraphicsProps.varTextOffset, snd pt2 - defaultGraphicsProps.varTextTransformUp), binStr, [("class", "const-text")], None)
     
+    [diamond; line; text] |> groupSVG [("class", "const")] None
 
-    failwith "TODO"
 
-let visualiseConstants (elems: Constant list) (nodeMap: NodeMap): NodeMap =
-    
-    failwith "TODO"
+let visualiseConstants (elems: Constant list) (nodeMap: NodeMap): SVGElement =
+    elems 
+    |> List.map (visualiseConstant nodeMap)
+    |> groupSVG [("class", "const-group")] None

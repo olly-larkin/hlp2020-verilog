@@ -36,7 +36,7 @@ let visualiseModuleInstanceConnection (elem: ModuleInstance) (nodeMap: NodeMap) 
                         |> List.map (fun (targetNode, cons) -> getTargetLabelsAndBlobsForNode sourceRange cons (getNodeFromNodeMap nodeMap targetNode) labelId)
                         |> groupSVG [] None
                         
-                    [[sourceSVG; targetSVG] |> groupSVG [("class", "label-group"); ("id", string lId)] None] |> groupSVG [("class", "label-group-wrapper")] None, lId + 1
+                    [sourceSVG; targetSVG] |> groupSVG [("class", "label-group"); ("id", string lId)] None, lId + 1
                 | false -> 
                     let targetNodeId, targets = conGroup |> List.head
                     let targetNode = getNodeFromNodeMap nodeMap targetNodeId

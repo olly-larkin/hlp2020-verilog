@@ -17,6 +17,7 @@ open Verishot.VisualiserUtil.Functions
 open Verishot.VisualiserUtil.Pin
 open Verishot.VisualiseModuleInstanceConnection
 open Verishot.VisualisePinConnection
+open Verishot.VisualiseConstant
 
 let visualiseNodes (inputPins, moduleInstances, outputPins, _) declMap currDecl =
     let inputPinsIds = inputPins |> List.map fst
@@ -31,7 +32,7 @@ let visualiseConnections (inputPins, moduleInstances, _, _) nodeMap =
     let inputConsSVG, nextId = visualiseInputPinConnections inputPins nodeMap 0
     let moduleConsSVG, _ = visualiseModuleInstanceConnections moduleInstances nodeMap nextId
     [inputConsSVG; moduleConsSVG] |> groupSVG [("class", "connections")] None
-   
+
 let splitNodes (nodes: Node list) =
     let inputPins =
         nodes
@@ -66,15 +67,17 @@ let splitNodes (nodes: Node list) =
 let visualiseNetlist netlist declMap: SVGElement =
     // nodes
     let splittedNodes = splitNodes netlist.nodes
-
+    let _, _, _, constants = splittedNodes
+   
     let currDecl = getDeclFromDeclMap declMap netlist.moduleName
 
     let nodeMap = visualiseNodes splittedNodes declMap currDecl
 
     let blocksSVG = getSVGFromNodeMap nodeMap [("class", "nodes")]
+    let constSVG = visualiseConstants constants nodeMap
     let consSVG = visualiseConnections splittedNodes nodeMap
 
-    [blocksSVG; consSVG] |> groupSVG [] None
+    [blocksSVG; constSVG; consSVG] |> groupSVG [] None
 
 let visualiseNetlists (netlists: Netlist list) (decls: ModuleDecl list) (styles: string option) (script: string option) =
     let declMap = 
