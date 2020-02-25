@@ -92,6 +92,7 @@ let private finalizeNodes (intermediateNodes: IntermediateNode list): Node list 
             match Map.tryFind name connections with
             | Some newConnections -> InputPin(name, existingConnections @ newConnections)
             | None -> InputPin(name, existingConnections)
+        | Constant _  -> failwith "Not yet implemented (Constants)"
         | OutputPin _ -> failwith "Tried to add connections to an output pin"
 
     // Basically all intermediate nodes, excluding references. Useful for resolving those references.
@@ -128,6 +129,7 @@ let private nodeName node =
     match node with
     | InputPin(name, _) -> name
     | OutputPin(name) -> name
+    | Constant constant -> sprintf "%d'%d" constant.width constant.value
     | ModuleInstance { instanceName = name } -> name
 
 let private findConnection (srcPort: Identifier * Range) (expr: AST.Expr): Netlist.Connection =
@@ -194,5 +196,6 @@ let private exprNodesWithOutput (operatorIdx: int ref) (expr: AST.Expr) (target:
 
         operatorNode :: exprNodes
     | AST.ExprNumber _ -> failwith "Not yet implemented (constant expressions)"
+    | AST.ExprIndex _ -> failwith "Not yet implemented (indexing expressions)"
     | AST.ExprIfThenElse _ -> failwith "Not yet implemented (if-then-else expressions)"
     | AST.ExprConcateneation _ -> failwith "Not yet implemented (concatenation expressions)"
