@@ -357,6 +357,31 @@ let getPortPropFromVNodeTestsE =
                 sprintf "ERROR: Port '%s' not found." "pp3"       
     ]
 
+let getBinaryOpHTMLStringTests =
+    [
+        "BOpPlus",
+            BOpPlus,
+                "+"
+        "BOpBitwiseNAnd",
+            BOpBitwiseNAnd,
+                "~&amp;"
+        "BOpArithmeticLeftShift",
+            BOpArithmeticLeftShift,
+                "&lt;&lt;&lt;"
+        "BOpArithmeticRightShift",
+            BOpArithmeticRightShift,
+                "&gt;&gt;&gt;"
+    ]   
+
+let getUnaryOpHTMLStringTests =
+    [
+        "UOpPlus",
+            UOpPlus,
+                "+"
+        "UOpNAndReduce",
+            UOpNAndReduce,
+                "~&amp;"
+    ]
 
 [<Tests>]
 let truncTextTestList =
@@ -466,3 +491,14 @@ let getPortPropFromVNodeTestListE =
         (getPortPropFromVNodeTestsE
         |> List.map (processIntoAsyncTestListE3 getPortPropFromVNode))
        
+[<Tests>]
+let getBinaryOpHTMLStringTestList =
+    testList "getBinaryOpHTMLString" <|
+        (getBinaryOpHTMLStringTests
+        |> List.map (processIntoAsyncTestList1 getBinaryOpHTMLString))
+
+[<Tests>]
+let getUnaryOpHTMLStringTestList =
+    testList "getUnaryOpHTMLString" <|
+        (getUnaryOpHTMLStringTests
+        |> List.map (processIntoAsyncTestList1 getUnaryOpHTMLString))

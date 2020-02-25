@@ -510,6 +510,21 @@ let outputTests =
                 + "<rect x='-48.0' y='-36.0' width='120.0' height='120.0' style='fill: none; stroke: black;'></rect>\n"
                 + "<circle cx='12.0' cy='24.0' r='36.0' class='circ-class'><title>svg1</title></circle>\n"
                 + "</svg>"
+        "basic1, no style, script, no grid",
+            (svg1, None, Some "BARFOO", false),
+                "<?xml version='1.0' encoding='UTF-8'?>\n"
+                + "<!-- SVG Output - Verishot Simulator -->\n"
+                + "<svg xmlns='http://www.w3.org/2000/svg' width='168.0' height='168.0' viewBox='-72.0 -60.0 144.0 156.0'>\n"
+                + "<style type='text/css'>\n"
+                + "\n"
+                + "</style>\n"
+                + "<script>\n"
+                + "BARFOO\n"
+                + "</script>\n"
+                + "\n"
+                + "<rect x='-48.0' y='-36.0' width='120.0' height='120.0' style='fill: none; stroke: black;'></rect>\n"
+                + "<circle cx='12.0' cy='24.0' r='36.0' class='circ-class'><title>svg1</title></circle>\n"
+                + "</svg>"
         "basic3, style, no script grid",
             (svg1, Some "FOOBAR", None, true),
                 "<?xml version='1.0' encoding='UTF-8'?>\n"

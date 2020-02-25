@@ -28,8 +28,8 @@ let BinaryOpMap: Map<VerilogAST.BinaryOp, string> =
         BOpXNor, "^~"
         BOpLogicRightShift, "<<"
         BOpLogicLeftShift, ">>"
-        BOpArithmeticRightShift, "<<<"
-        BOpArithmeticLeftShift, ">>>"
+        BOpArithmeticRightShift, ">>>"
+        BOpArithmeticLeftShift, "<<<"
     ]
 
 let UnaryOpMap: Map<VerilogAST.UnaryOp, string> =
