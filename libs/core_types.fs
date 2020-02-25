@@ -28,11 +28,12 @@ module Netlist =
     *)
 
     type ConnectionTarget =
-        | PinTarget of {| pinName: Identifier; pinIndex: int |}
-        | InstanceTarget of {| targetNode: Identifier; portName: Identifier; portIndex: int |}
+        | PinTarget of pinName: Identifier
+        | InstanceTarget of targetNode: Identifier * portName: Identifier
 
     type Connection =
-        { srcPortIndex: int
+        { srcRange: Range
+          targetRange: Range
           target: ConnectionTarget }
 
     /// Instance of a module.
