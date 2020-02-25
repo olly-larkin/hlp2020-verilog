@@ -298,4 +298,62 @@ let tests =
                                                target = PinTarget "out2" } ] ] }) ] }
 
               expectNetlist decls moduleAST expectedNetlist
-          }]
+          }
+
+          test "Connect sized constant to module input" {
+              let decls =
+                  [ { name = "B"
+                      ports = [ (Input, "bIn", Range(2, 0)) ] } ]
+
+              let moduleAST =
+                  { name = "A"
+                    ports = []
+                    items = [ ItemInstantiation("B", "theB", [ ExprNumber(Some 3, 1) ]) ] }
+
+              let expectedNetlist =
+                  { moduleName = "A"
+                    nodes =
+                        [ ModuleInstance
+                            ({ moduleName = StringIdentifier "B"
+                               instanceName = "theB"
+                               connections = Map.empty })
+
+                          Constant
+                              {| width = 3
+                                 value = 1
+                                 connections =
+                                     [ { srcRange = Range(2, 0)
+                                         targetRange = Range(2, 0)
+                                         target = InstanceTarget("theB", "bIn") } ] |} ] }
+
+              expectNetlist decls moduleAST expectedNetlist
+          }
+
+          test "Connect 1-bit sized constant to module input" {
+              let decls =
+                  [ { name = "B"
+                      ports = [ (Input, "bIn", Single) ] } ]
+
+              let moduleAST =
+                  { name = "A"
+                    ports = []
+                    items = [ ItemInstantiation("B", "theB", [ ExprNumber(Some 1, 1) ]) ] }
+
+              let expectedNetlist =
+                  { moduleName = "A"
+                    nodes =
+                        [ ModuleInstance
+                            ({ moduleName = StringIdentifier "B"
+                               instanceName = "theB"
+                               connections = Map.empty })
+
+                          Constant
+                              {| width = 1
+                                 value = 1
+                                 connections =
+                                     [ { srcRange = Single
+                                         targetRange = Single
+                                         target = InstanceTarget("theB", "bIn") } ] |} ] }
+
+              expectNetlist decls moduleAST expectedNetlist
+          } ]

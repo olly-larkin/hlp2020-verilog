@@ -22,6 +22,10 @@ type private IntermediateNode =
     | FinalNode of Netlist.Node
     | NodeReference of (Identifier * Map<Identifier, Connection>)
 
+/// A connection target along with a range. Useful when instantiating expressions feeding
+/// into a module port
+type private RangedConnectionTarget = ConnectionTarget * Range
+
 /// Gather IntermediateNode's from a module AST in a single pass. The output of
 /// this needs to be processed further to get the final list of nodes
 let private getIntermediateNodes (allModules: ModuleDecl list) (thisModule: AST.Module): IntermediateNode list =
@@ -62,7 +66,7 @@ let private getIntermediateNodes (allModules: ModuleDecl list) (thisModule: AST.
                 List.zip ports connectionExpressions
                 |> List.collect (function
                     | ((Input, portName, range), expr) ->
-                        exprNodesWithOutput operatorIdx expr (InstanceTarget(instanceName, portName))
+                        exprNodesWithOutput operatorIdx expr (InstanceTarget(instanceName, portName), range)
                     | ((Output, _, _), _) -> [])
 
 
@@ -73,7 +77,8 @@ let private getIntermediateNodes (allModules: ModuleDecl list) (thisModule: AST.
                        connections = Map outConnections }))
             :: inNodes
         | AST.ItemAssign(targetNodeName, expression) ->
-            exprNodesWithOutput operatorIdx expression (PinTarget targetNodeName)
+            // TODO don't assume all assignments are to single wires
+            exprNodesWithOutput operatorIdx expression (PinTarget targetNodeName, Single)
         | AST.ItemWireDecl _ -> failwith "Not yet implemented (wires)")
 
 let private finalizeNodes (intermediateNodes: IntermediateNode list): Node list =
@@ -129,14 +134,16 @@ let private nodeName node =
     | Constant constant -> sprintf "%d'%d" constant.width constant.value
     | ModuleInstance { instanceName = name } -> name
 
-let private exprNodesWithOutput (operatorIdx: int ref) (expr: AST.Expr) (target: ConnectionTarget): IntermediateNode list =
-    let finalConnection =
-        { srcRange = Single
-          targetRange = Single
-          target = target }
+let private exprNodesWithOutput (operatorIdx: int ref) (expr: AST.Expr) (target: RangedConnectionTarget): IntermediateNode list =
+    let connectionTarget, targetRange = target
+
+    let fullConnection =
+        { srcRange = moveRangeToBase targetRange
+          targetRange = targetRange
+          target = connectionTarget }
 
     match expr with
-    | AST.ExprIdentifier name -> [ NodeReference(name, Map [ (name, finalConnection) ]) ]
+    | AST.ExprIdentifier name -> [ NodeReference(name, Map [ (name, fullConnection) ]) ]
     | AST.ExprBinary(left, op, right) ->
         let operatorNodeName = sprintf "%A-%d" op !operatorIdx
         operatorIdx := !operatorIdx + 1
@@ -146,11 +153,13 @@ let private exprNodesWithOutput (operatorIdx: int ref) (expr: AST.Expr) (target:
                 (ModuleInstance
                     { instanceName = operatorNodeName
                       moduleName = BOpIdentifier op
-                      connections = Map [ ("output", [ finalConnection ]) ] })
+                      connections = Map [ ("output", [ fullConnection ]) ] })
 
-        let leftNodes = exprNodesWithOutput operatorIdx left (InstanceTarget(operatorNodeName, "left"))
+        let inputRange = moveRangeToBase targetRange
 
-        let rightNodes = exprNodesWithOutput operatorIdx right (InstanceTarget(operatorNodeName, "right"))
+        let leftNodes = exprNodesWithOutput operatorIdx left (InstanceTarget(operatorNodeName, "left"), inputRange)
+        let rightNodes =
+            exprNodesWithOutput operatorIdx right (InstanceTarget(operatorNodeName, "right"), inputRange)
 
         operatorNode :: (leftNodes @ rightNodes)
     | AST.ExprUnary(op, expr) ->
@@ -162,12 +171,19 @@ let private exprNodesWithOutput (operatorIdx: int ref) (expr: AST.Expr) (target:
                 (ModuleInstance
                     { instanceName = operatorNodeName
                       moduleName = UOpIdentifier op
-                      connections = Map [ ("output", [ finalConnection ]) ] })
+                      connections = Map [ ("output", [ fullConnection ]) ] })
 
-        let exprNodes = exprNodesWithOutput operatorIdx expr (InstanceTarget(operatorNodeName, "input"))
+        let inputRange = moveRangeToBase targetRange
+        let exprNodes = exprNodesWithOutput operatorIdx expr (InstanceTarget(operatorNodeName, "input"), inputRange)
 
         operatorNode :: exprNodes
-    | AST.ExprNumber _ -> failwith "Not yet implemented (constant expressions)"
+    | AST.ExprNumber(givenWidth, value) ->
+        let width = givenWidth |> Option.defaultValue (rangeWidth targetRange)
+        [ FinalNode
+            (Netlist.Constant
+                {| width = width
+                   value = value
+                   connections = [fullConnection] |}) ]
     | AST.ExprIndex _ -> failwith "Not yet implemented (indexing expressions)"
     | AST.ExprIfThenElse _ -> failwith "Not yet implemented (if-then-else expressions)"
     | AST.ExprConcateneation _ -> failwith "Not yet implemented (concatenation expressions)"
