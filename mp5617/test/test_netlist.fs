@@ -91,11 +91,9 @@ let tests =
                                  connections =
                                      Map
                                          [ ("bOut",
-                                            [ { srcPortIndex = 1
-                                                target = InstanceTarget
-                                                             {| targetNode = "aOut"
-                                                                portName = "aOut"
-                                                                portIndex = 1 |} } ]) ] }) ] }
+                                            [ { srcRange = Single
+                                                targetRange = Single
+                                                target = PinTarget "aOut" } ]) ] }) ] }
 
               expectNetlist decls moduleAST expectedNetlist
           }
@@ -117,11 +115,9 @@ let tests =
                     nodes =
                         [ InputPin
                             ("aIn",
-                             [ { srcPortIndex = 1
-                                 target = InstanceTarget
-                                              {| targetNode = "theB"
-                                                 portName = "bIn"
-                                                 portIndex = 1 |} } ])
+                             [ { srcRange = Single
+                                 targetRange = Single
+                                 target = InstanceTarget("theB", "bIn") } ])
                           ModuleInstance
                               ({ moduleName = StringIdentifier "B"
                                  instanceName = "theB"
@@ -150,29 +146,23 @@ let tests =
                     nodes =
                         [ InputPin
                             ("aIn1",
-                             [ { srcPortIndex = 1
-                                 target = InstanceTarget
-                                              {| targetNode = "BOpBitwiseAnd-0"
-                                                 portName = "left"
-                                                 portIndex = 1 |} } ])
+                             [ { srcRange = Single
+                                 targetRange = Single
+                                 target = InstanceTarget("BOpBitwiseAnd-0", "left") } ])
                           InputPin
                               ("aIn2",
-                               [ { srcPortIndex = 1
-                                   target = InstanceTarget
-                                                {| targetNode = "BOpBitwiseAnd-0"
-                                                   portName = "right"
-                                                   portIndex = 1 |} } ])
+                               [ { srcRange = Single
+                                   targetRange = Single
+                                   target = InstanceTarget("BOpBitwiseAnd-0", "right") } ])
                           ModuleInstance
                               ({ moduleName = BOpIdentifier BOpBitwiseAnd
                                  instanceName = "BOpBitwiseAnd-0"
                                  connections =
                                      Map
                                          [ "output",
-                                           [ { srcPortIndex = 1
-                                               target = InstanceTarget
-                                                            {| targetNode = "theB"
-                                                               portName = "bIn"
-                                                               portIndex = 1 |} } ] ] })
+                                           [ { srcRange = Single
+                                               targetRange = Single
+                                               target = InstanceTarget("theB", "bIn") } ] ] })
                           ModuleInstance
                               ({ moduleName = StringIdentifier "B"
                                  instanceName = "theB"
@@ -198,18 +188,14 @@ let tests =
                     nodes =
                         [ InputPin
                             ("in1",
-                             [ { srcPortIndex = 1
-                                 target = InstanceTarget
-                                              {| targetNode = "BOpBitwiseAnd-0"
-                                                 portName = "left"
-                                                 portIndex = 1 |} } ])
+                             [ { srcRange = Single
+                                 targetRange = Single
+                                 target = InstanceTarget("BOpBitwiseAnd-0", "left") } ])
                           InputPin
                               ("in2",
-                               [ { srcPortIndex = 1
-                                   target = InstanceTarget
-                                                {| targetNode = "BOpBitwiseAnd-0"
-                                                   portName = "right"
-                                                   portIndex = 1 |} } ])
+                               [ { srcRange = Single
+                                   targetRange = Single
+                                   target = InstanceTarget("BOpBitwiseAnd-0", "right") } ])
                           OutputPin("out")
                           ModuleInstance
                               ({ moduleName = BOpIdentifier BOpBitwiseAnd
@@ -217,10 +203,9 @@ let tests =
                                  connections =
                                      Map
                                          [ "output",
-                                           [ { srcPortIndex = 1
-                                               target = PinTarget
-                                                            {| pinName = "out"
-                                                               pinIndex = 1 |} } ] ] }) ] }
+                                           [ { srcRange = Single
+                                               targetRange = Single
+                                               target = PinTarget "out" } ] ] }) ] }
 
               expectNetlist decls moduleAST expectedNetlist
           }
@@ -241,11 +226,9 @@ let tests =
                     nodes =
                         [ InputPin
                             ("in",
-                             [ { srcPortIndex = 1
-                                 target = InstanceTarget
-                                              {| targetNode = "UOpBitwiseNegation-0"
-                                                 portName = "input"
-                                                 portIndex = 1 |} } ])
+                             [ { srcRange = Single
+                                 targetRange = Single
+                                 target = InstanceTarget("UOpBitwiseNegation-0", "input") } ])
                           OutputPin("out")
                           ModuleInstance
                               ({ moduleName = UOpIdentifier UOpBitwiseNegation
@@ -253,10 +236,9 @@ let tests =
                                  connections =
                                      Map
                                          [ "output",
-                                           [ { srcPortIndex = 1
-                                               target = PinTarget
-                                                            {| pinName = "out"
-                                                               pinIndex = 1 |} } ] ] }) ] }
+                                           [ { srcRange = Single
+                                               targetRange = Single
+                                               target = PinTarget "out" } ] ] }) ] }
 
               expectNetlist decls moduleAST expectedNetlist
           }
@@ -280,28 +262,20 @@ let tests =
                     nodes =
                         [ InputPin
                             ("in1",
-                             [ { srcPortIndex = 1
-                                 target = InstanceTarget
-                                              {| targetNode = "BOpBitwiseAnd-0"
-                                                 portName = "left"
-                                                 portIndex = 1 |} }
-                               { srcPortIndex = 1
-                                 target = InstanceTarget
-                                              {| targetNode = "BOpBitwiseAnd-1"
-                                                 portName = "right"
-                                                 portIndex = 1 |} } ])
+                             [ { srcRange = Single
+                                 targetRange = Single
+                                 target = InstanceTarget("BOpBitwiseAnd-0", "left") }
+                               { srcRange = Single
+                                 targetRange = Single
+                                 target = InstanceTarget("BOpBitwiseAnd-1", "right") } ])
                           InputPin
                               ("in2",
-                               [ { srcPortIndex = 1
-                                   target = InstanceTarget
-                                                {| targetNode = "BOpBitwiseAnd-0"
-                                                   portName = "right"
-                                                   portIndex = 1 |} }
-                                 { srcPortIndex = 1
-                                   target = InstanceTarget
-                                                {| targetNode = "BOpBitwiseAnd-1"
-                                                   portName = "left"
-                                                   portIndex = 1 |} } ])
+                               [ { srcRange = Single
+                                   targetRange = Single
+                                   target = InstanceTarget("BOpBitwiseAnd-0", "right") }
+                                 { srcRange = Single
+                                   targetRange = Single
+                                   target = InstanceTarget("BOpBitwiseAnd-1", "left") } ])
                           OutputPin("out1")
                           OutputPin("out2")
                           ModuleInstance
@@ -310,20 +284,18 @@ let tests =
                                  connections =
                                      Map
                                          [ "output",
-                                           [ { srcPortIndex = 1
-                                               target = PinTarget
-                                                            {| pinName = "out1"
-                                                               pinIndex = 1 |} } ] ] })
+                                           [ { srcRange = Single
+                                               targetRange = Single
+                                               target = PinTarget "out1" } ] ] })
                           ModuleInstance
                               ({ moduleName = BOpIdentifier BOpBitwiseAnd
                                  instanceName = "BOpBitwiseAnd-1"
                                  connections =
                                      Map
                                          [ "output",
-                                           [ { srcPortIndex = 1
-                                               target = PinTarget
-                                                            {| pinName = "out2"
-                                                               pinIndex = 1 |} } ] ] }) ] }
+                                           [ { srcRange = Single
+                                               targetRange = Single
+                                               target = PinTarget "out2" } ] ] }) ] }
 
               expectNetlist decls moduleAST expectedNetlist
           }]
