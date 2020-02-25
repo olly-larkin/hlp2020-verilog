@@ -19,7 +19,7 @@ let testString2 = "assign test_wire = a + clk;"
 
 [<EntryPoint>]
 let main argv =
-    // runExpressionTests()
-    testString |> ParseSource |> printfn "%A"
+    runExpressionTests()
+    // testString |> ParseSource |> printfn "%A"
     // Console.ReadKey() |> ignore
     0

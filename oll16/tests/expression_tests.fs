@@ -1,8 +1,12 @@
 module Tests.ExpressionTests
 
 open Expecto
-open Verishot.Parser
 open Verishot.CoreTypes.VerilogAST
+open Verishot.ParserUtils
+open Verishot.Token
+open Verishot.Expression
+open Verishot.ModuleDefinition
+open Verishot.Parser
 
 let equalTestAsync =
     fun (name, inp, exp) ->
@@ -28,15 +32,15 @@ let stringParseTestsList =
     testList "string parse tests" ([
         ([
             "test -> test passes",
-                ("test", List.ofSeq "test") ||> Token.Tools.stringParse,
+                ("test", List.ofSeq "test") ||> TokTools.stringParse,
                     Ok ("test", [])
 
             "whitespace is removed",
-                ("test", List.ofSeq "   test") ||> Token.Tools.stringParse,
+                ("test", List.ofSeq "   test") ||> TokTools.stringParse,
                     Ok ("test", [])
 
             "strict string positive test",
-                ("test", List.ofSeq "test") ||> Token.Tools.strict Token.Tools.stringParse,
+                ("test", List.ofSeq "test") ||> TokTools.strict TokTools.stringParse,
                     Ok ("test", [])
 
             ] |> List.map parserEqualTestAsync)
@@ -44,10 +48,10 @@ let stringParseTestsList =
         ([
 
             "test -> not test fails",
-                ("test", List.ofSeq "not test") ||> Token.Tools.stringParse
+                ("test", List.ofSeq "not test") ||> TokTools.stringParse
 
             "strict string failure",
-                ("test", List.ofSeq "testa") ||> Token.Tools.strict Token.Tools.stringParse
+                ("test", List.ofSeq "testa") ||> TokTools.strict TokTools.stringParse
         
             ] |> List.map errorTestAsync)
     ] |> List.collect id)
@@ -58,15 +62,15 @@ let regParseTestsList =
     testList "reg parse tests" ([
         ([
             "matching plain string",
-                ("test", List.ofSeq "test") ||> Token.Tools.regParse,
+                ("test", List.ofSeq "test") ||> TokTools.regParse,
                     Ok ("test", [])
 
             "matching int",
-                ("[0-9]+", List.ofSeq "198.5") ||> Token.Tools.regParse,
+                ("[0-9]+", List.ofSeq "198.5") ||> TokTools.regParse,
                     Ok ("198", ['.';'5'])
 
             "checking whitespace is removed",
-                ("test", List.ofSeq "   test") ||> Token.Tools.regParse,
+                ("test", List.ofSeq "   test") ||> TokTools.regParse,
                     Ok ("test", [])
 
             ] |> List.map parserEqualTestAsync)
@@ -74,7 +78,7 @@ let regParseTestsList =
         ([
 
             "checking reg parse fails correctly",
-                ("[a-z]+", List.ofSeq "198.5") ||> Token.Tools.regParse
+                ("[a-z]+", List.ofSeq "198.5") ||> TokTools.regParse
 
             ] |> List.map errorTestAsync)
     ] |> List.collect id)
@@ -84,15 +88,15 @@ let baseConversionsTestList =
     testList "baseConversionTests tests" ([
         ([
             "hex to dec",
-                "1A" |> Token.Tools.hexToDec,
+                "1A" |> TokTools.hexToDec,
                     26
 
             "bin to dec",
-                "1100" |> Token.Tools.binToDec,
+                "1100" |> TokTools.binToDec,
                     12
 
             "oct to dec",
-                "17" |> Token.Tools.octToDec,
+                "17" |> TokTools.octToDec,
                     15
 
             ] |> List.map equalTestAsync)
@@ -109,19 +113,19 @@ let numberParseTestsList =
     testList "number parse tests" ([
         ([
             "correctly matching hex value",
-                List.ofSeq "10'h1A" |> Token.Number.Value,
+                List.ofSeq "10'h1A" |> Number.Value,
                     Ok (26, [])
 
             "correctly matching dec value",
-                List.ofSeq "10'd20" |> Token.Number.Value,
+                List.ofSeq "10'd20" |> Number.Value,
                     Ok (20, [])
 
             "correctly matching oct value",
-                List.ofSeq "10'o17" |> Token.Number.Value,
+                List.ofSeq "10'o17" |> Number.Value,
                     Ok (15, [])
 
             "correctly matching bin value",
-                List.ofSeq "4'b1100" |> Token.Number.Value,
+                List.ofSeq "4'b1100" |> Number.Value,
                     Ok (12, [])
 
             ] |> List.map parserEqualTestAsync)
@@ -129,11 +133,11 @@ let numberParseTestsList =
         ([
 
             "correctly matching bin expr",
-                List.ofSeq "4'b1100" |> Token.Number.Expr,
+                List.ofSeq "4'b1100" |> Number.Expr,
                     Ok (ExprNumber (Some 4, 12), [])
 
             "correctly giving no size",
-                List.ofSeq "100" |> Token.Number.Expr,
+                List.ofSeq "100" |> Number.Expr,
                     Ok (ExprNumber (None, 100), [])
 
             ] |> List.map parserEqualTestAsync)
@@ -145,27 +149,83 @@ let numberParseTestsList =
     ] |> List.collect id)
 
 [<Tests>]
+let keywordTestsList =
+    testList "keyword tests" ([
+        ([
+            "checking keyword 'assign'",
+                List.ofSeq "assign" |> Keyword.Assign,
+                    Ok ("assign", [])
+
+            "checking keyword 'endmodule'",
+                List.ofSeq "endmodule" |> Keyword.Endmodule,
+                    Ok ("endmodule", [])
+
+            "checking keyword 'input'",
+                List.ofSeq "input" |> Keyword.Input,
+                    Ok ("input", [])
+
+            "checking keyword 'module'",
+                List.ofSeq "module" |> Keyword.Module,
+                    Ok ("module", [])
+
+            "checking keyword 'output'",
+                List.ofSeq "output" |> Keyword.Output,
+                    Ok ("output", [])
+                   
+            "checking keyword 'wire'",
+                List.ofSeq "wire" |> Keyword.Wire,
+                    Ok ("wire", [])
+
+            ] |> List.map parserEqualTestAsync)
+
+        ([
+            "checking keyword 'assign' strict",
+                List.ofSeq "assigne" |> Keyword.Assign
+
+            "checking keyword 'endmodule' strict",
+                List.ofSeq "endmodulee" |> Keyword.Endmodule
+
+            "checking keyword 'input' strict",
+                List.ofSeq "inpute" |> Keyword.Input
+
+            "checking keyword 'module' strict",
+                List.ofSeq "modulee" |> Keyword.Module
+
+            "checking keyword 'output' strict",
+                List.ofSeq "outpute" |> Keyword.Output
+                   
+            "checking keyword 'wire' strict",
+                List.ofSeq "wiree" |> Keyword.Wire
+
+            ] |> List.map errorTestAsync)
+    ] |> List.collect id)
+
+[<Tests>]
 let expressionTestsList =
     testList "expression tests" ([
         ([
             "checking a number gets passed to int from term",
-                List.ofSeq "5" |> Expression.TermParser,
+                List.ofSeq "5" |> TermParser,
                     Ok (ExprNumber (None, 5), [])
 
             "checking a string gets passed to identifier from term",
-                List.ofSeq "test" |> Expression.TermParser,
+                List.ofSeq "test" |> TermParser,
                     Ok (ExprIdentifier "test", [])
 
             "unary successful",
-                List.ofSeq "+10" |> Expression.UnaryOpParser,
+                List.ofSeq "+10" |> UnaryOpParser,
                     Ok (ExprUnary (UOpPlus, ExprNumber (None, 10)), [])
 
             "add sub successful plus",
-                List.ofSeq "5 + 5" |> Expression.AddSubParser,
+                List.ofSeq "5 + 5" |> AddSubParser,
                     Ok (ExprBinary (ExprNumber (None, 5), BOpPlus, ExprNumber (None, 5)), [])
 
+            "add sub successful minus",
+                List.ofSeq "5 - 5" |> AddSubParser,
+                    Ok (ExprBinary (ExprNumber (None, 5), BOpMinus, ExprNumber (None, 5)), [])
+
             "test bracketed expression",
-                List.ofSeq "(1+2)*3" |> Expression.ExpressionParser,
+                List.ofSeq "(1+2)*3" |> ExpressionParser,
                     Ok (ExprBinary (ExprBinary (ExprNumber (None, 1), BOpPlus, ExprNumber (None, 2)), BOpStar, ExprNumber (None, 3)), [])
 
             ] |> List.map parserEqualTestAsync)
@@ -173,9 +233,10 @@ let expressionTestsList =
         ([
 
             "checking invalid identifier for term",
-                List.ofSeq "-45" |> Expression.TermParser
+                List.ofSeq "-45" |> TermParser
 
             ] |> List.map errorTestAsync)
+
     ] |> List.collect id)
 
 [<Tests>]
@@ -194,5 +255,6 @@ let runExpressionTests() =
     runTests defaultConfig regParseTestsList |> ignore
     runTests defaultConfig baseConversionsTestList |> ignore
     runTests defaultConfig numberParseTestsList |> ignore
+    runTests defaultConfig keywordTestsList |> ignore
     runTests defaultConfig expressionTestsList |> ignore
     runTests defaultConfig somePropertyTests |> ignore
