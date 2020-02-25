@@ -120,7 +120,13 @@
 .output-var-text {
     text-anchor: start;
 }
-
+.const {
+    font-size: calc(var(--unitPx) * 0.8);
+    font-style: italic;
+    stroke: black;
+    fill: black;
+}
 .const-text {
     text-anchor: end;
+    stroke: none;
 }

@@ -228,25 +228,36 @@ let main argv =
                 [
                     InputPin ("in1", 
                         [
-                            {
-                                srcPortIndex=1
-                                target=PinTarget {| pinName="out"; pinIndex=3 |}
-                            }
-                            {
-                                srcPortIndex=0
-                                target=PinTarget {| pinName="out"; pinIndex=2 |}
-                            }
+                            // {
+                            //     srcPortIndex=1
+                            //     target=PinTarget {| pinName="out"; pinIndex=3 |}
+                            // }
+                            // {
+                            //     srcPortIndex=0
+                            //     target=PinTarget {| pinName="out"; pinIndex=2 |}
+                            // }
                         ])
+                    ModuleInstance {
+                        moduleName=StringIdentifier "IntelSucc"
+                        instanceName="succ"
+                        connections=Map []
+                    }
+                    Constant {| value=3; width=3; connections=[ 
+                        {
+                            srcPortIndex=0
+                            target = PinTarget {| pinName="out"; pinIndex=0 |}
+                        }
+                     ] |}
                     InputPin ("in2", 
                         [
-                            {
-                                srcPortIndex=1
-                                target=PinTarget {| pinName="out"; pinIndex=1 |}
-                            }
-                            {
-                                srcPortIndex=0
-                                target=PinTarget {| pinName="out"; pinIndex=0 |}
-                            }
+                            // {
+                            //     srcPortIndex=1
+                            //     target=PinTarget {| pinName="out"; pinIndex=1 |}
+                            // }
+                            // {
+                            //     srcPortIndex=0
+                            //     target=PinTarget {| pinName="out"; pinIndex=0 |}
+                            // }
                         ]
                     )
                     OutputPin ("out")

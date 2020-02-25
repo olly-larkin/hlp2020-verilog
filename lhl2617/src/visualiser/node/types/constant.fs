@@ -88,7 +88,8 @@ let visualiseConstant (nodeMap: NodeMap) (elem: Constant): SVGElement =
 
     let diamond = getDiamond pt1 
     let line = Polyline ([pt1; pt2], [], None)
-    let text = Text((fst pt2 - defaultGraphicsProps.varTextOffset, snd pt2 - defaultGraphicsProps.varTextTransformUp), binStr, [("class", "const-text")], None)
+    let text = Text((fst pt2 - defaultGraphicsProps.varTextOffset, snd pt2 - defaultGraphicsProps.varTextTransformUp), 
+                binStr, [("class", "const-text")], Some <| sprintf "Constant: %d\nWidth: %d" value width)
     
     [diamond; line; text] |> groupSVG [("class", "const")] None
 
