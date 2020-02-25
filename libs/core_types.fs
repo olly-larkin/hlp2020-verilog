@@ -52,6 +52,7 @@ module Netlist =
         /// An output pin of the *module the netlist refers to*
         | OutputPin of Identifier
         | ModuleInstance of ModuleInstance
+        | Constant of {| value: int; width: int; connections: Connection list |}
 
     type Netlist =
         { nodes: Node list
@@ -134,14 +135,19 @@ module VerilogAST =
         | BOpArithmeticRightShift
         /// >>>
         | BOpArithmeticLeftShift
+
+    type Index =
+        | IndexNum of int
+        | IndexRange of int * int
         
     type Expr =
-        | ExprNumber of int
+        | ExprNumber of int option * int
         | ExprConcateneation of Expr list
         | ExprIdentifier of Identifier
         | ExprBinary of Expr * BinaryOp * Expr
         | ExprUnary of UnaryOp * Expr
         | ExprIfThenElse of Expr * Expr * Expr // <expr> ? <expr> : <expr>
+        | ExprIndex of Expr * Index
 
     type ModuleItem =
         | ItemPort of Direction * Identifier

@@ -18,31 +18,31 @@ type SVGElement =
         cxy: Coord * 
         r: float * 
         props: PropType *
-        title: string
+        title: string Option
     | Rectangle of 
         xy: Coord * 
         wh: Coord * 
         props: PropType *
-        title: string
+        title: string Option
     | Text of 
         xy: Coord * 
         text: string * 
         props: PropType *
-        title: string
+        title: string Option
     | Polyline of 
         pts: Coord list * 
         props: PropType *
-        title: string
+        title: string Option
     // container element (‘a’, ‘clipPath’, ‘defs’, ‘g’, ‘marker’, ‘mask’, ‘pattern’, ‘svg’, ‘switch’, ‘symbol’ and ‘unknown’.)
     | Group of 
         children: SVGElement list *
         props: PropType *
-        title: string
+        title: string Option
     | Link of // a
         href: string *
         children: SVGElement list *
         props: PropType *
-        title: string
+        title: string Option
       
 
 let unitPx = 12. // pixels per drawing unit
@@ -67,10 +67,10 @@ let (|UPOINTS|) (points: Coord list) =
     |> List.map (fun (x, y) -> sprintf "%s,%s" ((|TOPX|) x) ((|TOPX|) y))
     |> String.concat " "
 
-let (|PTITLE|) (title: string): string =
-    match String.length title with
-    | 0 -> ""
-    | _ -> sprintf "<title>%s</title>" title
+let (|PTITLE|) (title: string Option): string =
+    match title with
+    | Some str -> sprintf "<title>%s</title>" str
+    | _ -> ""
 
 let (|OUTPUTSVGLIST|) (elems: SVGElement list): string =
     elems
@@ -97,7 +97,6 @@ let outputSVG (elem: SVGElement): string =
     | Link (href, OUTPUTSVGLIST children, UPROPS props, PTITLE title) ->
         sprintf "<a href='%s' %s>%s\n%s\n</a>"
             href props title children 
-
 
 let getDimensionElem (elem: SVGElement): Coord * Coord = 
     match elem with
@@ -134,18 +133,43 @@ let getDimensionElemList (elems: SVGElement list): Coord * Coord =
         let maxY = (List.map snd >> List.max) maxRange
         ((minX, minY), (maxX, maxY))
 
+let translateCoord (xOffset, yOffset) (x, y) = 
+    x + xOffset, y + yOffset
+
+let translateSVGList offset (elems: SVGElement list) : SVGElement list =
+    elems 
+    |> List.map (translateSVG offset)
+
+let translateSVG offset (elem: SVGElement): SVGElement =
+    let (|TRANSCOORD|) = translateCoord offset
+    let (|TRANSCOORDS|) pts = pts |> List.map (|TRANSCOORD|)
+    let (|TRANSSVGLIST|) = translateSVGList offset
+    match elem with
+    | Circle (TRANSCOORD coord , a, b, c) -> 
+        Circle (coord, a, b, c)
+    | Rectangle (TRANSCOORD coord, a, b, c) ->
+        Rectangle (coord, a, b, c)
+    | Text (TRANSCOORD coord, a, b, c) ->
+        Text (coord, a, b, c)
+    | Polyline (TRANSCOORDS pts, a, b) ->
+        Polyline (pts, a, b)
+    | Group (TRANSSVGLIST children, a, b) ->
+        Group (children, a, b)
+    | Link (a, TRANSSVGLIST children, b, c) -> 
+        Link (a, children, b, c)
+    
 let getGrid ((minX, minY), (maxX, maxY)): SVGElement =
     let xs = [minX .. 1. .. maxX]
     let ys = [minY .. 1. .. maxY]
 
     let getGridDot (x, y) =
-        Circle((x, y), 0.125, [("style", "fill: #E0E0E0;")], "")
+        Circle((x, y), 0.125, [("style", "fill: #E0E0E0;")], None)
 
     let gridDots = List.allPairs xs ys |> List.map getGridDot 
 
-    Group (gridDots, [], "") 
+    Group (gridDots, [], None) 
 
-let output (elem: SVGElement) (style: string) (grid: bool): string =
+let output (elem: SVGElement) (style: string Option) (script: string Option) (grid: bool): string =
     let (minX, minY), (maxX, maxY) = getDimensionElem elem
 
     let margin = 4.
@@ -163,20 +187,27 @@ let output (elem: SVGElement) (style: string) (grid: bool): string =
             ""
        
     let borderOutput = 
-        Rectangle((minX-margin/2., minY-margin/2.), (maxX-minX+margin, maxY-minY+margin), [("style", "fill: none; stroke: black;")], "")
+        Rectangle((minX-margin/2., minY-margin/2.), (maxX-minX+margin, maxY-minY+margin), [("style", "fill: none; stroke: black;")], None)
         |> outputSVG
 
     let svgOutput = outputSVG elem
+
+    let styleStr = match style with | Some s -> s | _ -> ""
+    let scriptStr = match script with | Some s -> s | _ -> ""
 
     let viewBoxStr = viewBox |> List.map (|TOPX|) |> String.concat " "
     sprintf
         "<?xml version='1.0' encoding='UTF-8'?>\n"
         + "<!-- SVG Output - Verishot Simulator -->\n"
-        + sprintf "<svg xmlns='http://www.w3.org/2000/svg' width='%s' height='%s' viewBox='%s'>\n" ((|TOPX|) w) ((|TOPX|) h) viewBoxStr
+        + sprintf "<svg class='global' xmlns='http://www.w3.org/2000/svg' width='%s' height='%s' viewBox='%s'>\n" ((|TOPX|) w) ((|TOPX|) h) viewBoxStr
         + "<style type='text/css'>\n"
-        + sprintf "%s\n" style
+        + sprintf "%s\n" styleStr
         + "</style>\n"
+        + "<script>\n"
+        + sprintf "%s\n" scriptStr
+        + "</script>\n"
         + sprintf "%s\n" gridOutput
         + sprintf "%s\n" borderOutput
         + sprintf "%s\n" svgOutput
+        + "<use id='use' href='#none'/>\n"
         + "</svg>"
