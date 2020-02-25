@@ -31,8 +31,8 @@ let getBuiltInModuleTitle (x, y) props instName (modId: ModuleIdentifier): SVGEl
     
     let text = 
         match modId with 
-        | BOpIdentifier i -> getBinaryOpXMLString i
-        | UOpIdentifier i -> getUnaryOpXMLString i
+        | BOpIdentifier i -> getBinaryOpHTMLString i
+        | UOpIdentifier i -> getUnaryOpHTMLString i
         | _ -> failwithf "ERROR: %s is not a built-in module" instName // should never happen
     
     Text

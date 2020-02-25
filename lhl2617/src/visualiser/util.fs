@@ -1,5 +1,6 @@
 namespace Verishot.VisualiserUtil
 
+open System.Web
 open Verishot.Util
 open Verishot.CoreTypes
 open Verishot.CoreTypes.Netlist
@@ -149,12 +150,12 @@ module Functions =
             | Output -> vNode.props.outputPortProps
         getPortPropFromPortProps portProps id
 
-    let getBinaryOpXMLString (op: BinaryOp) = 
-        match Map.tryFind op BinaryOpXMLMap with 
-        | Some ret -> ret
+    let getBinaryOpHTMLString (op: BinaryOp) = 
+        match Map.tryFind op BinaryOpMap with 
+        | Some ret -> HttpUtility.HtmlEncode ret
         | _ -> failwithf "ERROR: Binary operator '%A' does not exist." op
 
-    let getUnaryOpXMLString (op: UnaryOp) =
-        match Map.tryFind op UnaryOpXMLMap with 
-        | Some ret -> ret
+    let getUnaryOpHTMLString (op: UnaryOp) =
+        match Map.tryFind op UnaryOpMap with 
+        | Some ret -> HttpUtility.HtmlEncode ret
         | _ -> failwithf "ERROR: Unary operator '%A' does not exist." op

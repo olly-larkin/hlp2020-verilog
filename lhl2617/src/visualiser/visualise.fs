@@ -76,14 +76,14 @@ let visualiseNetlist netlist declMap: SVGElement =
 
     [blocksSVG; consSVG] |> groupSVG [] None
 
-let visualiseNetlists (netlists: Netlist list) (decls: ModuleDecl list) styles =
+let visualiseNetlists (netlists: Netlist list) (decls: ModuleDecl list) (styles: string option) (script: string option) =
     let declMap = 
         decls
         |> List.map (fun decl -> (decl.name, decl))
         |> Map.ofList
 
     let toSvg = fun netlist -> netlist.moduleName, visualiseNetlist netlist declMap
-    let toString = fun (modName, svg) -> modName, output svg styles true
+    let toString = fun (modName, svg) -> modName, output svg styles script true
     let toFile = fun (modName, svgString) -> writeStringToFile (sprintf "./outputsvg/%s.svg" modName) svgString
 
     netlists 

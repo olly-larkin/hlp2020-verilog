@@ -2,7 +2,7 @@ module Verishot.VisualiseMaps
 open Verishot.CoreTypes
 open Verishot.CoreTypes.VerilogAST
 
-let BinaryOpXMLMap: Map<VerilogAST.BinaryOp, string> =
+let BinaryOpMap: Map<VerilogAST.BinaryOp, string> =
     Map [
         BOpPlus, "+"
         BOpMinus, "-"
@@ -13,33 +13,33 @@ let BinaryOpXMLMap: Map<VerilogAST.BinaryOp, string> =
         BOpBangEquals, "!="
         BOpTripleEquals, "==="
         BOpBangTripleEquals, "!=="
-        BOpLogicalAnd, "&amp;&amp;"
+        BOpLogicalAnd, "&&"
         BOpLogicalOr, "||"
         BOpExponent, "**"
-        BOpLessThan, "&lt;"
-        BOpLessThanEqual, "&lt;="
-        BOpGreaterThan, "&gt;"
-        BOpGreaterThanEqual, "&gt;="
-        BOpBitwiseAnd, "&amp;"
+        BOpLessThan, "<"
+        BOpLessThanEqual, "<="
+        BOpGreaterThan, ">"
+        BOpGreaterThanEqual, ">="
+        BOpBitwiseAnd, "&"
         BOpBitwiseOr, "|"
-        BOpBitwiseNAnd, "~&amp;"
+        BOpBitwiseNAnd, "~&"
         BOpBitwiseNOr, "~|"
         BOpXor, "^"
         BOpXNor, "^~"
-        BOpLogicRightShift, "&lt;&lt;"
-        BOpLogicLeftShift, "&gt;&gt;"
-        BOpArithmeticRightShift, "&lt;&lt;&lt;"
-        BOpArithmeticLeftShift, "&gt;&gt;&gt;"
+        BOpLogicRightShift, "<<"
+        BOpLogicLeftShift, ">>"
+        BOpArithmeticRightShift, "<<<"
+        BOpArithmeticLeftShift, ">>>"
     ]
 
-let UnaryOpXMLMap: Map<VerilogAST.UnaryOp, string> =
+let UnaryOpMap: Map<VerilogAST.UnaryOp, string> =
     Map [
         UOpPlus, "+"
         UOpMinus, "-"
         UOpBang, "!"
         UOpBitwiseNegation, "~"
-        UOpAndReduce, "&amp;"
-        UOpNAndReduce, "~&amp;"
+        UOpAndReduce, "&"
+        UOpNAndReduce, "~&"
         UOpOrReduce, "|"
         UOpNOrReduce, "~|"
         UOpXOrReduce, "^"

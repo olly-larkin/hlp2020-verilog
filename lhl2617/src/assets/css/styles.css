@@ -1,5 +1,13 @@
-* {
-    font-family: Consolas, 'Courier New', monospace
+.global {
+    font-family: Consolas, 'Courier New', monospace;
+}
+.global use {
+    fill: red !important;
+    stroke: red !important;
+}
+.global use * {
+    fill: red !important;
+    stroke: red !important;
 }
 .node-bord {
     fill: none;
@@ -65,7 +73,6 @@
 .label-input-text {
     dominant-baseline: middle;
     stroke: none;
-
 }
 .label-output-text {
     text-anchor: start;  

@@ -32,7 +32,7 @@ let visualiseInputPinConnection (nodeMap: NodeMap) (source: Identifier) (cons: C
             |> List.map (fun (targetNode, cons) -> getTargetLabelsAndBlobsForNode sourceRange cons (getNodeFromNodeMap nodeMap targetNode) labelId)
             |> groupSVG [] None
 
-        [sourceSVG; targetSVG] |> groupSVG [("class", "label-group")] None, labelId + 1
+        [sourceSVG; targetSVG] |> groupSVG [("class", "label-group"); ("id", string labelId)] None, labelId + 1
 
 let visualiseInputPinConnections (elems: (Identifier * Connection list) list) (nodeMap: NodeMap) (labelId: int) =
     (labelId, elems)

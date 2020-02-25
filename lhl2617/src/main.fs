@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open System.Web
 open Verishot.SVG
 open Verishot.CoreTypes
 open Verishot.CoreTypes.VerilogAST
@@ -14,6 +15,8 @@ open Verishot.VisualiserUtil.Functions
 [<EntryPoint>]
 let main argv =
     let styles = loadCSSWithUnit "./src/assets/css/styles.css" unitPx
+    // let script = readFileToString "./src/assets/script/script.js"
+    // let htmlScript = HttpUtility.HtmlEncode script
 
     // let decls: ModuleDecl list =
     //     [ { name = "mod1"
@@ -141,78 +144,117 @@ let main argv =
     //               OutputPin("out1")
     //               OutputPin("out2") ] } ]
 
+    // let decls = 
+    //     [
+    //         { name="A"; ports=[(Input, "in1", Single); (Input, "in2", Single); (Output, "out1", Single); (Output, "out2", Single)] }
+    //         // { name="BBB"; ports=[(Input, "in1", Single); (Input, "in2", Single); (Output, "out1", Single); (Output, "out2", Single)] }
+    //     ]
+    // let expectedNetlist =
+    //     { moduleName = "A"
+    //       nodes =
+    //           [ InputPin
+    //               ("in1",
+    //                [ { srcPortIndex = 0
+    //                    target = InstanceTarget
+    //                                 {| targetNode = "BOpBitwiseAnd-0"
+    //                                    portName = "left"
+    //                                    portIndex = 0 |} }
+    //                  { srcPortIndex = 0
+    //                    target = InstanceTarget
+    //                                 {| targetNode = "BOpBitwiseAnd-1"
+    //                                    portName = "right"
+    //                                    portIndex = 0 |} }
+    //                  { srcPortIndex = 0
+    //                    target = InstanceTarget
+    //                                 {| targetNode = "reeeeeeeeeeeeee"
+    //                                    portName = "in1"
+    //                                    portIndex = 0 |} }                 
+    //                  { srcPortIndex = 0
+    //                    target = InstanceTarget
+    //                                 {| targetNode = "reeeeeeeeeeeeee"
+    //                                    portName = "in2"
+    //                                    portIndex = 0 |} }                 
+    //                                     ]) 
+    //             InputPin
+    //                 ("in2",
+    //                  [ { srcPortIndex = 0
+    //                      target = InstanceTarget
+    //                                   {| targetNode = "BOpBitwiseAnd-0"
+    //                                      portName = "right"
+    //                                      portIndex = 0 |} }
+    //                 //    { srcPortIndex = 0
+    //                 //      target = InstanceTarget
+    //                 //                   {| targetNode = "BOpBitwiseAnd-1"
+    //                 //                      portName = "left"
+    //                 //                      portIndex = 0 |} } 
+    //                                      ])
+    //             OutputPin("out1")
+    //             OutputPin("out2")
+    //             ModuleInstance
+    //                 ({ moduleName = StringIdentifier "A"
+    //                    instanceName = "reeeeeeeeeeeeee"
+    //                    connections = Map [] })
+    //             ModuleInstance
+    //                 ({ moduleName = BOpIdentifier BOpBitwiseAnd
+    //                    instanceName = "BOpBitwiseAnd-0"
+    //                    connections =
+    //                        Map
+    //                            [ "output",
+    //                              [ { srcPortIndex = 0
+    //                                  target = InstanceTarget
+    //                                          {| targetNode = "BOpBitwiseAnd-1"
+    //                                             portName = "left"
+    //                                             portIndex = 0 |} } ] ] })
+    //             ModuleInstance
+    //                 ({ moduleName = BOpIdentifier BOpBitwiseAnd
+    //                    instanceName = "BOpBitwiseAnd-1"
+    //                    connections =
+    //                        Map
+    //                            [ "output",
+    //                              [ { srcPortIndex = 1
+    //                                  target = PinTarget
+    //                                               {| pinName = "out2"
+    //                                                  pinIndex = 1 |} } ] ] }) ] }
     let decls = 
         [
-            { name="A"; ports=[(Input, "in1", Single); (Input, "in2", Single); (Output, "out1", Single); (Output, "out2", Single)] }
-            // { name="BBB"; ports=[(Input, "in1", Single); (Input, "in2", Single); (Output, "out1", Single); (Output, "out2", Single)] }
+            { name="IntelSucc"; ports=[(Input, "in1", Range(1, 0)); (Input, "in2", Range(1, 0)); (Output, "out", Range(3, 0))]}
         ]
-    let expectedNetlist =
-        { moduleName = "A"
-          nodes =
-              [ InputPin
-                  ("in1",
-                   [ { srcPortIndex = 0
-                       target = InstanceTarget
-                                    {| targetNode = "BOpBitwiseAnd-0"
-                                       portName = "left"
-                                       portIndex = 0 |} }
-                     { srcPortIndex = 0
-                       target = InstanceTarget
-                                    {| targetNode = "BOpBitwiseAnd-1"
-                                       portName = "right"
-                                       portIndex = 0 |} }
-                     { srcPortIndex = 0
-                       target = InstanceTarget
-                                    {| targetNode = "reeeeeeeeeeeeee"
-                                       portName = "in1"
-                                       portIndex = 0 |} }                 
-                     { srcPortIndex = 0
-                       target = InstanceTarget
-                                    {| targetNode = "reeeeeeeeeeeeee"
-                                       portName = "in2"
-                                       portIndex = 0 |} }                 
-                                        ]) 
-                InputPin
-                    ("in2",
-                     [ { srcPortIndex = 0
-                         target = InstanceTarget
-                                      {| targetNode = "BOpBitwiseAnd-0"
-                                         portName = "right"
-                                         portIndex = 0 |} }
-                    //    { srcPortIndex = 0
-                    //      target = InstanceTarget
-                    //                   {| targetNode = "BOpBitwiseAnd-1"
-                    //                      portName = "left"
-                    //                      portIndex = 0 |} } 
-                                         ])
-                OutputPin("out1")
-                OutputPin("out2")
-                ModuleInstance
-                    ({ moduleName = StringIdentifier "A"
-                       instanceName = "reeeeeeeeeeeeee"
-                       connections = Map [] })
-                ModuleInstance
-                    ({ moduleName = BOpIdentifier BOpBitwiseAnd
-                       instanceName = "BOpBitwiseAnd-0"
-                       connections =
-                           Map
-                               [ "output",
-                                 [ { srcPortIndex = 0
-                                     target = InstanceTarget
-                                             {| targetNode = "BOpBitwiseAnd-1"
-                                                portName = "left"
-                                                portIndex = 0 |} } ] ] })
-                ModuleInstance
-                    ({ moduleName = BOpIdentifier BOpBitwiseAnd
-                       instanceName = "BOpBitwiseAnd-1"
-                       connections =
-                           Map
-                               [ "output",
-                                 [ { srcPortIndex = 1
-                                     target = PinTarget
-                                                  {| pinName = "out2"
-                                                     pinIndex = 1 |} } ] ] }) ] }
 
-    visualiseNetlists [expectedNetlist] decls styles |> ignore
+    let netlists = 
+        [
+            {
+                moduleName="IntelSucc"
+                nodes=
+                [
+                    InputPin ("in1", 
+                        [
+                            {
+                                srcPortIndex=1
+                                target=PinTarget {| pinName="out"; pinIndex=3 |}
+                            }
+                            {
+                                srcPortIndex=0
+                                target=PinTarget {| pinName="out"; pinIndex=2 |}
+                            }
+                        ])
+                    InputPin ("in2", 
+                        [
+                            {
+                                srcPortIndex=1
+                                target=PinTarget {| pinName="out"; pinIndex=1 |}
+                            }
+                            {
+                                srcPortIndex=0
+                                target=PinTarget {| pinName="out"; pinIndex=0 |}
+                            }
+                        ]
+                    )
+                    OutputPin ("out")
+                ]
+            }
+        ]
+
+    
+    visualiseNetlists netlists decls (Some styles) None |> ignore
 
     0 // return an integer exit code
