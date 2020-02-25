@@ -81,7 +81,7 @@ let getRangeStrTests =
                 "[50:42]"
     ]
 
-let getNumberOfInputsFromNodeTests =
+let getNumberOfInputsFromPinOrBuiltInNodeTests =
     let inputPin0 = ("inputPin0", [{ srcPortIndex=0; target=PinTarget {| pinName="1"; pinIndex=0 |} }])
     let modInst0 = { moduleName=UOpIdentifier UOpMinus; instanceName="inst0"; connections=Map.empty }
     let modInst1 = { moduleName=BOpIdentifier BOpMinus; instanceName="inst1"; connections=Map.empty }
@@ -105,7 +105,7 @@ let getNumberOfInputsFromNodeTests =
                 2
     ]
 
-let getNumberOfInputsFromNodeTestsE =
+let getNumberOfInputsFromPinOrBuiltInNodeTestsE =
     let modInst0 = { moduleName=StringIdentifier "123"; instanceName="inst0"; connections=Map.empty }
     let node2 = ModuleInstance modInst0
     [
@@ -398,16 +398,16 @@ let getRangeStrTestList =
          |> List.map (processIntoAsyncTestList1 getRangeStr))
 
 [<Tests>]
-let getNumberOfInputsFromNodeTestList =
-    testList "getNumberOfInputsFromNode" <|
-        (getNumberOfInputsFromNodeTests
-         |> List.map (processIntoAsyncTestList1 getNumberOfInputsFromNode))
+let getNumberOfInputsFromPinOrBuiltInNodeTestList =
+    testList "getNumberOfInputsFromPinOrBuiltInNode" <|
+        (getNumberOfInputsFromPinOrBuiltInNodeTests
+         |> List.map (processIntoAsyncTestList1 getNumberOfInputsFromPinOrBuiltInNode))
 
 [<Tests>]
-let getNumberOfInputsFromNodeTestListE =
-    testList "getNumberOfInputsFromNodeE" <|
-        (getNumberOfInputsFromNodeTestsE
-         |> List.map (processIntoAsyncTestListE1 getNumberOfInputsFromNode))
+let getNumberOfInputsFromPinOrBuiltInNodeTestListE =
+    testList "getNumberOfInputsFromPinOrBuiltInNode" <|
+        (getNumberOfInputsFromPinOrBuiltInNodeTestsE
+         |> List.map (processIntoAsyncTestListE1 getNumberOfInputsFromPinOrBuiltInNode))
 
 [<Tests>]
 let getNumberOfInputsFromVNodeTestList =

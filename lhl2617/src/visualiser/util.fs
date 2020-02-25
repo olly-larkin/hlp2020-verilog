@@ -75,7 +75,8 @@ module Functions =
             | _ -> sprintf "[%d:%d]" a b
         | _ -> ""
 
-    let getNumberOfInputsFromNode (node: Node) =
+    (* USE ONLY IN getNumberOfInputsFromVNode *)
+    let getNumberOfInputsFromPinOrBuiltInNode (node: Node) =
         match node with
         | ModuleInstance modInst -> 
             match modInst.moduleName with 
@@ -92,7 +93,7 @@ module Functions =
             |> List.filter (fun (x, _, _) -> x = Input)
             |> List.length
         | _ -> 
-            getNumberOfInputsFromNode targetNode.node
+            getNumberOfInputsFromPinOrBuiltInNode targetNode.node
             
 
     // border

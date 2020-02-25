@@ -1,17 +1,13 @@
 module Verishot.Test.Pin
 
 open Expecto
-open FsCheck
 
 open Verishot.Test.Util
 open Verishot.SVG
 open Verishot.CoreTypes
 open Verishot.VisualisePin
-open Verishot.CoreTypes.Netlist
 open Verishot.VisualiserUtil
 open Verishot.VisualiserUtil.Pin
-open Verishot.VisualiserUtil.ModuleInstance
-open Verishot.VisualiserUtil.Functions
 
 let truncPinTextTests = 
     [

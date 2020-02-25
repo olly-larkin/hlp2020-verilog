@@ -22,7 +22,6 @@ let defaultGraphicsProps =
        varTextTransformUp=0.1 |}
 
 let verifyConstantConnections (cons: Connection list) = 
-    (* true if pass tests *)
     let groupTargets =
         fun target -> 
             match target with 

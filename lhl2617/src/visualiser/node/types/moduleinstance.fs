@@ -103,7 +103,7 @@ let getWidth instName inPorts outPorts =
         match maxPortLen >= defaultGraphicsProps.maxPortLen with
         | true -> 12.
         | _ -> 
-            max (float maxPortLen + 1.) <| max 4. (float <| String.length instName - 3)
+            max (float maxPortLen + 1.) (max 4. (float <| String.length instName - 3))
 
 let getHeight inPorts outPorts =
     defaultGraphicsProps.titleHeight + max (List.length inPorts) (List.length outPorts) + 1 |> float
@@ -186,7 +186,7 @@ let visualiseBuiltInModuleInstance (arity: int) (elem: ModuleInstance) (nodeMap:
     
     let props = 
         { defaultModuleInstanceProps with 
-            width=getWidth "XXX" inputPorts outputPorts // longest ops are 3chars
+            width=getWidth "   " inputPorts outputPorts // longest ops are 3chars
             height=getHeight inputPorts outputPorts }
 
     let borderBox = getBorderBox xy props "node-builtin-bord"

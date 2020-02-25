@@ -12,6 +12,8 @@
     <Compile Include="./visualiser/util_test.fs" />
     <Compile Include="./visualiser/visualise_test.fs" />
     <Compile Include="./visualiser/node/types/pin_test.fs" />
+    <Compile Include="./visualiser/node/types/constant_test.fs" />
+    <Compile Include="./visualiser/node/types/moduleinstance_test.fs" />
     <Compile Include="main.fs" />
   </ItemGroup>
 
