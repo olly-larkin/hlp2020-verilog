@@ -30,8 +30,7 @@ let private getIntermediateNodes (allModules: ModuleDecl list) (thisModule: AST.
 
     thisModule.items
     // We need to use collect because each item can require multiple nodes (e.g. expressions)
-    |> List.collect
-        (function
+    |> List.collect (function
         | AST.ItemPort(Output, _range, name) -> [ FinalNode(Netlist.OutputPin(name)) ]
         | AST.ItemPort(Input, _range, name) -> [ FinalNode(Netlist.InputPin(name, [])) ]
         | AST.ItemInstantiation(moduleName, instanceName, connectionExpressions) ->
@@ -48,9 +47,14 @@ let private getIntermediateNodes (allModules: ModuleDecl list) (thisModule: AST.
             let outConnections: (Identifier * Connection list) list =
                 List.zip ports connectionExpressions
                 |> List.choose (function
-                    | ((Output, name, range), expr) ->
-                        let connection = findConnection (name, range) expr
-                        Some(name, [ connection ])
+                    | ((Output, name, range), AST.ExprIdentifier targetName) ->
+                        Some
+                            (name,
+                             [ { srcRange = range
+                                 targetRange = moveRangeToBase range
+                                 target = PinTarget(targetName) } ])
+                    | ((Output, _, _), _) ->
+                        failwith "Not yet implemented (Connecting module output to anything other than an output pin)"
                     | ((Input, _, _), _) -> None)
 
 
@@ -58,11 +62,7 @@ let private getIntermediateNodes (allModules: ModuleDecl list) (thisModule: AST.
                 List.zip ports connectionExpressions
                 |> List.collect (function
                     | ((Input, portName, range), expr) ->
-                        exprNodesWithOutput operatorIdx expr
-                            (InstanceTarget
-                                {| targetNode = instanceName
-                                   portName = portName
-                                   portIndex = 1 |})
+                        exprNodesWithOutput operatorIdx expr (InstanceTarget(instanceName, portName))
                     | ((Output, _, _), _) -> [])
 
 
@@ -73,10 +73,7 @@ let private getIntermediateNodes (allModules: ModuleDecl list) (thisModule: AST.
                        connections = Map outConnections }))
             :: inNodes
         | AST.ItemAssign(targetNodeName, expression) ->
-            exprNodesWithOutput operatorIdx expression
-                (PinTarget
-                    {| pinName = targetNodeName
-                       pinIndex = 1 |})
+            exprNodesWithOutput operatorIdx expression (PinTarget targetNodeName)
         | AST.ItemWireDecl _ -> failwith "Not yet implemented (wires)")
 
 let private finalizeNodes (intermediateNodes: IntermediateNode list): Node list =
@@ -92,7 +89,7 @@ let private finalizeNodes (intermediateNodes: IntermediateNode list): Node list 
             match Map.tryFind name connections with
             | Some newConnections -> InputPin(name, existingConnections @ newConnections)
             | None -> InputPin(name, existingConnections)
-        | Constant _  -> failwith "Not yet implemented (Constants)"
+        | Constant _ -> failwith "Not yet implemented (Constants)"
         | OutputPin _ -> failwith "Tried to add connections to an output pin"
 
     // Basically all intermediate nodes, excluding references. Useful for resolving those references.
@@ -132,20 +129,10 @@ let private nodeName node =
     | Constant constant -> sprintf "%d'%d" constant.width constant.value
     | ModuleInstance { instanceName = name } -> name
 
-let private findConnection (srcPort: Identifier * Range) (expr: AST.Expr): Netlist.Connection =
-    match (srcPort, expr) with
-    | ((_, Single), AST.ExprIdentifier name) ->
-        { srcPortIndex = 1
-          target = InstanceTarget
-                       {| targetNode = name
-                          portName = name
-                          portIndex = 1 |} }
-    | _ -> failwith "Not implemented"
-
-
 let private exprNodesWithOutput (operatorIdx: int ref) (expr: AST.Expr) (target: ConnectionTarget): IntermediateNode list =
     let finalConnection =
-        { srcPortIndex = 1
+        { srcRange = Single
+          targetRange = Single
           target = target }
 
     match expr with
@@ -161,19 +148,9 @@ let private exprNodesWithOutput (operatorIdx: int ref) (expr: AST.Expr) (target:
                       moduleName = BOpIdentifier op
                       connections = Map [ ("output", [ finalConnection ]) ] })
 
-        let leftNodes =
-            exprNodesWithOutput operatorIdx left
-                (InstanceTarget
-                    {| targetNode = operatorNodeName
-                       portName = "left"
-                       portIndex = 1 |})
+        let leftNodes = exprNodesWithOutput operatorIdx left (InstanceTarget(operatorNodeName, "left"))
 
-        let rightNodes =
-            exprNodesWithOutput operatorIdx right
-                (InstanceTarget
-                    {| targetNode = operatorNodeName
-                       portName = "right"
-                       portIndex = 1 |})
+        let rightNodes = exprNodesWithOutput operatorIdx right (InstanceTarget(operatorNodeName, "right"))
 
         operatorNode :: (leftNodes @ rightNodes)
     | AST.ExprUnary(op, expr) ->
@@ -187,12 +164,7 @@ let private exprNodesWithOutput (operatorIdx: int ref) (expr: AST.Expr) (target:
                       moduleName = UOpIdentifier op
                       connections = Map [ ("output", [ finalConnection ]) ] })
 
-        let exprNodes =
-            exprNodesWithOutput operatorIdx expr
-                (InstanceTarget
-                    {| targetNode = operatorNodeName
-                       portName = "input"
-                       portIndex = 1 |})
+        let exprNodes = exprNodesWithOutput operatorIdx expr (InstanceTarget(operatorNodeName, "input"))
 
         operatorNode :: exprNodes
     | AST.ExprNumber _ -> failwith "Not yet implemented (constant expressions)"
