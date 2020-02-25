@@ -10,7 +10,7 @@ input a;
 input clk;
 output b;
 
-wire[3:h] test_wire;
+wire[3:0] test_wire;
 assign test_wire = a + clk;
 
 endmodule"
@@ -21,6 +21,5 @@ let testString2 = "assign test_wire = a + clk;"
 let main argv =
     // runExpressionTests()
     testString |> ParseSource |> printfn "%A"
-    // testString2 |> List.ofSeq |> ModuleDefinition.ModuleItemListParser |> printfn "%A"
     // Console.ReadKey() |> ignore
-    0 // return an integer exit code
+    0
