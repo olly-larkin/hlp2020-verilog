@@ -52,7 +52,7 @@ module Netlist =
         /// An output pin of the *module the netlist refers to*
         | OutputPin of Identifier
         | ModuleInstance of ModuleInstance
-        | Constant of {| value: int; width: int; connections: Connection list |}
+        | Constant of {| value: int; width: int |}
 
     type Netlist =
         { nodes: Node list
@@ -141,7 +141,9 @@ module VerilogAST =
         | IndexRange of int * int
         
     type Expr =
-        | ExprNumber of int option * int
+        | ExprNumber of
+            width : int option *
+            value : int
         | ExprConcateneation of Expr list
         | ExprIdentifier of Identifier
         | ExprBinary of Expr * BinaryOp * Expr
@@ -159,3 +161,5 @@ module VerilogAST =
         { name: Identifier
           ports: Identifier list
           items: ModuleItem list }
+
+          
