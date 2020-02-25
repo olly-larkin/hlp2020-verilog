@@ -68,19 +68,19 @@ and ShiftParser inp =
 
 and RelationalParser inp =
     let operator = buildParser [
-        Symbol.GreaterThan
-        Symbol.LessThan
         Symbol.GreaterThanOrEqual
         Symbol.LessThanOrEqual
+        Symbol.GreaterThan
+        Symbol.LessThan
     ]
     inp |> (ShiftParser ?=> (operator >=> RelationalParser) <&> ExprTools.OpBinExprMap)
 
 and RelationalEqualityParser inp =
     let operator = buildParser [
-        Symbol.LogicalEqual
-        Symbol.LogicalNotEqual
         Symbol.CaseEqual
         Symbol.CaseNotEqual
+        Symbol.LogicalEqual
+        Symbol.LogicalNotEqual
     ]
     inp |> (RelationalParser ?=> (operator >=> RelationalEqualityParser) <&> ExprTools.OpBinExprMap)
 
