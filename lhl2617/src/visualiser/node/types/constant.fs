@@ -14,7 +14,7 @@ open Verishot.VisualiserUtil
 open Verishot.VisualiserUtil.Functions
 open Verishot.Util
 
-type Constant = {| connections: Connection list; value: int; width: int |}
+type ConstantElem = {| connections: Connection list; value: int; width: int |}
 
 let defaultGraphicsProps = 
     {| diamondOffset = 0.25
@@ -69,7 +69,7 @@ let getDiamond (x, y) =
     Polyline ([top; right; btm; left; top], ["class", "label-diamond"], None)
 
 
-let visualiseConstant (nodeMap: NodeMap) (elem: Constant): SVGElement =
+let visualiseConstant (nodeMap: NodeMap) (elem: ConstantElem): SVGElement =
     let value, width, cons = elem.value, elem.width, elem.connections    
     let targetNodeId, portId = verifyConstantConnections cons 
     let targetNode = getNodeFromNodeMap nodeMap targetNodeId
@@ -94,7 +94,7 @@ let visualiseConstant (nodeMap: NodeMap) (elem: Constant): SVGElement =
     [diamond; line; text] |> groupSVG [("class", "const")] None
 
 
-let visualiseConstants (elems: Constant list) (nodeMap: NodeMap): SVGElement =
+let visualiseConstants (elems: ConstantElem list) (nodeMap: NodeMap): SVGElement =
     elems 
     |> List.map (visualiseConstant nodeMap)
     |> groupSVG [("class", "const-group")] None

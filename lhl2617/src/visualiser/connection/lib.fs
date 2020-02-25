@@ -79,6 +79,7 @@ let groupConnections (cons: Connection list) (sourceRange: Range): ConnectionGro
         | Range _ -> true
         | _ -> false
 
+    (* WARNING: This won't support concatenated busses. *)
     let getRangeFromList (x: int list) =
         match sourceIsBus with
         | false -> Single
