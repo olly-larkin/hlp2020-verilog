@@ -15,15 +15,16 @@ open Verishot.VisualiseModuleInstance
 open Verishot.VisualisePin
 open Verishot.VisualiserUtil.Functions
 open Verishot.VisualiserUtil.Pin
-open Verishot.VisualiseConnection
+open Verishot.VisualiseModuleInstanceConnection
+open Verishot.VisualisePinConnection
 
-
-let visualiseBlocks (inputPins, moduleInstances, outputPins, _) declMap currDecl =
+let visualiseNodes (inputPins, moduleInstances, outputPins, _) declMap currDecl =
     let inputPinsIds = inputPins |> List.map fst
     
     let nodeMap0, idx0, _      = visualisePins currDecl inputPinsIds Input Map.empty 0 (0., 0.5)
     let nodeMap1, idx1, coord1 = visualiseModuleInstances moduleInstances declMap nodeMap0 idx0 (defaultPinMargin + defaultPinProps.width, 0.)
     let nodeMap, _, _          = visualisePins currDecl outputPins Output nodeMap1 idx1 (fst coord1, 0.5)
+    
     nodeMap
 
 let visualiseConnections (inputPins, moduleInstances, _, _) nodeMap =
@@ -68,7 +69,7 @@ let visualiseNetlist netlist declMap: SVGElement =
 
     let currDecl = getDeclFromDeclMap declMap netlist.moduleName
 
-    let nodeMap = visualiseBlocks splittedNodes declMap currDecl
+    let nodeMap = visualiseNodes splittedNodes declMap currDecl
 
     let blocksSVG = getSVGFromNodeMap nodeMap [("class", "nodes")]
     let consSVG = visualiseConnections splittedNodes nodeMap

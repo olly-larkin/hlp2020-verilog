@@ -9,9 +9,12 @@
     <Compile Include="../libs/svg.fs" />
     <Compile Include="src/visualiser/maps.fs" />
     <Compile Include="src/visualiser/util.fs" />
-    <Compile Include="src/visualiser/node/moduleinstance.fs" />
-    <Compile Include="src/visualiser/node/pin.fs" />
-    <Compile Include="src/visualiser/connection/connection.fs" />
+    <Compile Include="src/visualiser/node/types/moduleinstance.fs" />
+    <Compile Include="src/visualiser/node/types/pin.fs" />
+    <Compile Include="src/visualiser/node/types/constant.fs" />
+    <Compile Include="src/visualiser/connection/lib.fs" />
+    <Compile Include="src/visualiser/connection/types/moduleinstance.fs" />
+    <Compile Include="src/visualiser/connection/types/pin.fs" />
     <Compile Include="src/visualiser/visualise.fs" />
     <Compile Include="src/main.fs" />
   </ItemGroup>

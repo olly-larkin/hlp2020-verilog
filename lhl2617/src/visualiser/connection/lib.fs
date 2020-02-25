@@ -1,11 +1,11 @@
 (*
-    Visualise code for `Connection` type
-    ====================================
+    Visualise library code for `Connection` type
+    ============================================
 
     Author: lhl2617
 *)
 
-module Verishot.VisualiseConnection
+module Verishot.VisualiseConnectionLib
 
 open Verishot.SVG
 open Verishot.CoreTypes
@@ -235,31 +235,6 @@ let getTargetLabelsAndBlobsForNode (sourceRange: Range) (targets: (Identifier * 
 
     [labelSVG; linesSVG; blobsSVG] |> groupSVG [] None
 
-let visualiseInputPinConnection (nodeMap: NodeMap) (source: Identifier) (cons: Connection list) labelId =
-    // we don't draw anything if cons is empty
-    match List.length cons with 
-    | 0 -> 
-        [] |> groupSVG [] None, labelId
-    | _ -> 
-        let sourceNode = getNodeFromNodeMap nodeMap source
-
-        (* for pins we always use labels, much easier and less likely to fail *)
-        let sourceRange = (getPortPropFromVNode sourceNode Output source).range
-        let conGroup = groupConnections cons sourceRange
-        
-        let sourceSVG = getSourceLabel source sourceNode sourceRange labelId
-        let targetSVG = 
-            conGroup 
-            |> List.map (fun (targetNode, cons) -> getTargetLabelsAndBlobsForNode sourceRange cons (getNodeFromNodeMap nodeMap targetNode) labelId)
-            |> groupSVG [] None
-
-        [sourceSVG; targetSVG] |> groupSVG [("class", "label-group")] None, labelId + 1
-
-let visualiseInputPinConnections (elems: (Identifier * Connection list) list) (nodeMap: NodeMap) (labelId: int) =
-    (labelId, elems)
-    ||> List.mapFold (fun lId (src, cons) -> visualiseInputPinConnection nodeMap src cons lId)
-    |> (fun (svgs, lId) -> svgs |> groupSVG [] None, lId)
-
 let labelRequired (sourceNode: VisualisedNode) (sourcePortId: Identifier) (conGroup: ConnectionGroup) (nodeMap: NodeMap): bool = 
     (* true if label required 
         Label not required if:
@@ -360,41 +335,3 @@ let getWiresAndBlobs (source: Identifier) (sourceNode: VisualisedNode) (sourcePo
     let linesSVG, blobsSVG = getLinesAndBlobsToTarget targets targetNode pt2
         
     [sourceSVG; linesSVG; blobsSVG] |> groupSVG [] None
-
-let visualiseModuleInstanceConnection (elem: ModuleInstance) (nodeMap: NodeMap) labelId = 
-    let source = elem.instanceName
-    let sourceNode = getNodeFromNodeMap nodeMap source
-    
-    let targetGroups =
-        elem.connections
-        |> Map.map (fun sourceId cons -> groupConnections cons (getPortPropFromVNode sourceNode Output sourceId).range) 
-        |> Map.toList
-
-    let svgElems, finalLabelId = 
-        (labelId, targetGroups)
-        ||> List.mapFold 
-            (fun lId (sourcePort, conGroup) -> 
-                let sourceRange = (getPortPropFromVNode sourceNode Output sourcePort).range
-                match labelRequired sourceNode sourcePort conGroup nodeMap with 
-                | true -> 
-                    let sourceSVG = getSourceLabel sourcePort sourceNode sourceRange lId
-                    let targetSVG = 
-                        conGroup 
-                        |> List.map (fun (targetNode, cons) -> getTargetLabelsAndBlobsForNode sourceRange cons (getNodeFromNodeMap nodeMap targetNode) labelId)
-                        |> groupSVG [] None
-                        
-                    [sourceSVG; targetSVG] |> groupSVG [("class", "label-group")] None, lId + 1
-                | false -> 
-                    let targetNodeId, targets = conGroup |> List.head
-                    let targetNode = getNodeFromNodeMap nodeMap targetNodeId
-                    [getWiresAndBlobs sourcePort sourceNode sourceRange targets targetNode] |> groupSVG [("class", "label-group")] None, lId
-            )
-    svgElems |> groupSVG [] None, finalLabelId
-
-let visualiseModuleInstanceConnections (elems: ModuleInstance list) (nodeMap: NodeMap) (labelId: int) =
-    let svgElems, finalLabelId = 
-        (labelId, elems)
-        ||> List.mapFold 
-            (fun lId elem -> 
-                visualiseModuleInstanceConnection elem nodeMap lId)
-    svgElems |> groupSVG [] None, finalLabelId
