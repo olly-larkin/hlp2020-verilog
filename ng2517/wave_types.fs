@@ -7,15 +7,10 @@ type WaveformState =
         { prevVal: int 
           svgVals: SVGElement}
 
-type WireWaveform =
-    { portName: SVGElement
-      wave: SVGElement}
 
-type BusWaveform =
-    { portName: SVGElement
-      waveList: (SVGElement*SVGElement) list}
-
-type PortWaveform = BusWave of BusWaveform | WireWave of WireWaveform
+type PortWaveform =
+  {
+    waveBlock: SVGElement}
 
 type SimulatorWire =
     { portName: string
