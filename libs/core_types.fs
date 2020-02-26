@@ -28,14 +28,17 @@ module Netlist =
     *)
 
     type ConnectionTarget =
-        | PinTarget of {| pinName: Identifier; pinIndex: int |}
-        | InstanceTarget of {| targetNode: Identifier; portName: Identifier; portIndex: int |}
+        | PinTarget of pinName: Identifier
+        | InstanceTarget of targetNode: Identifier * portName: Identifier
 
     type Connection =
-        { srcPortIndex: int
+        { srcRange: Range
+          targetRange: Range
           target: ConnectionTarget }
 
     /// Instance of a module.
+    [<CustomEquality>]
+    [<NoComparison>]
     type ModuleInstance =
         { /// Name of the module being declared (first identifier in verilog declaration)
           moduleName: ModuleIdentifier
@@ -46,6 +49,19 @@ module Netlist =
           /// *Outgoing* connections of the module
           connections: Map<Identifier, Connection list> }
 
+        override this.GetHashCode() = (this.moduleName, this.instanceName, this.connections).GetHashCode()
+
+        override this.Equals(thatObj: obj) =
+            match thatObj with
+            | :? ModuleInstance as that ->
+                List.reduce (&&)
+                    [ this.moduleName = that.moduleName
+                      this.instanceName = that.instanceName
+                      equivalentMaps sameListElements this.connections that.connections ]
+
+
+    [<CustomEquality>]
+    [<NoComparison>]
     type Node =
         /// An input pin of the *module the netlist refers to*
         | InputPin of Identifier * Connection list
@@ -54,10 +70,62 @@ module Netlist =
         | ModuleInstance of ModuleInstance
         | Constant of {| value: int; width: int |}
 
+        override this.GetHashCode() =
+            match this with
+            | InputPin(name, conns) -> (1, name, conns).GetHashCode()
+            | OutputPin(name) -> (2, name).GetHashCode()
+            | ModuleInstance instance -> (3, instance).GetHashCode()
+            | Constant constant -> (4, constant).GetHashCode()
+
+        override this.Equals(thatObj: obj) =
+            match thatObj with
+            | :? Node as that ->
+                match this, that with
+                | InputPin(thisName, theseConns), InputPin(thatName, thoseConns) ->
+                    thisName = thatName && sameListElements theseConns thoseConns
+                | OutputPin(thisName), OutputPin(thatName) -> thisName = thatName
+                | ModuleInstance(thisInstance), ModuleInstance(thatInstance) -> thisInstance = thatInstance
+                | Constant thisConstant, Constant thatConstant ->
+                    List.reduce (&&)
+                        [ thisConstant.value = thatConstant.value
+                          thisConstant.width = thatConstant.width
+                          sameListElements thisConstant.connections thatConstant.connections ]
+                | _, _ -> false
+            | _ -> false
+
     type Netlist =
         { nodes: Node list
           moduleName: Identifier }
 
+    /// Check that 2 lists have the same elements, irrespective of order.
+    /// Used for equality comparisons. It must be defined here, not in Util,
+    /// because Util imports this module
+    let private sameListElements lst1 lst2 =
+        List.forall (fun el -> List.contains el lst2) lst1 && List.forall (fun el -> List.contains el lst1) lst2
+
+    /// Check that 2 maps have equivalent elements, with equivalence given by some function
+    /// Used for equality comparisons. It must be defined here, not in Util,
+    /// because Util imports this module
+    let private equivalentMaps equiv map1 map2 =
+        let holds1to2 =
+            map1
+            |> Map.forall (fun name conn ->
+                map2
+                |> Map.tryFind name
+                |> function
+                | Some otherConns -> sameListElements conn otherConns
+                | None -> false)
+
+        let holds2to1 =
+            map2
+            |> Map.forall (fun name conn ->
+                map1
+                |> Map.tryFind name
+                |> function
+                | Some otherConns -> sameListElements conn otherConns
+                | None -> false)
+
+        holds1to2 && holds2to1
 
 module VerilogAST =
     type UnaryOp =
