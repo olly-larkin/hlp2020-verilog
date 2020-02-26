@@ -68,26 +68,10 @@ let getBlobs sourceY bendPointX targetYs =
 
         blobYs |> List.map (fun cy -> Circle((bendPointX, cy), defaultGraphicsProps.blobRadius, [ ("class", "wire-blob") ], None))
 
-let groupConnections (cons: Connection list) (sourceRange: Range): ConnectionGroup =
+let groupConnections (cons: Connection list): ConnectionGroup =
     (* group connections by targetNodes and portNames 
         List<TargetNodeId * (TargetPortName * { srcRange; targetRange })>
-
-        we take in sourceIsBus to know if the input is Single or Range
     *)
-    let sourceIsBus = 
-        match sourceRange with 
-        | Range _ -> true
-        | _ -> false
-
-    (* WARNING: This won't support concatenated busses. *)
-    let getRangeFromList (x: int list) =
-        match sourceIsBus with
-        | false -> Single
-        | _ -> 
-            let min = List.min x
-            let max = List.max x
-            Range (max, min)
-
     let getTargetNodeId (con: Connection) =
         match con.target with 
         | PinTarget x -> x

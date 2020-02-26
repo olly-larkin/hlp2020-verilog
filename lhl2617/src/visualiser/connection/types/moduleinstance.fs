@@ -20,7 +20,7 @@ let visualiseModuleInstanceConnection (elem: ModuleInstance) (nodeMap: NodeMap) 
     
     let targetGroups =
         elem.connections
-        |> Map.map (fun sourceId cons -> groupConnections cons (getPortPropFromVNode sourceNode Output sourceId).range) 
+        |> Map.map (fun sourceId cons -> groupConnections cons)
         |> Map.toList
 
     let svgElems, finalLabelId = 
