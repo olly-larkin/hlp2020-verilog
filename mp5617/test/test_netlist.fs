@@ -356,4 +356,30 @@ let tests =
                                          target = InstanceTarget("theB", "bIn") } ] |} ] }
 
               expectNetlist decls moduleAST expectedNetlist
+          }
+
+          test "Wire single input to output through wire" {
+              let decls = []
+
+              let moduleAST =
+                  { name = "A"
+                    ports = []
+                    items =
+                        [ ItemPort(Input, Single, "in")
+                          ItemPort(Output, Single, "out")
+                          ItemWireDecl(Single, "between")
+                          ItemAssign("between", ExprIdentifier "in")
+                          ItemAssign("out", ExprIdentifier "between") ] }
+
+              let expectedNetlist =
+                  { moduleName = "A"
+                    nodes =
+                        [ InputPin
+                            ("in",
+                             [ { srcRange = Single
+                                 targetRange = Single
+                                 target = PinTarget "out" } ])
+                          OutputPin("out") ] }
+
+              expectNetlist decls moduleAST expectedNetlist
           } ]

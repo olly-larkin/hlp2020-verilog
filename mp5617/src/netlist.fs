@@ -128,7 +128,7 @@ module Internal =
                            connections = state.connections @ newConns
                            nodes = state.nodes @ newNodes |}
 
-                | AST.ItemWireDecl _ -> failwith "Not yet implemented (wires)")
+                | AST.ItemWireDecl _ -> state )
         |> (fun state -> state.connections, state.nodes)
 
     let unifyConnections (connections: IntermediateConnection list): IntermediateConnection list =
