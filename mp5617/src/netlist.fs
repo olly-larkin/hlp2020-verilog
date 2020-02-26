@@ -48,16 +48,19 @@ module Internal =
         // We use a single, mutable reference
         let operatorIdx = ref 0
 
-        let initialState: IntermediateConnection list * Node list = ([], [])
+        let initialState =
+            {| nodes = []
+               connections = [] |}
 
         (initialState, thisModule.items)
         // We need to use collect because each item can require multiple nodes (e.g. expressions)
-        ||> List.fold (fun (connections, nodes) item ->
+        ||> List.fold (fun state item ->
                 match item with
                 | AST.ItemPort(Output, _range, name) ->
-                    (connections, Netlist.OutputPin(name) :: nodes)
+                    {| state with nodes = Netlist.OutputPin(name) :: state.nodes |}
                 | AST.ItemPort(Input, _range, name) ->
-                    (connections, Netlist.InputPin(name, []) :: nodes)
+                    {| state with nodes =
+                           Netlist.InputPin(name, []) :: state.nodes |}
                 | AST.ItemInstantiation(moduleName, instanceName,
                                         connectionExpressions) ->
                     // Find the ports of the instantiated module from its declaration
@@ -109,17 +112,24 @@ module Internal =
                             (List.concat xss, List.concat yss)
 
 
-                    (List.concat [ connections; inConnections; outConnections ],
-                     instance :: List.concat [ nodes; inNodes; nodes ])
+                    {| state with
+                           connections =
+                               List.concat
+                                   [ state.connections; inConnections; outConnections ]
+                           nodes = instance :: (state.nodes @ inNodes) |}
+
 
                 | AST.ItemAssign(targetNodeName, expression) ->
                     // TODO don't assume all assignments are to single wires
                     let (newConns, newNodes) =
                         exprNodesWithOutput operatorIdx expression
                             (NameEndpoint targetNodeName, Single)
-                    (newConns @ connections, newNodes @ nodes)
+                    {| state with
+                           connections = state.connections @ newConns
+                           nodes = state.nodes @ newNodes |}
 
                 | AST.ItemWireDecl _ -> failwith "Not yet implemented (wires)")
+        |> (fun state -> state.connections, state.nodes)
 
     let unifyConnections (connections: IntermediateConnection list): IntermediateConnection list =
         ([], connections)
