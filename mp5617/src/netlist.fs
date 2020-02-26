@@ -138,18 +138,17 @@ module Internal =
                         else
                             existingConn, false)
                     |> (function
-                        | (newConns, true) -> newConns
-                        | (sameConns, false) -> conn::sameConns)
+                    | (newConns, true) -> newConns
+                    | (sameConns, false) -> conn :: sameConns)
                 | NameTarget(_) as src, target ->
                     directConns
                     |> List.confirmedMap (fun existingConn ->
-                        if existingConn.target = src then
-                            { existingConn with target = target }, true
-                        else
-                            existingConn, false)
+                        if existingConn.target = src
+                        then { existingConn with target = target }, true
+                        else existingConn, false)
                     |> (function
-                        | (newConns, true) -> newConns
-                        | (sameConns, false) -> conn::sameConns)
+                    | (newConns, true) -> newConns
+                    | (sameConns, false) -> conn :: sameConns)
                 | src, (NameTarget(_) as target) ->
                     directConns
                     |> List.confirmedMap (fun existingConn ->
@@ -158,8 +157,8 @@ module Internal =
                         else
                             existingConn, false)
                     |> (function
-                        | (newConns, true) -> newConns
-                        | (sameConns, false) -> conn::sameConns)
+                    | (newConns, true) -> newConns
+                    | (sameConns, false) -> conn :: sameConns)
                 | _, _ -> conn :: directConns)
     // TODO Verify that there is no undriven wire, or any wires driving nothing
 
