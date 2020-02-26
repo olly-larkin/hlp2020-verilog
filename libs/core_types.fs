@@ -68,7 +68,7 @@ module Netlist =
         /// An output pin of the *module the netlist refers to*
         | OutputPin of Identifier
         | ModuleInstance of ModuleInstance
-        | Constant of {| value: int; width: int |}
+        | Constant of {| value: int; width: int; connections: Connection list |}
 
         override this.GetHashCode() =
             match this with
@@ -226,8 +226,6 @@ module VerilogAST =
         | ItemInstantiation of Identifier * Identifier * Expr list
 
     type Module =
-        { name: Identifier
+        { name: string
           ports: Identifier list
           items: ModuleItem list }
-
-          
