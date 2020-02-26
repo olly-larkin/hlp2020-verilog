@@ -6,7 +6,7 @@ type Err = string * char list
 /// Return the furthest Err type
 let furthestErr err1 err2 =
     match err1, err2 with
-    | (_, lst1), (_, lst2) when List.length lst1 >= List.length lst2 -> err2
+    | (_, lst1), (_, lst2) when List.length lst1 > List.length lst2 -> err2
     | _ -> err1
 
 let furthestOpErr err1 err2 =

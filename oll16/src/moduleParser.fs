@@ -39,7 +39,12 @@ and ModuleItemParser inp =
         ] >=> Symbol.Semmicolon <&> fun (a,_) -> a)
 
 and RangeParser inp =
-    inp |> (Symbol.LeftSquareBra >=> Number.Value >=> Symbol.Colon >=> Number.Value >=> Symbol.RightSquareBra <&> fun ((((_,a),_),b),_) -> Range (a,b))
+    inp 
+    |> (Symbol.LeftSquareBra >=> Number.Value >=> Symbol.Colon >=> Number.Value >=> Symbol.RightSquareBra)
+    |> function
+        | Ok (((((_,a),_),b),_), rest, opErr) when a >= b -> Ok (Range (a, b), rest, opErr)
+        | Ok (((((_,a),_),b),_), _, _) -> Error (sprintf "The first element (%A) of the range is smaller than the second element (%A)." a b, inp)
+        | Error err -> Error err
 
 and PortDeclarationParser inp =
     let portMap (dir: Direction) =
@@ -53,8 +58,7 @@ and PortDeclarationParser inp =
     ]
 
 and AssignParser inp =
-    inp |> (Keyword.Assign >=> Identifier >=> Symbol.AssignEqual >=> ExpressionParser <&> fun (((_,a),_),b) -> 
-        ItemAssign (a,b))
+    inp |> (Keyword.Assign >=> Identifier >=> Symbol.AssignEqual >=> ExpressionParser <&> fun (((_,a),_),b) -> ItemAssign (a,b))
 
 and WireDeclarationParser inp =
     inp |> (Keyword.Wire ?=> RangeParser >=> Identifier <&> fun ((_,range),iden) ->

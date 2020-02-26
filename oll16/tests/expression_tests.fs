@@ -46,6 +46,7 @@ let stringParseTestsList =
 
             ] |> List.map parserEqualTestAsync)
 
+        // ************** FAILURES *********************
         ([
 
             "test -> not test fails",
@@ -76,6 +77,7 @@ let regParseTestsList =
 
             ] |> List.map parserEqualTestAsync)
 
+        // ************** FAILURES *********************
         ([
 
             "checking reg parse fails correctly",
@@ -102,6 +104,7 @@ let baseConversionsTestList =
 
             ] |> List.map equalTestAsync)
 
+        // ************** FAILURES *********************
         ([
 
             // failure tests
@@ -130,7 +133,6 @@ let numberParseTestsList =
                     Ok (12, [])
 
             ] |> List.map parserEqualTestAsync)
-
         ([
 
             "correctly matching bin expr",
@@ -142,6 +144,8 @@ let numberParseTestsList =
                     Ok (ExprNumber (None, 100), [])
 
             ] |> List.map parserEqualTestAsync)
+
+        // ************** FAILURES *********************
         ([
 
             // failure tests
@@ -179,6 +183,7 @@ let keywordTestsList =
 
             ] |> List.map parserEqualTestAsync)
 
+        // ************** FAILURES *********************
         ([
             "checking keyword 'assign' strict",
                 List.ofSeq "assigne" |> Keyword.Assign
@@ -342,7 +347,6 @@ let expressionTestsList =
                     Ok (ExprBinary (ExprBinary (ExprNumber (None, 1), BOpPlus, ExprNumber (None, 2)), BOpStar, ExprNumber (None, 3)), [])
 
             ] |> List.map parserEqualTestAsync)
-
         ([
 
             "index parser individual",
@@ -354,7 +358,6 @@ let expressionTestsList =
                     Ok (IndexRange (1,0), [])
 
             ] |> List.map parserEqualTestAsync)
-
         ([
             
             /// Testing with index to check it conforms to precidence
@@ -364,6 +367,7 @@ let expressionTestsList =
 
             ] |> List.map parserEqualTestAsync)
 
+        // ************** FAILURES *********************
         ([
 
             "checking invalid identifier for term",
@@ -376,7 +380,51 @@ let expressionTestsList =
 [<Tests>]
 let moduleDefinitionTestsList =
     testList "module definitions tests" ([
-        ([
+        ([  
+            
+            "wire instantiation single",
+                List.ofSeq "wire test" |> WireDeclarationParser,
+                    Ok (ItemWireDecl (Single, "test"), [])
+            
+            "wire instantiation range",
+                List.ofSeq "wire[4:3] test2" |> WireDeclarationParser,
+                    Ok (ItemWireDecl (Range (4, 3), "test2"), [])
+
+            ] |> List.map parserEqualTestAsync)
+        ([  
+            
+            "port declaration input",
+                List.ofSeq "input test" |> PortDeclarationParser,
+                    Ok (ItemPort (Input, Single, "test"), [])
+            
+            "port declaration input range",
+                List.ofSeq "input[2:0] test2" |> PortDeclarationParser,
+                    Ok (ItemPort (Input, Range (2,0), "test2"), [])
+            
+            "port declaration otuput",
+                List.ofSeq "output test3" |> PortDeclarationParser,
+                    Ok (ItemPort (Output, Single, "test3"), [])
+            
+            "port declaration output range",
+                List.ofSeq "output[3:1] test4" |> PortDeclarationParser,
+                    Ok (ItemPort (Output, Range (3,1), "test4"), [])
+
+            ] |> List.map parserEqualTestAsync)
+        ([  
+            
+            "assign test",
+                List.ofSeq "assign test = a" |> AssignParser,
+                    Ok (ItemAssign("test", ExprIdentifier "a"), [])
+
+            ] |> List.map parserEqualTestAsync)
+        ([  
+            
+            "module instantiation",
+                List.ofSeq "add add_1(a, b, c)" |> ItemInstantiationParser,
+                    Ok (ItemInstantiation ("add", "add_1", [ExprIdentifier "a"; ExprIdentifier "b"; ExprIdentifier "c"]), [])
+
+            ] |> List.map parserEqualTestAsync)
+        ([  
             
             "basic module",
                 List.ofSeq "module test (); endmodule" |> ParseModuleDefinition,
@@ -384,10 +432,17 @@ let moduleDefinitionTestsList =
 
             "less basic module",
                 List.ofSeq "module test (a); input a; endmodule" |> ParseModuleDefinition,
-                    Ok ({name="test"; ports=["a"]; items=[ItemPort (Input, "a")]}, [])
+                    Ok ({name="test"; ports=["a"]; items=[ItemPort (Input, Single, "a")]}, [])
 
             ] |> List.map parserEqualTestAsync)
 
+        // ************** FAILURES *********************
+        ([
+
+            "range doesn't work when wrong way around",
+                List.ofSeq "[2:3]" |> RangeParser
+
+            ] |> List.map errorTestAsync)
         ([
 
             "misspelling of module does not parse",
