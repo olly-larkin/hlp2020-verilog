@@ -22,9 +22,9 @@ let moduleNetlist (allModules: ModuleDecl list) (thisModule: AST.Module): Netlis
 
 module Internal =
     type Endpoint =
-        | NameTarget of Identifier
-        | PortTarget of nodeName: Identifier * portName: Identifier
-        | ConstantTarget of {| value: int; width: int |}
+        | NameEndpoint of Identifier
+        | PortEndpoint of nodeName: Identifier * portName: Identifier
+        | ConstantEndpoint of {| value: int; width: int |}
 
     /// A connection target along with a range. Useful when instantiating expressions feeding
     /// into a module port
@@ -83,9 +83,9 @@ module Internal =
                             | ((Output, portName, portRange),
                                AST.ExprIdentifier targetName) ->
                                 Some
-                                    { src = PortTarget(instanceName, portName)
+                                    { src = PortEndpoint(instanceName, portName)
                                       srcRange = portRange
-                                      target = NameTarget targetName
+                                      target = NameEndpoint targetName
                                       targetRange = moveRangeToBase portRange }
                             | ((Output, _, _), _) ->
                                 failwith
@@ -101,7 +101,7 @@ module Internal =
                             | (Input, portName, range) ->
                                 Some
                                     (exprNodesWithOutput operatorIdx expr
-                                         (PortTarget(instanceName, portName),
+                                         (PortEndpoint(instanceName, portName),
                                           range))
                             | (Output, _, _) -> None)
                         |> List.unzip
@@ -116,7 +116,7 @@ module Internal =
                     // TODO don't assume all assignments are to single wires
                     let (newConns, newNodes) =
                         exprNodesWithOutput operatorIdx expression
-                            (NameTarget targetNodeName, Single)
+                            (NameEndpoint targetNodeName, Single)
                     (newConns @ connections, newNodes @ nodes)
 
                 | AST.ItemWireDecl _ -> failwith "Not yet implemented (wires)")
@@ -126,7 +126,7 @@ module Internal =
         // Remove all references
         ||> List.fold (fun directConns conn ->
                 match conn.src, conn.target with
-                | (NameTarget(_) as src), (NameTarget(_) as target) ->
+                | (NameEndpoint(_) as src), (NameEndpoint(_) as target) ->
                     directConns
                     |> List.confirmedMap (fun existingConn ->
                         if existingConn.target = src then
@@ -138,7 +138,7 @@ module Internal =
                     |> (function
                     | (newConns, true) -> newConns
                     | (sameConns, false) -> conn :: sameConns)
-                | NameTarget(_) as src, target ->
+                | NameEndpoint(_) as src, target ->
                     directConns
                     |> List.confirmedMap (fun existingConn ->
                         if existingConn.target = src
@@ -147,7 +147,7 @@ module Internal =
                     |> (function
                     | (newConns, true) -> newConns
                     | (sameConns, false) -> conn :: sameConns)
-                | src, (NameTarget(_) as target) ->
+                | src, (NameEndpoint(_) as target) ->
                     directConns
                     |> List.confirmedMap (fun existingConn ->
                         if existingConn.src = target then
@@ -169,7 +169,7 @@ module Internal =
                       target = endpointToTarget connection.target
                       targetRange = connection.targetRange }
                 match connection.src with
-                | NameTarget srcName ->
+                | NameEndpoint srcName ->
                     intermediateNodes
                     |> List.confirmedMap (function
                         | InputPin(pinName, conns) when pinName = srcName ->
@@ -179,11 +179,11 @@ module Internal =
                     | (finalNodes, true) -> finalNodes
                     | (_, false) -> failwithf "Pin %s was not found" srcName)
 
-                | ConstantTarget constantSpec ->
+                | ConstantEndpoint constantSpec ->
                     Constant
                         {| constantSpec with connections = [ finalConnection ] |}
                     :: intermediateNodes
-                | PortTarget(instanceName, portName) ->
+                | PortEndpoint(instanceName, portName) ->
                     intermediateNodes
                     |> List.confirmedMap (function
                         | ModuleInstance instance when instance.instanceName =
@@ -210,9 +210,9 @@ module Internal =
 
     let endpointToTarget (endpoint: Endpoint): Netlist.ConnectionTarget =
         match endpoint with
-        | NameTarget name -> PinTarget name
-        | PortTarget(nodeName, portName) -> InstanceTarget(nodeName, portName)
-        | ConstantTarget _ -> failwith "Tried to connect into constant"
+        | NameEndpoint name -> PinTarget name
+        | PortEndpoint(nodeName, portName) -> InstanceTarget(nodeName, portName)
+        | ConstantEndpoint _ -> failwith "Tried to connect into constant"
 
     let nodeName node =
         match node with
@@ -227,7 +227,7 @@ module Internal =
 
         match expr with
         | AST.ExprIdentifier name ->
-            ([ { src = NameTarget(name)
+            ([ { src = NameEndpoint(name)
                  srcRange = moveRangeToBase targetRange
                  target = targetEndpoint
                  targetRange = targetRange } ], [])
@@ -242,7 +242,7 @@ module Internal =
                       moduleName = BOpIdentifier op
                       connections = Map.empty })
             let outputConnection =
-                { src = PortTarget(operatorNodeName, "output")
+                { src = PortEndpoint(operatorNodeName, "output")
                   srcRange = moveRangeToBase targetRange
                   target = targetEndpoint
                   targetRange = targetRange }
@@ -251,10 +251,10 @@ module Internal =
 
             let (leftConnections, leftNodes) =
                 exprNodesWithOutput operatorIdx left
-                    (PortTarget(operatorNodeName, "left"), inputRange)
+                    (PortEndpoint(operatorNodeName, "left"), inputRange)
             let (rightConnections, rightNodes) =
                 exprNodesWithOutput operatorIdx right
-                    (PortTarget(operatorNodeName, "right"), inputRange)
+                    (PortEndpoint(operatorNodeName, "right"), inputRange)
 
             (outputConnection :: leftConnections @ rightConnections,
              operatorNode :: leftNodes @ rightNodes)
@@ -268,7 +268,7 @@ module Internal =
                       moduleName = UOpIdentifier op
                       connections = Map.empty }
             let outputConnection =
-                { src = PortTarget(operatorNodeName, "output")
+                { src = PortEndpoint(operatorNodeName, "output")
                   srcRange = moveRangeToBase targetRange
                   target = targetEndpoint
                   targetRange = targetRange }
@@ -276,7 +276,7 @@ module Internal =
             let inputRange = moveRangeToBase targetRange
             let (exprConnections, exprNodes) =
                 exprNodesWithOutput operatorIdx expr
-                    (PortTarget(operatorNodeName, "input"), inputRange)
+                    (PortEndpoint(operatorNodeName, "input"), inputRange)
 
             (outputConnection :: exprConnections, operatorNode :: exprNodes)
         | AST.ExprNumber(givenWidth, value) ->
@@ -284,7 +284,7 @@ module Internal =
                 givenWidth |> Option.defaultValue (rangeWidth targetRange)
 
             let connection =
-                { src = ConstantTarget
+                { src = ConstantEndpoint
                           {| width = width
                              value = value |}
                   srcRange = moveRangeToBase targetRange
