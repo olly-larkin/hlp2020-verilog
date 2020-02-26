@@ -13,11 +13,11 @@ open WaveTypes
 
 
 let testInput = [
-    SimWire{portName = "module"; output = [1;0;0;1;0;1;1;0]};
-    SimWire{portName = "module"; output = [0;1;0;1;0;1;0;1]};
-    SimWire{portName = "module"; output = [1;1;1;1;0;0;0;0]};
-    SimBus{portName = "module"; outputList = [(0,[1;0;0;1;0;1;1;0]); (1,[1;1;0;1;0;1;1;0]); (2,[1;0;1;1;0;0;1;0])]};
-    SimBus{portName = "module"; outputList = [(0,[1;1;0;1;1;0;0;1]); (1,[1;0;1;0;0;0;1;0]); (2,[1;1;1;1;1;1;1;0])]};
+    SimWire{portName = "a"; output = [1;0;0;1;0;1;1;0]};
+    SimWire{portName = "b"; output = [0;1;0;1;0;1;0;1]};
+    SimWire{portName = "out"; output = [1;1;1;1;0;0;0;0]};
+    SimBus{portName = "reg1"; outputList = [(0,[1;0;0;1;0;1;1;0]); (1,[1;1;0;1;0;1;1;0]); (2,[1;0;1;1;0;0;1;0])]};
+    SimBus{portName = "reg2"; outputList = [(0,[1;1;0;1;1;0;0;1]); (1,[1;0;1;0;0;0;1;0]); (2,[1;1;1;1;1;1;1;0])]};
 ]
 
 
@@ -33,8 +33,8 @@ let toFile (modName, svgString) = writeStringToFile (sprintf "../../../outputsvg
 
 [<EntryPoint>]
 let main argv =    
-    let svgGroup = testInput |> Waveform.SimOutputToWaveform |> Waveform.SetPosition |> Waveform.GroupWaveformElements
-    let outString =  output svgGroup "" false
+    let svgGroup = testInput |> Waveform.SimOutputToWaveform
+    let outString =  output svgGroup None None false
     ("Test",outString) |> toFile
 
     0 // return an integer exit code
