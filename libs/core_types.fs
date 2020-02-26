@@ -58,6 +58,7 @@ module Netlist =
                     [ this.moduleName = that.moduleName
                       this.instanceName = that.instanceName
                       equivalentMaps sameListElements this.connections that.connections ]
+            | _ -> false
 
 
     [<CustomEquality>]
