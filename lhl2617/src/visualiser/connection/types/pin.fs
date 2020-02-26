@@ -24,7 +24,7 @@ let visualiseInputPinConnection (nodeMap: NodeMap) (source: Identifier) (cons: C
 
         (* for pins we always use labels, much easier and less likely to fail *)
         let sourceRange = (getPortPropFromVNode sourceNode Output source).range
-        let conGroup = groupConnections cons sourceRange
+        let conGroup = groupConnections cons
         
         let sourceSVG = getSourceLabel source sourceNode sourceRange labelId
         let targetSVG = 
