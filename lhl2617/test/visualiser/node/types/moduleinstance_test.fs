@@ -46,10 +46,10 @@ let getWidthTests =
                 12.
         "short portname and instName",
             ("a", ["1", 1], []),
-                0.
+                4.
         "instName longer than portnName but still short",
             ("abc", ["1", 1], ["1", 1]),
-                0.
+                4.
     ]
 
 let getHeightTests = 
@@ -72,25 +72,17 @@ let getHeightTests =
                 4.
         "a lot",
             ([1; 2; 3; 4; 5; 6; 7], []),
-                9.
+                10.
     ]
 
 let getSrcPortsRangeFromModInstTests =
-    let con0 = { srcPortIndex = 0; target=PinTarget {| pinName="foo"; pinIndex=0 |} }
-    let con1 = { srcPortIndex = 1; target=PinTarget {| pinName="foo"; pinIndex=1 |} }
-    let con2 = { srcPortIndex = 2; target=PinTarget {| pinName="foo"; pinIndex=0 |} }
-    let con3 = { srcPortIndex = 3; target=PinTarget {| pinName="foo"; pinIndex=1 |} }
-    let con4 = { srcPortIndex = 4; target=PinTarget {| pinName="foo"; pinIndex=0 |} }
-    let con5 = { srcPortIndex = 5; target=PinTarget {| pinName="foo"; pinIndex=1 |} }
-    let con6 = { srcPortIndex = 6; target=PinTarget {| pinName="foo"; pinIndex=0 |} }
-    let con7 = { srcPortIndex = 7; target=PinTarget {| pinName="foo"; pinIndex=1 |} }
-   
+    let con0 = { srcRange=Single; targetRange=Single; target=PinTarget "test" }
+    let con1 = { srcRange=Range(1, 1); targetRange=Single; target=PinTarget "test" }
+    let con2 = { srcRange=Range(3, 0); targetRange=Single; target=PinTarget "test" }
 
     let modInst0 = { moduleName=UOpIdentifier UOpMinus; instanceName="inst"; connections=Map [("a", [con0])] }
     let modInst1 = { moduleName=UOpIdentifier UOpMinus; instanceName="inst"; connections=Map [("a", [con1])] }
     let modInst2 = { moduleName=UOpIdentifier UOpMinus; instanceName="inst"; connections=Map [("a", [con0; con1])] }
-    let modInst3 = { moduleName=UOpIdentifier UOpMinus; instanceName="inst"; connections=Map [("a", [con0; con1; con2; con3; con4; con5; con6; con7])] }
-    let modInst4 = { moduleName=UOpIdentifier UOpMinus; instanceName="inst"; connections=Map [("a", [con0; con1; con2]); ("b", [con1; con2; con3])] }
 
     [
         "simple Single",
@@ -101,12 +93,6 @@ let getSrcPortsRangeFromModInstTests =
                 Range (1, 1)
         "simple range",
             modInst2,
-                Range (1, 0)
-        "long range",
-            modInst3,
-                Range (7, 0)
-        "overlapping range",
-            modInst4,
                 Range (3, 0)
     ]
 

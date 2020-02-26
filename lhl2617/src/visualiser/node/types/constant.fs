@@ -51,13 +51,6 @@ let verifyConstantConnections (cons: Connection list) =
         List.head targets
     | _ -> failwithf "ERROR: Constants can only connect to one Pin or Module Instance."
 
-let rec intToBinary i = 
-    match i with
-    | 0 | 1 -> string i
-    | _ ->
-        let bit = string (i % 2)
-        (intToBinary (i / 2)) + bit
-
 let getDiamond (x, y) = 
     let o = defaultGraphicsProps.diamondOffset
     let top = (x, y - o)
@@ -79,7 +72,7 @@ let visualiseConstant (nodeMap: NodeMap) (elem: ConstantElem): SVGElement =
                      ^pt1            ^pt2
     *)              
 
-    let binStr = string width + "'b" + intToBinary value
+    let binStr = string value
 
     let endpointProp = getPortPropFromVNode targetNode Input portId 
     let pt2 = endpointProp.coord

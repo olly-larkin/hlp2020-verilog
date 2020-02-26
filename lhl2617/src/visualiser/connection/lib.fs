@@ -69,7 +69,7 @@ let getBlobs sourceY bendPointX targetYs =
 
 let groupConnections (cons: Connection list): ConnectionGroup =
     (* group connections by targetNodes and portNames 
-        List<TargetNodeId * (TargetPortName * { srcRange; targetRange })>
+        / List<TargetNodeId * (TargetPortName * List<InputRange * OutputRange>)>
     *)
     let getTargetNodeId (con: Connection) =
         match con.target with 

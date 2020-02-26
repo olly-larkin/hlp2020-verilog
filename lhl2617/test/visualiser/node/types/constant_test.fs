@@ -3,14 +3,16 @@ module Verishot.Test.Constant
 open Expecto
 
 open Verishot.Test.Util
+open Verishot.CoreTypes
 open Verishot.CoreTypes.Netlist
 open Verishot.VisualiseConstant
 
 let verifyConstantConnectionsTests =
-    let con0 = { srcPortIndex = 0; target=PinTarget {| pinName="foo"; pinIndex=0 |} }
-    let con1 = { srcPortIndex = 1; target=PinTarget {| pinName="foo"; pinIndex=1 |} }
-    let con2 = { srcPortIndex = 0; target=InstanceTarget {| targetNode="bar"; portName="p1"; portIndex=1 |} }
-    let con3 = { srcPortIndex = 1; target=InstanceTarget {| targetNode="bar"; portName="p1"; portIndex=2 |} }
+
+    let con0 = { srcRange=Single; targetRange=Single; target=PinTarget "foo" }
+    let con1 = { srcRange=Range(3,0); targetRange=Range(5,2); target=PinTarget "foo" }
+    let con2 = { srcRange=Single; targetRange=Single; target=InstanceTarget ("bar", "p1") }
+    let con3 = { srcRange=Range(2,0); targetRange=Range(100,98); target=InstanceTarget ("bar", "p1") }
     [
         "1 pin",
             [con0],
@@ -27,13 +29,13 @@ let verifyConstantConnectionsTests =
     ]
 
 let verifyConstantConnectionsTestsE = 
-    let con0 = { srcPortIndex = 0; target=PinTarget {| pinName="foo"; pinIndex=0 |} }
-    let con1 = { srcPortIndex = 1; target=PinTarget {| pinName="foo"; pinIndex=1 |} }
-    let con2 = { srcPortIndex = 3; target=PinTarget {| pinName="FOOOOOO"; pinIndex=1 |} }
-    let con3 = { srcPortIndex = 0; target=InstanceTarget {| targetNode="bar"; portName="p1"; portIndex=1 |} }
-    let con4 = { srcPortIndex = 1; target=InstanceTarget {| targetNode="bar"; portName="p1"; portIndex=2 |} }
-    let con5 = { srcPortIndex = 1; target=InstanceTarget {| targetNode="bar"; portName="p2"; portIndex=2 |} }
-    let con6 = { srcPortIndex = 1; target=InstanceTarget {| targetNode="BAAAAAR"; portName="p2"; portIndex=2 |} }
+    let con0 = { srcRange=Single; targetRange=Single; target=PinTarget "foo" }
+    let con1 = { srcRange=Range(3,0); targetRange=Range(5,2); target=PinTarget "foo" }
+    let con2 = { srcRange=Range(3,0); targetRange=Range(5,2); target=PinTarget "FOOOOOO" }
+    let con3 = { srcRange=Single; targetRange=Single; target=InstanceTarget ("bar", "p1") }
+    let con4 = { srcRange=Range(2,0); targetRange=Range(100,98); target=InstanceTarget ("bar", "p1") }
+    let con5 = { srcRange=Range(2,0); targetRange=Range(100,98); target=InstanceTarget ("bar", "p2") }
+    let con6 = { srcRange=Range(2,0); targetRange=Range(100,98); target=InstanceTarget ("baaaaar", "p1") }
     [
         "different pins",
             [con0; con1; con2],

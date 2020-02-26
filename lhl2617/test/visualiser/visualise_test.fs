@@ -7,8 +7,8 @@ open Verishot.CoreTypes
 open Verishot.CoreTypes.Netlist
 
 let splitNodesTests = 
-    let inputPin0 = ("inputPin0", [{ srcPortIndex=0; target=PinTarget {| pinName="1"; pinIndex=0 |} }])
-    let inputPin1 = ("inputPin1", [{ srcPortIndex=0; target=PinTarget {| pinName="2"; pinIndex=1 |} }])
+    let inputPin0 = ("inputPin0", [{ srcRange=Single; targetRange=Single; target=PinTarget "test" }])
+    let inputPin1 = ("inputPin1", [{ srcRange=Single; targetRange=Single; target=PinTarget "test" }])
     let modInst0 = { moduleName=StringIdentifier "modInst0"; instanceName="inst0"; connections=Map.empty }
     let modInst1 = { moduleName=StringIdentifier "modInst1"; instanceName="inst1"; connections=Map.empty }
  
@@ -18,8 +18,8 @@ let splitNodesTests =
     let node1 = InputPin inputPin1
     let node2 = ModuleInstance modInst0
     let node3 = ModuleInstance modInst1
-    let node4 = Constant {| value=1; width=2; connections=[{ srcPortIndex=0; target=PinTarget {| pinIndex=0; pinName="1" |} }] |}
-    let node5 = Constant {| value=3; width=4; connections=[{ srcPortIndex=0; target=PinTarget {| pinIndex=0; pinName="1" |} }] |}
+    let node4 = Constant {| value=1; width=2; connections=[{ srcRange=Single; targetRange=Single; target=PinTarget "test" }] |}
+    let node5 = Constant {| value=3; width=4; connections=[{ srcRange=Single; targetRange=Single; target=PinTarget "test" }] |}
     let node6 = OutputPin outputPin0
     let node7 = OutputPin outputPin1
 

@@ -82,7 +82,7 @@ let getRangeStrTests =
     ]
 
 let getNumberOfInputsFromPinOrBuiltInNodeTests =
-    let inputPin0 = ("inputPin0", [{ srcPortIndex=0; target=PinTarget {| pinName="1"; pinIndex=0 |} }])
+    let inputPin0 = ("inputPin0", [{ srcRange=Single; targetRange=Single; target=PinTarget "test" }])
     let modInst0 = { moduleName=UOpIdentifier UOpMinus; instanceName="inst0"; connections=Map.empty }
     let modInst1 = { moduleName=BOpIdentifier BOpMinus; instanceName="inst1"; connections=Map.empty }
     let outputPin0 = "outputPin0"
