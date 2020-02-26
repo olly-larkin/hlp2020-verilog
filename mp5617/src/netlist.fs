@@ -127,27 +127,36 @@ module Internal =
                 match conn.src, conn.target with
                 | (NameTarget(_) as src), (NameTarget(_) as target) ->
                     directConns
-                    |> List.map (fun existingConn ->
+                    |> List.confirmedMap (fun existingConn ->
                         if existingConn.target = src then
-                            { existingConn with target = target }
+                            { existingConn with target = target }, true
                         elif existingConn.src = target then
-                            { existingConn with src = src }
+                            { existingConn with src = src }, true
                         else
-                            existingConn)
+                            existingConn, false)
+                    |> (function
+                        | (newConns, true) -> newConns
+                        | (sameConns, false) -> conn::sameConns)
                 | NameTarget(_) as src, target ->
                     directConns
-                    |> List.map (fun existingConn ->
+                    |> List.confirmedMap (fun existingConn ->
                         if existingConn.target = src then
-                            { existingConn with target = target }
+                            { existingConn with target = target }, true
                         else
-                            existingConn)
+                            existingConn, false)
+                    |> (function
+                        | (newConns, true) -> newConns
+                        | (sameConns, false) -> conn::sameConns)
                 | src, (NameTarget(_) as target) ->
                     directConns
-                    |> List.map (fun existingConn ->
+                    |> List.confirmedMap (fun existingConn ->
                         if existingConn.src = target then
-                            { existingConn with src = src }
+                            { existingConn with src = src }, true
                         else
-                            existingConn)
+                            existingConn, false)
+                    |> (function
+                        | (newConns, true) -> newConns
+                        | (sameConns, false) -> conn::sameConns)
                 | _, _ -> conn :: directConns)
     // TODO Verify that there is no undriven wire, or any wires driving nothing
 
