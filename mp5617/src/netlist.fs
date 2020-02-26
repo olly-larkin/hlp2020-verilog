@@ -49,18 +49,22 @@ module Internal =
         let operatorIdx = ref 0
 
         let initialState =
-            {| nodes = []
+            {| netRanges = Map.empty<Identifier, Range> // Map wires to their declared sizes
+               nodes = []
                connections = [] |}
 
         (initialState, thisModule.items)
         // We need to use collect because each item can require multiple nodes (e.g. expressions)
         ||> List.fold (fun state item ->
                 match item with
-                | AST.ItemPort(Output, _range, name) ->
-                    {| state with nodes = Netlist.OutputPin(name) :: state.nodes |}
-                | AST.ItemPort(Input, _range, name) ->
-                    {| state with nodes =
-                           Netlist.InputPin(name, []) :: state.nodes |}
+                | AST.ItemPort(Output, range, name) ->
+                    {| state with
+                           netRanges = Map.add name range state.netRanges
+                           nodes = Netlist.OutputPin(name) :: state.nodes |}
+                | AST.ItemPort(Input, range, name) ->
+                    {| state with
+                           netRanges = Map.add name range state.netRanges
+                           nodes = Netlist.InputPin(name, []) :: state.nodes |}
                 | AST.ItemInstantiation(moduleName, instanceName,
                                         connectionExpressions) ->
                     // Find the ports of the instantiated module from its declaration
@@ -120,15 +124,24 @@ module Internal =
 
 
                 | AST.ItemAssign(targetNodeName, expression) ->
-                    // TODO don't assume all assignments are to single wires
+                    let targetRange =
+                        state.netRanges
+                        |> Map.tryFind targetNodeName
+                        |> Option.defaultWith
+                            (fun () ->
+                                failwithf "Net %s does not exist"
+                                    targetNodeName)
+
                     let (newConns, newNodes) =
                         exprNodesWithOutput operatorIdx expression
-                            (NameEndpoint targetNodeName, Single)
+                            (NameEndpoint targetNodeName, targetRange)
                     {| state with
                            connections = state.connections @ newConns
                            nodes = state.nodes @ newNodes |}
 
-                | AST.ItemWireDecl _ -> state )
+                | AST.ItemWireDecl(size, name) ->
+                    {| state with netRanges = Map.add name size state.netRanges |})
+
         |> (fun state -> state.connections, state.nodes)
 
     let unifyConnections (connections: IntermediateConnection list): IntermediateConnection list =
