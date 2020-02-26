@@ -11,12 +11,16 @@ let moduleNetlist (allModules: ModuleDecl list) (thisModule: AST.Module): Netlis
     Some
         { moduleName = thisModule.name
           nodes =
-              thisModule
-              |> Internal.getIntermediateNodes allModules
-              |> function
-              | (connections, nodes) ->
-                  (Internal.unifyConnections connections, nodes)
-                  ||> Internal.applyConnections }
+              let (intermediateConnections, intermediateNodes) =
+                  Internal.getIntermediateNodes allModules thisModule
+              eprintf "--- Initial Connections: %A" intermediateConnections
+              let unifiedConnections =
+                  Internal.unifyConnections intermediateConnections
+              eprintf "--- Unified Connections: %A" unifiedConnections
+              let finalNodes =
+                  Internal.applyConnections unifiedConnections
+                      intermediateNodes
+              finalNodes }
 
 module Internal =
     type Endpoint =
@@ -157,13 +161,11 @@ module Internal =
                       targetRange = connection.targetRange }
                 match connection.src with
                 | NameTarget srcName ->
-                    (false, intermediateNodes)
-                    ||> List.mapFold (fun found node ->
-                            match node with
-                            | InputPin(pinName, conns) when pinName = srcName ->
-                                (InputPin(pinName, finalConnection :: conns),
-                                 true)
-                            | _ -> (node, found))
+                    intermediateNodes
+                    |> List.confirmedMap (function
+                        | InputPin(pinName, conns) when pinName = srcName ->
+                            (InputPin(pinName, finalConnection :: conns), true)
+                        | node -> (node, false))
                     |> (function
                     | (finalNodes, true) -> finalNodes
                     | (_, false) -> failwithf "Pin %s was not found" srcName)
@@ -173,32 +175,29 @@ module Internal =
                         {| constantSpec with connections = [ finalConnection ] |}
                     :: intermediateNodes
                 | PortTarget(instanceName, portName) ->
-                    (false, intermediateNodes)
-                    ||> List.mapFold (fun found node ->
-                            match node with
-                            | ModuleInstance instance when instance.instanceName =
-                                                               instanceName ->
-                                let existingPinConnections =
-                                    instance.connections
-                                    |> Map.tryFind portName
-                                    |> Option.defaultValue []
+                    intermediateNodes
+                    |> List.confirmedMap (function
+                        | ModuleInstance instance when instance.instanceName =
+                                                           instanceName ->
+                            let existingPinConnections =
+                                instance.connections
+                                |> Map.tryFind portName
+                                |> Option.defaultValue []
 
-                                let newConnections =
-                                    instance.connections
-                                    |> Map.add portName
-                                           (finalConnection
-                                            :: existingPinConnections)
+                            let newConnections =
+                                instance.connections
+                                |> Map.add portName
+                                       (finalConnection
+                                        :: existingPinConnections)
 
-                                (ModuleInstance
-                                    { instance with connections = newConnections },
-                                 true)
-                            | _ -> (node, found))
+                            (ModuleInstance
+                                { instance with connections = newConnections },
+                             true)
+                        | node -> (node, false))
                     |> (function
                     | (finalNodes, true) -> finalNodes
                     | (_, false) ->
-                        failwithf "Instance %s was not found" instanceName)
-
-                )
+                        failwithf "Instance %s was not found" instanceName))
 
     let endpointToTarget (endpoint: Endpoint): Netlist.ConnectionTarget =
         match endpoint with
