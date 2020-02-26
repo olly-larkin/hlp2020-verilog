@@ -13,10 +13,8 @@ let moduleNetlist (allModules: ModuleDecl list) (thisModule: AST.Module): Netlis
           nodes =
               let (intermediateConnections, intermediateNodes) =
                   Internal.getIntermediateNodes allModules thisModule
-              eprintf "--- Initial Connections: %A" intermediateConnections
               let unifiedConnections =
                   Internal.unifyConnections intermediateConnections
-              eprintf "--- Unified Connections: %A" unifiedConnections
               let finalNodes =
                   Internal.applyConnections unifiedConnections
                       intermediateNodes
