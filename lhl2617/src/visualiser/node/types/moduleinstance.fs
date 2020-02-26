@@ -156,17 +156,26 @@ let visualiseDeclaredModuleInstance (elem: ModuleInstance) (modName: string) (de
     newNodeMap, 1 + idx, newCoord
 
 let getSrcPortsRangeFromModInst (elem: ModuleInstance) =
-    let srcPortIdxs = 
+    let srcPortRanges = 
         elem.connections
         |> Map.toList
         |> List.collect (
             fun (_, cons) -> 
-            cons 
-            |> List.map (fun con -> con.srcPortIndex)
+                cons 
+                |> List.map (fun con -> con.srcRange)
         )
 
-    let min = List.min srcPortIdxs
-    let max = List.max srcPortIdxs
+    let srcPortBounds = 
+        srcPortRanges
+        |> List.collect (
+            fun range -> 
+                match range with 
+                | Single -> [0]
+                | Range (a, b) -> [a; b]
+        )
+
+    let min = List.min srcPortBounds
+    let max = List.max srcPortBounds
 
     match min = max && min = 0 with
     | true -> Single
@@ -186,7 +195,7 @@ let visualiseBuiltInModuleInstance (arity: int) (elem: ModuleInstance) (nodeMap:
     
     let props = 
         { defaultModuleInstanceProps with 
-            width=getWidth "   " inputPorts outputPorts // longest ops are 3chars
+            width=getWidth "xxx" inputPorts outputPorts // longest ops are 3chars
             height=getHeight inputPorts outputPorts }
 
     let borderBox = getBorderBox xy props "node-builtin-bord"

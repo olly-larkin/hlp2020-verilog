@@ -70,7 +70,7 @@ let getBlobs sourceY bendPointX targetYs =
 
 let groupConnections (cons: Connection list) (sourceRange: Range): ConnectionGroup =
     (* group connections by targetNodes and portNames 
-        List<TargetNodeId * (TargetPortName * Range)>
+        List<TargetNodeId * (TargetPortName * { srcRange; targetRange })>
 
         we take in sourceIsBus to know if the input is Single or Range
     *)
@@ -88,32 +88,23 @@ let groupConnections (cons: Connection list) (sourceRange: Range): ConnectionGro
             let max = List.max x
             Range (max, min)
 
-    let flattenPortnameGroup =
-        fun (portName: Identifier, con: List<Identifier * (int * int)>) ->
-            portName,
-            con
-            |> List.map snd
-            |> List.unzip
-            |> fun (x, y) -> { inputRange=getRangeFromList x; outputRange=getRangeFromList y }
-
     let getTargetNodeId (con: Connection) =
         match con.target with 
-        | PinTarget x -> x.pinName
-        | InstanceTarget x -> x.targetNode  
+        | PinTarget x -> x
+        | InstanceTarget (x, _) -> x  
     
-    let groupTargetConnections (con: Connection) =
-        match con.target with 
-        | PinTarget x -> x.pinName, (con.srcPortIndex, x.pinIndex)
-        | InstanceTarget x -> x.portName, (con.srcPortIndex, x.portIndex)
-    
+    let groupTargetConnections (con: Connection): Identifier * ConnectionRange =
+        let conRange = { inputRange=con.srcRange; outputRange=con.targetRange }
+        match con.target with  
+        | PinTarget pinName -> pinName, conRange
+        | InstanceTarget (_, portName) -> portName, conRange
+
     cons
     |> List.groupBy getTargetNodeId
     |> List.map (fun (id, cons) ->
         id,
         cons
         |> List.map groupTargetConnections
-        |> List.groupBy fst
-        |> List.map flattenPortnameGroup
     )
     
 let truncConnectionText text len range = 

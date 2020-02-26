@@ -25,8 +25,8 @@ let verifyConstantConnections (cons: Connection list) =
     let groupTargets =
         fun target -> 
             match target with 
-            | PinTarget t -> t.pinName, t.pinName
-            | InstanceTarget t -> t.targetNode, t.portName
+            | PinTarget t -> t, t
+            | InstanceTarget (targetId, portId) -> targetId, portId
 
     let extractTarget = fun con -> con.target
     

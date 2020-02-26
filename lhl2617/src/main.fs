@@ -244,8 +244,9 @@ let main argv =
                     }
                     Constant {| value=3; width=3; connections=[ 
                         {
-                            srcPortIndex=0
-                            target = PinTarget {| pinName="out"; pinIndex=0 |}
+                            srcRange=Range (2, 0)
+                            targetRange=Range(2, 0)
+                            target = PinTarget "out"
                         }
                      ] |}
                     InputPin ("in2", 
