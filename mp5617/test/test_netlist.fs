@@ -2,17 +2,20 @@ module Verishot.Test.Netlist
 
 open Expecto
 
-open Verishot.Netlist
 open Verishot.CoreTypes
 open Verishot.CoreTypes.Netlist
 open Verishot.CoreTypes.VerilogAST
+open Verishot.Netlist
 
 let expectNetlist decls ast expectedNetlist =
     match moduleNetlist decls ast with
     | Some actualNetlist ->
-        Expect.equal actualNetlist.moduleName expectedNetlist.moduleName "Should have same name"
-        Expect.containsAll actualNetlist.nodes expectedNetlist.nodes "Should have all expected nodes"
-        Expect.containsAll expectedNetlist.nodes actualNetlist.nodes "Should not have any extra nodes"
+        Expect.equal actualNetlist.moduleName expectedNetlist.moduleName
+            "Should have same name"
+        Expect.containsAll actualNetlist.nodes expectedNetlist.nodes
+            "Should have all expected nodes"
+        Expect.containsAll expectedNetlist.nodes actualNetlist.nodes
+            "Should not have any extra nodes"
     | None -> Expect.equal None (Some expectedNetlist) "Should not fail"
 
 [<Tests>]
@@ -79,7 +82,8 @@ let tests =
                     ports = [ "aOut" ]
                     items =
                         [ ItemPort(Output, Single, "aOut")
-                          ItemInstantiation("B", "theB", [ ExprIdentifier "aOut" ]) ] }
+                          ItemInstantiation
+                              ("B", "theB", [ ExprIdentifier "aOut" ]) ] }
 
               let expectedNetlist =
                   { moduleName = "A"
@@ -108,7 +112,8 @@ let tests =
                     ports = [ "aIn" ]
                     items =
                         [ ItemPort(Input, Single, "aIn")
-                          ItemInstantiation("B", "theB", [ ExprIdentifier "aIn" ]) ] }
+                          ItemInstantiation
+                              ("B", "theB", [ ExprIdentifier "aIn" ]) ] }
 
               let expectedNetlist =
                   { moduleName = "A"
@@ -139,7 +144,9 @@ let tests =
                           ItemPort(Input, Single, "aIn2")
                           ItemInstantiation
                               ("B", "theB",
-                               [ ExprBinary((ExprIdentifier "aIn1"), BOpBitwiseAnd, (ExprIdentifier "aIn2")) ]) ] }
+                               [ ExprBinary
+                                   ((ExprIdentifier "aIn1"), BOpBitwiseAnd,
+                                    (ExprIdentifier "aIn2")) ]) ] }
 
               let expectedNetlist =
                   { moduleName = "A"
@@ -148,12 +155,15 @@ let tests =
                             ("aIn1",
                              [ { srcRange = Single
                                  targetRange = Single
-                                 target = InstanceTarget("BOpBitwiseAnd-0", "left") } ])
+                                 target =
+                                     InstanceTarget("BOpBitwiseAnd-0", "left") } ])
                           InputPin
                               ("aIn2",
                                [ { srcRange = Single
                                    targetRange = Single
-                                   target = InstanceTarget("BOpBitwiseAnd-0", "right") } ])
+                                   target =
+                                       InstanceTarget
+                                           ("BOpBitwiseAnd-0", "right") } ])
                           ModuleInstance
                               ({ moduleName = BOpIdentifier BOpBitwiseAnd
                                  instanceName = "BOpBitwiseAnd-0"
@@ -162,7 +172,8 @@ let tests =
                                          [ "output",
                                            [ { srcRange = Single
                                                targetRange = Single
-                                               target = InstanceTarget("theB", "bIn") } ] ] })
+                                               target =
+                                                   InstanceTarget("theB", "bIn") } ] ] })
                           ModuleInstance
                               ({ moduleName = StringIdentifier "B"
                                  instanceName = "theB"
@@ -181,7 +192,11 @@ let tests =
                         [ ItemPort(Input, Single, "in1")
                           ItemPort(Input, Single, "in2")
                           ItemPort(Output, Single, "out")
-                          ItemAssign("out", ExprBinary((ExprIdentifier "in1"), BOpBitwiseAnd, (ExprIdentifier "in2"))) ] }
+                          ItemAssign
+                              ("out",
+                               ExprBinary
+                                   ((ExprIdentifier "in1"), BOpBitwiseAnd,
+                                    (ExprIdentifier "in2"))) ] }
 
               let expectedNetlist =
                   { moduleName = "A"
@@ -190,12 +205,15 @@ let tests =
                             ("in1",
                              [ { srcRange = Single
                                  targetRange = Single
-                                 target = InstanceTarget("BOpBitwiseAnd-0", "left") } ])
+                                 target =
+                                     InstanceTarget("BOpBitwiseAnd-0", "left") } ])
                           InputPin
                               ("in2",
                                [ { srcRange = Single
                                    targetRange = Single
-                                   target = InstanceTarget("BOpBitwiseAnd-0", "right") } ])
+                                   target =
+                                       InstanceTarget
+                                           ("BOpBitwiseAnd-0", "right") } ])
                           OutputPin("out")
                           ModuleInstance
                               ({ moduleName = BOpIdentifier BOpBitwiseAnd
@@ -219,7 +237,10 @@ let tests =
                     items =
                         [ ItemPort(Input, Single, "in")
                           ItemPort(Output, Single, "out")
-                          ItemAssign("out", ExprUnary(UOpBitwiseNegation, (ExprIdentifier "in"))) ] }
+                          ItemAssign
+                              ("out",
+                               ExprUnary
+                                   (UOpBitwiseNegation, (ExprIdentifier "in"))) ] }
 
               let expectedNetlist =
                   { moduleName = "A"
@@ -228,7 +249,9 @@ let tests =
                             ("in",
                              [ { srcRange = Single
                                  targetRange = Single
-                                 target = InstanceTarget("UOpBitwiseNegation-0", "input") } ])
+                                 target =
+                                     InstanceTarget
+                                         ("UOpBitwiseNegation-0", "input") } ])
                           OutputPin("out")
                           ModuleInstance
                               ({ moduleName = UOpIdentifier UOpBitwiseNegation
@@ -254,8 +277,16 @@ let tests =
                           ItemPort(Input, Single, "in2")
                           ItemPort(Output, Single, "out1")
                           ItemPort(Output, Single, "out2")
-                          ItemAssign("out1", ExprBinary((ExprIdentifier "in1"), BOpBitwiseAnd, (ExprIdentifier "in2")))
-                          ItemAssign("out2", ExprBinary((ExprIdentifier "in2"), BOpBitwiseAnd, (ExprIdentifier "in1"))) ] }
+                          ItemAssign
+                              ("out1",
+                               ExprBinary
+                                   ((ExprIdentifier "in1"), BOpBitwiseAnd,
+                                    (ExprIdentifier "in2")))
+                          ItemAssign
+                              ("out2",
+                               ExprBinary
+                                   ((ExprIdentifier "in2"), BOpBitwiseAnd,
+                                    (ExprIdentifier "in1"))) ] }
 
               let expectedNetlist =
                   { moduleName = "A"
@@ -264,18 +295,23 @@ let tests =
                             ("in1",
                              [ { srcRange = Single
                                  targetRange = Single
-                                 target = InstanceTarget("BOpBitwiseAnd-0", "left") }
+                                 target =
+                                     InstanceTarget("BOpBitwiseAnd-0", "left") }
                                { srcRange = Single
                                  targetRange = Single
-                                 target = InstanceTarget("BOpBitwiseAnd-1", "right") } ])
+                                 target =
+                                     InstanceTarget("BOpBitwiseAnd-1", "right") } ])
                           InputPin
                               ("in2",
                                [ { srcRange = Single
                                    targetRange = Single
-                                   target = InstanceTarget("BOpBitwiseAnd-0", "right") }
+                                   target =
+                                       InstanceTarget
+                                           ("BOpBitwiseAnd-0", "right") }
                                  { srcRange = Single
                                    targetRange = Single
-                                   target = InstanceTarget("BOpBitwiseAnd-1", "left") } ])
+                                   target =
+                                       InstanceTarget("BOpBitwiseAnd-1", "left") } ])
                           OutputPin("out1")
                           OutputPin("out2")
                           ModuleInstance
@@ -308,7 +344,9 @@ let tests =
               let moduleAST =
                   { name = "A"
                     ports = []
-                    items = [ ItemInstantiation("B", "theB", [ ExprNumber(Some 3, 1) ]) ] }
+                    items =
+                        [ ItemInstantiation
+                            ("B", "theB", [ ExprNumber(Some 3, 1) ]) ] }
 
               let expectedNetlist =
                   { moduleName = "A"
@@ -337,7 +375,9 @@ let tests =
               let moduleAST =
                   { name = "A"
                     ports = []
-                    items = [ ItemInstantiation("B", "theB", [ ExprNumber(Some 1, 1) ]) ] }
+                    items =
+                        [ ItemInstantiation
+                            ("B", "theB", [ ExprNumber(Some 1, 1) ]) ] }
 
               let expectedNetlist =
                   { moduleName = "A"
