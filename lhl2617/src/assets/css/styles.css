@@ -101,19 +101,21 @@
 }
 
 .output-var-text,
-.input-var-text {
+.input-var-text-source,
+.input-var-text-target {
     stroke: none;
-    font-size: calc(var(--unitPx) * 0.7);
+    font-size: calc(var(--unitPx) * 0.6);
     font-style: normal;
 }
-.input-var-text {
+.input-var-text-target {
     text-anchor: end;
 }
-.output-var-text {
+.output-var-text,
+.input-var-text-source {
     text-anchor: start;
 }
 .const {
-    font-size: calc(var(--unitPx) * 0.8);
+    font-size: calc(var(--unitPx) * 0.6);
     font-style: italic;
     stroke: black;
     fill: black;

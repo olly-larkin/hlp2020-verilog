@@ -217,7 +217,7 @@ let main argv =
     //                                                  pinIndex = 1 |} } ] ] }) ] }
     let decls = 
         [
-            { name="IntelSucc"; ports=[(Input, "in1", Range(1, 0)); (Input, "in2", Range(1, 0)); (Output, "out", Range(3, 0))]}
+            { name="IntelSucc"; ports=[(Input, "in1", Range(4, 0)); (Input, "in2", Range(10, 0)); (Output, "out", Range(3, 0))]}
         ]
 
     let netlists = 
@@ -228,6 +228,16 @@ let main argv =
                 [
                     InputPin ("in1", 
                         [
+                            {
+                                srcRange = Range(4, 3)
+                                targetRange=Range (1, 0)
+                                target = InstanceTarget ("succ", "in1")
+                            }
+                            {
+                                srcRange = Range(3, 3)
+                                targetRange=Range (1, 1)
+                                target = InstanceTarget ("succ", "in2")
+                            }
                             // {
                             //     srcPortIndex=1
                             //     target=PinTarget {| pinName="out"; pinIndex=3 |}
@@ -252,12 +262,9 @@ let main argv =
                     InputPin ("in2", 
                         [
                             // {
-                            //     srcPortIndex=1
-                            //     target=PinTarget {| pinName="out"; pinIndex=1 |}
-                            // }
-                            // {
-                            //     srcPortIndex=0
-                            //     target=PinTarget {| pinName="out"; pinIndex=0 |}
+                            //     srcRange = Range(4, 3)
+                            //     targetRange=Range (1, 0)
+                            //     target = InstanceTarget ("succ", "in1")
                             // }
                         ]
                     )

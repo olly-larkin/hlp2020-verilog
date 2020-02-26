@@ -18,7 +18,7 @@ open Verishot.VisualiserUtil.Functions
 let defaultGraphicsProps = 
     {| maxConnectionTextLen=12
        xSize=0.25
-       varTextOffset=0.2
+       varTextOffset=0.1
        varTextTransformUp=0.1
        labelTextOffset=0.5
        blobRadius=0.15 |}
@@ -60,11 +60,10 @@ let getBlobs sourceY bendPointX targetYs =
     match List.length targetYs <= 1 with
     | true -> []
     | _ -> 
-        let tmp =
-            if List.head targetYs <> sourceY then targetYs.[1..] else targetYs
+        let firstIdx = if List.head targetYs <> sourceY then 1 else 0
+        let lastIdx  = if List.last targetYs <> sourceY then List.length targetYs - 2 else List.length targetYs - 1
 
-        let blobYs =
-            if List.last targetYs <> sourceY then tmp.[..tmp.Length - 2] else tmp
+        let blobYs = targetYs.[firstIdx..lastIdx]
 
         blobYs |> List.map (fun cy -> Circle((bendPointX, cy), defaultGraphicsProps.blobRadius, [ ("class", "wire-blob") ], None))
 
@@ -133,18 +132,25 @@ let getLinesAndBlobsToTarget (targets: (Identifier * ConnectionRange) list) (tar
     let linesSVG = 
         targets 
         |> List.map 
-            (fun (targetPortId, connectionRanges) -> 
-                let sourceRange = connectionRanges.inputRange
+            (fun (targetPortId, conRange) -> 
+                let sourceRange = conRange.inputRange
+                let targetRange = conRange.outputRange
+
                 let endpointProp = getPortPropFromVNode targetNode Input targetPortId 
                 let pt4 = endpointProp.coord
                 let pt3 = fst pt2, snd pt4
-                
-                let varStr = truncConnectionText "" defaultGraphicsProps.maxConnectionTextLen sourceRange
+
+                let sourceStr = truncConnectionText "" defaultGraphicsProps.maxConnectionTextLen sourceRange
+                let targetStr = truncConnectionText "" defaultGraphicsProps.maxConnectionTextLen targetRange
                 
                 let line = Polyline([pt2; pt3; pt4], [("class", getLineClassName sourceRange)], None)
-                let varText = Text((fst pt4 - defaultGraphicsProps.varTextOffset, snd pt4 - defaultGraphicsProps.varTextTransformUp), varStr, [("class", "input-var-text")], Some <| sprintf "Bus: %s" varStr)
 
-                [line; varText] |> groupSVG [] None)
+                let textY = snd pt4 - defaultGraphicsProps.varTextTransformUp
+
+                let sourceText = Text((fst pt3 + defaultGraphicsProps.varTextOffset, textY), sourceStr, [("class", "input-var-text-source")], Some <| sprintf "Source Bus: %s" sourceStr)
+                let targetText = Text((fst pt4 - defaultGraphicsProps.varTextOffset, textY), targetStr, [("class", "input-var-text-target")], Some <| sprintf "Target Bus: %s" targetStr)
+
+                [line; sourceText; targetText] |> groupSVG [] None)
         |> groupSVG [] None
 
     let targetYs = 
@@ -175,30 +181,20 @@ let getTargetLabelsAndBlobsForNode (sourceRange: Range) (targets: (Identifier * 
            +-------|   |
            *3      -----
 
-    distance between *3 and *4 is (number of inports of RB - index of last inport of RB)
-    taking the last port is just for aesthetic purposes to make labels more readable.
-    This means that the messy parts are closer to the RB, allowing more whitespace for labels
-    closer to the margin
+    distance between *1 and *2 is the index of the first port + 1.
     *)
 
     // draw pt1 and pt2 first
     let firstCon = List.head targets
     let firstEndpointProp = getPortPropFromVNode targetNode Input (fst firstCon)
-    let lastCon = List.last targets
-    let lastEndpointProp = getPortPropFromVNode targetNode Input (fst lastCon)
     
     let firstCoord = firstEndpointProp.coord
-    let lastTargetIdx = lastEndpointProp.index
-
-    let numberOfInputs = getNumberOfInputsFromVNode targetNode
-
-    let bendPointOffset = numberOfInputs - lastTargetIdx
-
-    let bendPointX = fst firstCoord - float bendPointOffset - 2.
+    let firstIdx = firstEndpointProp.index
 
     let labelStr = "l" + string labelId
     
     let pt1 = fst firstCoord - targetNode.props.marginLeft + 2., snd firstCoord
+    let bendPointX = fst pt1 + float firstIdx + 1.
     let pt2 = bendPointX, snd pt1
 
     let labelLine = Polyline([pt1; pt2], [("class", getLineClassName sourceRange)], Some <| "Label: " + labelStr)
@@ -279,25 +275,19 @@ let getWiresAndBlobs (source: Identifier) (sourceNode: VisualisedNode) (sourcePo
     |   |         *3+-------|   |
     -----          BP2      -----
 
-    distance between *3 and *4 is number of inports of RB - index of last inport of RB
-    taking the last port is just for aesthetic purposes to make labels more readable.
-    This means that the messy parts are closer to the RB, allowing more whitespace for labels
-    closer to the margin
+
+    distance between margin and *2 is the index of the first port + 1.
     *)
     let sourceProps = getPortPropFromPortProps sourceNode.props.outputPortProps source
     let pt1 = sourceProps.coord
 
-    let lastTargetEndpointProp = 
+    let firstTargetEndpointProp = 
         targets 
-        |> List.last 
+        |> List.head 
         |> fst 
         |> getPortPropFromPortProps targetNode.props.inputPortProps
 
-    let numberOfInputs = getNumberOfInputsFromVNode targetNode
-
-    let bendPointOffset = numberOfInputs - lastTargetEndpointProp.index
-    
-    let bendPointX = fst lastTargetEndpointProp.coord - (float bendPointOffset) - 2.
+    let bendPointX = fst pt1 + sourceNode.props.marginRight + float firstTargetEndpointProp.index + 1.
     
     let pt2 = bendPointX, snd pt1
     let varStr = truncConnectionText "" defaultGraphicsProps.maxConnectionTextLen sourcePortRange
