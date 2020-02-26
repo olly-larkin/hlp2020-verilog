@@ -57,8 +57,8 @@ module Connection =
           outputRange: Range }
   
     type ConnectionGroup = 
-        (Identifier * ((Identifier * ConnectionRange) list)) list
-        // List<TargetNodeId * (TargetPortName * (InputRange * OutputRange))>
+        (Identifier * (Identifier * ConnectionRange) list) list
+        // List<TargetNodeId * (TargetPortName * List<InputRange * OutputRange>)>
 
 module Functions =
     let truncText text len =

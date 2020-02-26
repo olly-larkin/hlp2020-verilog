@@ -77,7 +77,7 @@ let groupConnections (cons: Connection list): ConnectionGroup =
         | PinTarget x -> x
         | InstanceTarget (x, _) -> x  
     
-    let groupTargetConnections (con: Connection): Identifier * ConnectionRange =
+    let groupByTarget (con: Connection): Identifier * ConnectionRange =
         let conRange = { inputRange=con.srcRange; outputRange=con.targetRange }
         match con.target with  
         | PinTarget pinName -> pinName, conRange
@@ -88,9 +88,9 @@ let groupConnections (cons: Connection list): ConnectionGroup =
     |> List.map (fun (id, cons) ->
         id,
         cons
-        |> List.map groupTargetConnections
+        |> List.map groupByTarget
     )
-    
+
 let truncConnectionText text len range = 
     let rangeStr = getRangeStr range
     truncText text (len - String.length rangeStr) + rangeStr
@@ -311,3 +311,18 @@ let getWiresAndBlobs (source: Identifier) (sourceNode: VisualisedNode) (sourcePo
     let linesSVG, blobsSVG = getLinesAndBlobsToTarget targets targetNode pt2
         
     [sourceSVG; linesSVG; blobsSVG] |> groupSVG [] None
+
+let visualiseLabel sourceNode sourcePort sourceRange (conGroup: ConnectionGroup) nodeMap lId =
+    let sourceSVG = getSourceLabel sourcePort sourceNode sourceRange lId
+    let targetSVG = 
+        conGroup 
+        |> List.map (fun (targetNode, cons) -> getTargetLabelsAndBlobsForNode sourceRange cons (getNodeFromNodeMap nodeMap targetNode) lId)
+        |> groupSVG [] None
+        
+    [sourceSVG; targetSVG] |> groupSVG [("class", "label-group"); ("id", string lId)] None, lId + 1
+
+let visualiseWire sourceNode sourcePort sourceRange (conGroup: ConnectionGroup) nodeMap (lId: int) = 
+    let targetNodeId, targets = conGroup |> List.head
+    let targetNode = getNodeFromNodeMap nodeMap targetNodeId
+
+    [getWiresAndBlobs sourcePort sourceNode sourceRange targets targetNode] |> groupSVG [("class", "label-group"); ("id", string lId)] None, lId

@@ -1,17 +1,9 @@
-.global {
+* {
     font-family: Consolas, 'Courier New', monospace;
-}
-.global use {
-    fill: red !important;
-    stroke: red !important;
-}
-.global use * {
-    fill: red !important;
-    stroke: red !important;
 }
 .node-bord {
     fill: none;
-    /* stroke: pink; */
+    stroke: pink;
 }
 .node-actual {
     fill: #f7f1e3;
@@ -19,7 +11,7 @@
 }
 .node-builtin-bord {
     fill: none;
-    /* stroke: pink; */
+    stroke: pink;
 }
 .node-builtin-actual {
     fill: #e8e9ff;

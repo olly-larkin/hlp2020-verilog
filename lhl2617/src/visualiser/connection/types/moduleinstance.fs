@@ -14,13 +14,14 @@ open Verishot.VisualiserUtil
 open Verishot.VisualiserUtil.Functions
 open Verishot.VisualiseConnectionLib
 
+
 let visualiseModuleInstanceConnection (elem: ModuleInstance) (nodeMap: NodeMap) labelId = 
     let source = elem.instanceName
     let sourceNode = getNodeFromNodeMap nodeMap source
     
     let targetGroups =
         elem.connections
-        |> Map.map (fun sourceId cons -> groupConnections cons)
+        |> Map.map (fun _ cons -> groupConnections cons)
         |> Map.toList
 
     let svgElems, finalLabelId = 
@@ -29,18 +30,8 @@ let visualiseModuleInstanceConnection (elem: ModuleInstance) (nodeMap: NodeMap) 
             (fun lId (sourcePort, conGroup) -> 
                 let sourceRange = (getPortPropFromVNode sourceNode Output sourcePort).range
                 match labelRequired sourceNode sourcePort conGroup nodeMap with 
-                | true -> 
-                    let sourceSVG = getSourceLabel sourcePort sourceNode sourceRange lId
-                    let targetSVG = 
-                        conGroup 
-                        |> List.map (fun (targetNode, cons) -> getTargetLabelsAndBlobsForNode sourceRange cons (getNodeFromNodeMap nodeMap targetNode) labelId)
-                        |> groupSVG [] None
-                        
-                    [sourceSVG; targetSVG] |> groupSVG [("class", "label-group"); ("id", string lId)] None, lId + 1
-                | false -> 
-                    let targetNodeId, targets = conGroup |> List.head
-                    let targetNode = getNodeFromNodeMap nodeMap targetNodeId
-                    [getWiresAndBlobs sourcePort sourceNode sourceRange targets targetNode] |> groupSVG [("class", "label-group"); ("id", string lId)] None, lId
+                | true -> visualiseLabel sourceNode sourcePort sourceRange conGroup nodeMap lId
+                | false -> visualiseWire sourceNode sourcePort sourceRange conGroup nodeMap lId
             )
     svgElems |> groupSVG [] None, finalLabelId
 

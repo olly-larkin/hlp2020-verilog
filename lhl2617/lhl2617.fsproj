@@ -4,8 +4,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../libs/util.fs" />
     <Compile Include="../libs/core_types.fs" />
+    <Compile Include="../libs/util.fs" />
     <Compile Include="../libs/svg.fs" />
     <Compile Include="src/visualiser/maps.fs" />
     <Compile Include="src/visualiser/util.fs" />
