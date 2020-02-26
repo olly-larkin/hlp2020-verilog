@@ -112,12 +112,15 @@ module Internal =
 
 
                     (List.concat [ connections; inConnections; outConnections ],
-                     instance :: List.append nodes inNodes)
+                     instance :: List.concat [ nodes; inNodes; nodes ])
 
                 | AST.ItemAssign(targetNodeName, expression) ->
                     // TODO don't assume all assignments are to single wires
-                    exprNodesWithOutput operatorIdx expression
-                        (NameTarget targetNodeName, Single)
+                    let (newConns, newNodes) =
+                        exprNodesWithOutput operatorIdx expression
+                            (NameTarget targetNodeName, Single)
+                    (newConns @ connections, newNodes @ nodes)
+
                 | AST.ItemWireDecl _ -> failwith "Not yet implemented (wires)")
 
     let unifyConnections (connections: IntermediateConnection list): IntermediateConnection list =
