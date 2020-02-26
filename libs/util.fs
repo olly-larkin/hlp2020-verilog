@@ -1,6 +1,7 @@
 module Verishot.Util
 
 open System.IO
+open Verishot.CoreTypes
 
 let print x = printfn "%A" x
 
@@ -10,6 +11,18 @@ let readFileToString (filename: string): string =
 
 let writeStringToFile (filename: string) (content: string) =
     File.WriteAllText(filename, content)
+
+/// Get the number of bits a Range represents
+let rangeWidth range =
+    match range with
+    | Range(high, low) -> abs(high - low) + 1
+    | Single -> 1
+
+/// Keep the number of bits the same but make range start at 0
+let moveRangeToBase range =
+    match range with
+    | Single -> Single
+    | _ -> Range(rangeWidth range - 1, 0)
 
 module List =
     let catOptions (xs: 'a option list): 'a list =
