@@ -38,10 +38,18 @@ and ModuleItemParser inp =
             ItemInstantiationParser
         ] >=> Symbol.Semmicolon <&> fun (a,_) -> a)
 
+and RangeParser inp =
+    inp |> (Symbol.LeftSquareBra >=> Number.Value >=> Symbol.Colon >=> Number.Value >=> Symbol.RightSquareBra <&> fun ((((_,a),_),b),_) -> Range (a,b))
+
 and PortDeclarationParser inp =
+    let portMap (dir: Direction) =
+        fun ((_,range),a) ->
+            match range with
+            | None -> ItemPort (dir, Single, a)
+            | Some range' -> ItemPort (dir, range', a) 
     inp |> buildParser [ 
-        Keyword.Input >=> Identifier <&> fun (_,a) -> ItemPort (Input, a) 
-        Keyword.Output >=> Identifier <&> fun (_,a) -> ItemPort (Output, a) 
+        Keyword.Input ?=> RangeParser >=> Identifier <&> (portMap Input)
+        Keyword.Output ?=> RangeParser >=> Identifier <&> (portMap Output)
     ]
 
 and AssignParser inp =
@@ -49,10 +57,10 @@ and AssignParser inp =
         ItemAssign (a,b))
 
 and WireDeclarationParser inp =
-    inp |> (Keyword.Wire ?=> (Symbol.LeftSquareBra >=> Number.Value >=> Symbol.Colon >=> Number.Value >=> Symbol.RightSquareBra) >=> Identifier <&> fun ((_,range),iden) ->
+    inp |> (Keyword.Wire ?=> RangeParser >=> Identifier <&> fun ((_,range),iden) ->
         match range with
         | None -> ItemWireDecl (Single, iden)
-        | Some ((((_,a),_),b),_) -> ItemWireDecl (Range (a,b), iden))
+        | Some range' -> ItemWireDecl (range', iden))
 
 and ItemInstantiationParser inp =
     inp |> (Identifier >=> Identifier >=> Symbol.LeftRoundBra ?=> ExpressionListParser >=> Symbol.RightRoundBra <&> fun ((((a,b),_),c),_) ->
