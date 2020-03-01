@@ -13,5 +13,12 @@ The example output exercises all required features for supported netlists. There
 
 ## Individual Statement 
 * Code will be inserted into Team part after `Verishot.AST` and `Verishot.Netlist` modules, as this module requires the output from the netlist which follows output  of the AST module.
-* I wrote the SVG library (`Verishot.SVG`) located in `../libs/svg.fs`. This is intended to be a easy-to-use and easy-to-extend generic SVG library. The library currently contains SVG elements required for this module and also for another teammate's module (`Verishot.Waveform`), but can be easily extended to contain more SVG elements.
+* I wrote the SVG library (`Verishot.SVG`) located in `../libs/svg.fs`. This is intended to be a easy-to-use and easy-to-extend generic SVG library. The library currently contains SVG elements required by this module and also for another teammate's module (`Verishot.Waveform`), but can be easily extended to contain more SVG elements. There is also support for CSS stylesheets and JavaScript scripts.
 * This module heavily relies on core types (located in `../libs/core_types.fs`) co-developed by the team. We discussed on the interfacing types before and during work to make sure the features supported are adequate.
+
+## Tests
+Tests are located in `test` and can be run using `dotnet run` in the `test` directory. There are a combination of pre-defined `Expecto` tests as well as generated `FsCheck` property-based tests. 
+
+`test/visualiser/util_test.fs` demonstrates varied testing methodology, including use of arbitrary modifiers to generate custom property-based tests. 
+
+The `Expecto` testbench is designed to be easily-extendable, and the definition of a `Expecto` test list is simply a list of `(name, input, expected output)` tuples. The test lists are then passed on to test generators to create `async` tests.
