@@ -58,6 +58,7 @@ module Netlist =
                     [ this.moduleName = that.moduleName
                       this.instanceName = that.instanceName
                       equivalentMaps sameListElements this.connections that.connections ]
+            | _ -> false
 
 
     [<CustomEquality>]
@@ -220,7 +221,7 @@ module VerilogAST =
         | ExprIndex of Expr * Index
 
     type ModuleItem =
-        | ItemPort of Direction * Identifier
+        | ItemPort of Direction * Range * Identifier
         | ItemAssign of Identifier * Expr
         | ItemWireDecl of Range * Identifier
         | ItemInstantiation of Identifier * Identifier * Expr list
