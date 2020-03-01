@@ -12,7 +12,7 @@ module Waveform =
     
     let styleprops = [("fill", "none");("stroke","black");("stroke-width","1")] //Standard style for waveforms
 
-    let objTextBox name = 
+    let textBox name = 
         Group([Rectangle((0.0,0.0),(9.0, 4.0) ,[("fill", "none"); ("stroke","black")], Some name);
         Text((1.0,2.2),name,[("fill", "black")],Some name)],[],None) //standard style for waveform labels
                              
@@ -92,16 +92,40 @@ module Waveform =
     let GenPortWaveform (initialState:WaveformState) (portVals:int list) = 
         (initialState, portVals) ||> List.fold SingleCycle
 
-    let GenWireWaveform (portName:string) (vals:int list) : PortWaveform =
+    let GenWireWaveform (portName:string) (vals:int list) =
         let waveform = GenPortWaveform initState vals
-        let wireBlock = Group([objTextBox portName; translateSVG (9.0,0.0) (wrappedWave waveform.svgVals)],[], None)
+        let wireBlock = Group([textBox portName; translateSVG (9.0,0.0) (wrappedWave waveform.svgVals)],[], None)
         {waveBlock = wireBlock}
 
-    let GenBusWaveform (portName:string) (vals:(int * int list)list) =
+    let GenBusWaveform (portName:string) (portRange: int) (vals:int list) =
         let pinName pinNo = portName + "[" + string pinNo + "]"
+        let decToBinary (dec:int) (idx:int)  = (idx, dec%2), dec/2 
         let singlePortWaveform = GenPortWaveform initState
-        let individualPortWaveform (offset:float) (inp:(int * int list)) = (translateSVG (0.0,4.0 * offset) (Group([objTextBox (pinName (fst(inp))) ; translateSVG (9.0,0.0) (wrappedWave (singlePortWaveform (snd(inp))).svgVals)],[], None))), (offset + 1.0)
-        {waveBlock = Group([objTextBox portName] @fst(List.mapFold individualPortWaveform 1.0 vals),[], None)}
+        let keyCheck (map: Map<int, int list>) (idx:int) = if map.ContainsKey idx then map.[idx] else []
+        let addPinValToMap (map: Map<int, int list>) (pinVal:(int*int)) = map.Add ((fst(pinVal)),((keyCheck map (fst(pinVal))) @ [snd(pinVal)]))
+        let addCycleToMap (busWaveforms: Map<int, int list>) (decVal: (int*int) list) = (busWaveforms, decVal) ||> List.fold addPinValToMap 
+        let decToPinVals (dec:int) =
+            [0..(portRange-1)]
+            |> List.mapFold decToBinary dec
+            |> fst
+        let decToWaveformList = 
+            vals
+            |> List.map decToPinVals
+            |> List.fold addCycleToMap Map.empty
+            |> Map.toList
+        let createWaveBox (inp:(int * int list)) = 
+            let elemList = 
+                [(singlePortWaveform (snd(inp))).svgVals
+                    |> wrappedWave
+                    |> translateSVG (9.0,0.0)]
+                |> (@) [textBox (pinName (fst(inp)))]
+            Group(elemList,[], None)
+        let individualPortWaveform (offset:float) (inp:(int * int list)) = translateSVG (0.0,4.0 * offset) (createWaveBox inp) , (offset + 1.0)
+        let blockList =
+            List.mapFold individualPortWaveform 1.0 decToWaveformList
+            |> fst
+            |> (@) [textBox portName]
+        {waveBlock = Group(blockList,[], None)}
 
     let SetPortPosition (offset:float) (port:PortWaveform) = 
         (translateSVG (0.0, offset) port.waveBlock), offset + snd(snd(getDimensionElem port.waveBlock))
@@ -117,14 +141,14 @@ module Waveform =
         let viewerDimensions = getDimensionElem(waveformList)
         let noOfCylces = int((fst(snd(viewerDimensions)) - fst(fst(viewerDimensions)) - 9.5) / 5.0) // (MaxX - MinX - offsets)/width per cycle to get the number of cycles
         let clkWaveform = List.fold clkCycle (Polyline([0.0, 3.0], styleprops, None)) [1..noOfCylces]
-        translateSVG (0.0,snd(snd(viewerDimensions))) (Group([objTextBox "clk"; translateSVG (9.0,0.0) (wrappedWave clkWaveform)],[], None))
+        translateSVG (0.0,snd(snd(viewerDimensions))) (Group([textBox "clk"; translateSVG (9.0,0.0) (wrappedWave clkWaveform)],[], None))
 
 
     let SimOutputToWaveform (inp:SimulatorPort list) =
         let portToWaveform (prt:SimulatorPort) =
             match prt with
             | SimWire wire -> GenWireWaveform wire.portName wire.output
-            | SimBus bus   -> GenBusWaveform bus.portName bus.outputList
+            | SimBus bus   -> GenBusWaveform bus.portName bus.range bus.output
         let waveformList = List.map portToWaveform inp
         let groupedWaveforms = Group(fst(List.mapFold SetPortPosition 0.0 waveformList),[], None)
         Group([groupedWaveforms ; GenClock groupedWaveforms], [], None)

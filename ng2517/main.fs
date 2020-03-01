@@ -16,8 +16,7 @@ let testInput = [
     SimWire{portName = "a"; output = [1;0;0;1;0;1;1;0]};
     SimWire{portName = "b"; output = [0;1;0;1;0;1;0;1]};
     SimWire{portName = "out"; output = [1;1;1;1;0;0;0;0]};
-    SimBus{portName = "reg1"; outputList = [(0,[1;0;0;1;0;1;1;0]); (1,[1;1;0;1;0;1;1;0]); (2,[1;0;1;1;0;0;1;0])]};
-    SimBus{portName = "reg2"; outputList = [(0,[1;1;0;1;1;0;0;1]); (1,[1;0;1;0;0;0;1;0]); (2,[1;1;1;1;1;1;1;0])]};
+    SimBus{portName = "reg1"; range = 4; output = [0;1;2;3;4;5;6;7] };
 ]
 
 
