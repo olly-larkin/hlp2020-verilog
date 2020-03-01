@@ -80,11 +80,15 @@ let getSrcPortsRangeFromModInstTests =
     let con1 = { srcRange=Range(1, 1); targetRange=Single; target=PinTarget "test" }
     let con2 = { srcRange=Range(3, 0); targetRange=Single; target=PinTarget "test" }
 
+    let noCon    = { moduleName=UOpIdentifier UOpMinus; instanceName="inst"; connections=Map [] }
     let modInst0 = { moduleName=UOpIdentifier UOpMinus; instanceName="inst"; connections=Map [("a", [con0])] }
     let modInst1 = { moduleName=UOpIdentifier UOpMinus; instanceName="inst"; connections=Map [("a", [con1])] }
     let modInst2 = { moduleName=UOpIdentifier UOpMinus; instanceName="inst"; connections=Map [("a", [con0; con1])] }
 
     [
+        "no output",
+            noCon,
+                Single
         "simple Single",
             modInst0,
                 Single

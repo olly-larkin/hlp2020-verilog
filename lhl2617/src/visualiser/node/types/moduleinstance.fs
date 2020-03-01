@@ -173,9 +173,11 @@ let getSrcPortsRangeFromModInst (elem: ModuleInstance) =
                 | Single -> [0]
                 | Range (a, b) -> [a; b]
         )
+       
 
-    let min = List.min srcPortBounds
-    let max = List.max srcPortBounds
+    // fall back to single if not found any 
+    let min = if List.isEmpty srcPortBounds then 0 else List.min srcPortBounds 
+    let max = if List.isEmpty srcPortBounds then 0 else List.max srcPortBounds 
 
     match min = max && min = 0 with
     | true -> Single
