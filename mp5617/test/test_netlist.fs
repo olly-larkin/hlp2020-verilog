@@ -545,15 +545,16 @@ let fullModuleTests =
 
           testList "Unification of connections"
               [ testProperty "Has no effect if there are no named endpoints"
-                <| Prop.forAll nonNamedEndpointConnectionList (fun conns ->
-                       (Set.ofList <| Internal.unifyConnections conns) =
-                           (Set.ofList conns))
+                <| Prop.forAll nonNamedEndpointConnectionList
+                       (fun conns ->
+                           isPermutationOf conns
+                               (Internal.unifyConnections conns))
 
                 testProperty "Is idempotent"
                 <| fun conns ->
-                    (Set.ofList << Netlist.Internal.unifyConnections
-                     <| Netlist.Internal.unifyConnections conns) =
-                        (Set.ofList <| Internal.unifyConnections conns)
+                    isPermutationOf (Netlist.Internal.unifyConnections conns)
+                        (Netlist.Internal.unifyConnections
+                         <| Netlist.Internal.unifyConnections conns)
 
                 // This is not passing yet because of current handling of ranges
                 ptestProperty "Is commutative"
