@@ -463,6 +463,83 @@ let fullModuleTests =
                                 OutputPin("out") ] }
 
                     expectNetlist decls moduleAST expectedNetlist
+                }
+
+                test "Wire 2 modules together with bus" {
+                    let decls =
+                        [ { name = "B"
+                            ports = [ (Output, "bOut", Range(5, 0)) ] }
+                          { name = "C"
+                            ports = [ (Input, "cIn", Range(5, 0)) ] } ]
+
+                    let moduleAST =
+                        { name = "A"
+                          ports = []
+                          items =
+                              [ ItemWireDecl(Range(5, 0), "between")
+                                ItemInstantiation
+                                    ("B", "theB", [ ExprIdentifier "between" ])
+                                ItemInstantiation
+                                    ("C", "theC", [ ExprIdentifier "between" ]) ] }
+
+                    let expectedNetlist =
+                        { moduleName = "A"
+                          nodes =
+                              [ ModuleInstance
+                                  ({ moduleName = StringIdentifier "B"
+                                     instanceName = "theB"
+                                     connections =
+                                         Map
+                                             [ "bOut",
+                                               [ { srcRange = Range(5, 0)
+                                                   targetRange = Range(5, 0)
+                                                   target =
+                                                       InstanceTarget
+                                                           ("theC", "cIn") } ] ] })
+                                ModuleInstance
+                                    ({ moduleName = StringIdentifier "C"
+                                       instanceName = "theC"
+                                       connections = Map.empty }) ] }
+
+                    expectNetlist decls moduleAST expectedNetlist
+                }
+                test "Wire 2 modules together with bus (different ranges)" {
+                    let decls =
+                        [ { name = "B"
+                            ports = [ (Output, "bOut", Range(20, 15)) ] }
+                          { name = "C"
+                            ports = [ (Input, "cIn", Range(5, 0)) ] } ]
+
+                    let moduleAST =
+                        { name = "A"
+                          ports = []
+                          items =
+                              [ ItemWireDecl(Range(25, 20), "between")
+                                ItemInstantiation
+                                    ("B", "theB", [ ExprIdentifier "between" ])
+                                ItemInstantiation
+                                    ("C", "theC", [ ExprIdentifier "between" ]) ] }
+
+                    let expectedNetlist =
+                        { moduleName = "A"
+                          nodes =
+                              [ ModuleInstance
+                                  ({ moduleName = StringIdentifier "B"
+                                     instanceName = "theB"
+                                     connections =
+                                         Map
+                                             [ "bOut",
+                                               [ { srcRange = Range(20, 15)
+                                                   targetRange = Range(5, 0)
+                                                   target =
+                                                       InstanceTarget
+                                                           ("theC", "cIn") } ] ] })
+                                ModuleInstance
+                                    ({ moduleName = StringIdentifier "C"
+                                       instanceName = "theC"
+                                       connections = Map.empty }) ] }
+
+                    expectNetlist decls moduleAST expectedNetlist
                 } ]
 
           testList "Unification of connections"
