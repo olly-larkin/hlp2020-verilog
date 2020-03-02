@@ -503,6 +503,7 @@ let fullModuleTests =
 
                     expectNetlist decls moduleAST expectedNetlist
                 }
+
                 test "Wire 2 modules together with bus (different ranges)" {
                     let decls =
                         [ { name = "B"
@@ -564,7 +565,9 @@ let fullModuleTests =
                                        (Internal.unifyConnections conns)
                                        (Internal.unifyConnections shuffledCons))) ] ]
 
-let private permutationsOf lst = Arb.fromGen (Gen.map List.ofArray <| Gen.shuffle lst)
+
+let private permutationsOf lst =
+    Arb.fromGen (Gen.map List.ofArray <| Gen.shuffle lst)
 
 let private isPermutationOf lst1 lst2 =
     ((Set.ofList lst1 = Set.ofList lst2) && (lst1.Length = lst2.Length))
@@ -574,7 +577,8 @@ let private portEndpoint =
     Arb.generate<NonNull<string> * NonNull<string>>
     |> Gen.map (fun (a, b) -> Netlist.Internal.PortEndpoint(a.Get, b.Get))
 
-let private constantEndpoint = Gen.map Netlist.Internal.ConstantEndpoint Arb.generate
+let private constantEndpoint =
+    Gen.map Netlist.Internal.ConstantEndpoint Arb.generate
 
 let private nameEndpoint =
     Arb.generate<NonNull<string>>
