@@ -8,9 +8,39 @@ type ModuleIdentifier =
     | BOpIdentifier of VerilogAST.BinaryOp
     | UOpIdentifier of VerilogAST.UnaryOp
 
+[<CustomEquality>]
+[<CustomComparison>]
 type Range =
     | Single
     | Range of (int * int)
+
+    override this.Equals(thatObj: obj) =
+        match thatObj with
+        | :? Range as that ->
+            match (this, that) with
+            | (Single, Single) -> true
+            | (Range(h1, l1), Range(h2, l2)) -> h1 = h2 && l1 = l2
+            | (Single, Range(h, l)) -> h = l
+            | (Range(h, l), Single) -> h = l
+        | _ -> false
+
+    override this.GetHashCode() =
+        match this with
+        | Single -> 1
+        | Range(h, l) -> (h, l).GetHashCode()
+
+    interface System.IComparable with
+        member this.CompareTo(thatObj: obj) =
+            // Actual implementation of the member
+            match thatObj with
+            | :? Range as that ->
+                match (this, that) with
+                | Single, Single -> 0
+                | Range(h1, l1), Range(h2, l2) ->
+                    if l1 - l2 = 0 then h1 - h2 else l1 - l2
+                | Range _, Single -> 1
+                | Single, Range _ -> -1
+            | _ -> invalidArg "yobj" "cannot compare value of different types"
 
 type Direction =
     | Input
