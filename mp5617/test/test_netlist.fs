@@ -545,27 +545,26 @@ let fullModuleTests =
 
           testList "Unification of connections"
               [ testProperty "Has no effect if there are no named endpoints"
-                <| Prop.forAll nonNamedEndpointConnectionList
+                <| Prop.forAll MyArbitraries.nonNamedEndpointConnectionList
                        (fun conns ->
                            isPermutationOf conns
                                (Internal.unifyConnections conns))
 
                 testProperty "Is idempotent"
-                <| fun conns ->
-                    isPermutationOf (Netlist.Internal.unifyConnections conns)
-                        (Netlist.Internal.unifyConnections
-                         <| Netlist.Internal.unifyConnections conns)
+                <| Prop.forAll MyArbitraries.connectionList (fun conns ->
+                       isPermutationOf
+                           (Netlist.Internal.unifyConnections conns)
+                           (Netlist.Internal.unifyConnections
+                            <| Netlist.Internal.unifyConnections conns))
 
-                // This is not passing yet because of current handling of ranges
-                ptestProperty "Is commutative"
-                <| Prop.forAll connectionList
+                testProperty "Is commutative"
+                <| Prop.forAll MyArbitraries.connectionList
                        (fun conns ->
                            Prop.forAll (permutationsOf conns)
                                (fun shuffledCons ->
                                    isPermutationOf
                                        (Internal.unifyConnections conns)
                                        (Internal.unifyConnections shuffledCons))) ] ]
-
 
 let private permutationsOf lst =
     Arb.fromGen (Gen.map List.ofArray <| Gen.shuffle lst)
@@ -574,59 +573,63 @@ let private isPermutationOf lst1 lst2 =
     ((Set.ofList lst1 = Set.ofList lst2) && (lst1.Length = lst2.Length))
     |@ sprintf "\n%A \n ---isPermuationOf--- \n %A\n" lst1 lst2
 
-let private portEndpoint =
-    Arb.generate<NonNull<string> * NonNull<string>>
-    |> Gen.map (fun (a, b) -> Netlist.Internal.PortEndpoint(a.Get, b.Get))
+module private MyArbitraries =
+    let connectionList =
+        let endpoint =
+            Gen.oneof [ portEndpoint; constantEndpoint; nameEndpoint ]
+        let targetEndpoint = Gen.oneof [ portEndpoint; nameEndpoint ]
 
-let private constantEndpoint =
-    Gen.map Netlist.Internal.ConstantEndpoint Arb.generate
+        Arb.fromGen (Gen.listOf (connectionOf endpoint targetEndpoint))
+        |> Arb.filter validConnectionList
 
-let private nameEndpoint =
-    Arb.generate<NonNull<string>>
-    |> Gen.map (fun n -> Netlist.Internal.NameEndpoint(n.Get))
+    let nonNamedEndpointConnectionList =
+        let nonNamedEndpoint = Gen.oneof [ portEndpoint; constantEndpoint ]
+        let nonNamedTargetEndpoint = portEndpoint
 
-let private range =
-    Gen.oneof
-        [ gen { return Single }
-          gen {
-              let! start = Arb.generate<NonNegativeInt>
-                           |> Gen.map (fun x -> x.Get)
-              let! size = Arb.generate<NonNegativeInt>
-                          |> Gen.map (fun x -> x.Get)
-              return Range(start, start + size + 1) } ]
+        Arb.fromGen
+            (Gen.listOf (connectionOf nonNamedEndpoint nonNamedTargetEndpoint))
+        |> Arb.filter validConnectionList
 
-let private connectionList: Arbitrary<list<Netlist.Internal.IntermediateConnection>> =
-    let endpoint = Gen.oneof [ portEndpoint; constantEndpoint; nameEndpoint ]
-    let targetEndpoint = Gen.oneof [ portEndpoint; nameEndpoint ]
+    let private range =
+        Gen.oneof
+            [ gen { return Single }
+              gen {
+                  let! start = Arb.generate<NonNegativeInt>
+                               |> Gen.map (fun x -> x.Get)
+                  let! size = Arb.generate<NonNegativeInt>
+                              |> Gen.map (fun x -> x.Get + 1)
+                  return Range(start + size, start) } ]
 
-    Arb.fromGenShrink
-        (Gen.listOf
-            (gen {
-                let! src = endpoint
-                let! target = targetEndpoint |> Gen.filter ((<>) src)
-                let! srcRange = range
-                let! targetRange = range
+    let private connectionOf srcGen targetGen =
+        gen {
+            let! src = srcGen
+            let! target = targetGen |> Gen.filter ((<>) src)
+            let! connectionRange = range
 
-                return { src = src
-                         target = target
-                         srcRange = srcRange
-                         targetRange = targetRange }
-             }), Arb.shrink)
+            return ({ src = src
+                      target = target
+                      srcRange = connectionRange
+                      targetRange = connectionRange }: Internal.IntermediateConnection)
+        }
 
-let private nonNamedEndpointConnectionList: Arbitrary<list<Netlist.Internal.IntermediateConnection>> =
-    let nonNamedEndpoint = Gen.oneof [ portEndpoint; constantEndpoint ]
-    let nonNamedTargetEndpoint = portEndpoint
+    let private validConnectionList conns =
+        let srcPorts = conns |> Seq.map (fun conn -> conn.src)
+        let targetPorts = conns |> Seq.map (fun conn -> conn.target)
 
-    Arb.fromGenShrink
-        (Gen.listOf
-            (gen {
-                let! src = nonNamedEndpoint
-                let! target = nonNamedTargetEndpoint |> Gen.filter ((<>) src)
-                let! srcRange = range
-                let! targetRange = range
+        let rangesMatch =
+            conns |> Seq.forall (fun conn -> conn.srcRange = conn.targetRange)
+        let noLoops =
+            Set.isEmpty
+                (Set.intersect (Set.ofSeq srcPorts) (Set.ofSeq targetPorts))
+        rangesMatch && noLoops
 
-                return { src = src
-                         target = target
-                         srcRange = srcRange
-                         targetRange = targetRange }
-             }), Arb.shrink)
+    let private portEndpoint =
+        Arb.generate<NonNull<string> * NonNull<string>>
+        |> Gen.map (fun (a, b) -> Netlist.Internal.PortEndpoint(a.Get, b.Get))
+
+    let private constantEndpoint =
+        Gen.map Netlist.Internal.ConstantEndpoint Arb.generate
+
+    let private nameEndpoint =
+        Arb.generate<NonNull<string>>
+        |> Gen.map (fun n -> Netlist.Internal.NameEndpoint(n.Get))
