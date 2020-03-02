@@ -564,7 +564,16 @@ let fullModuleTests =
                                (fun shuffledCons ->
                                    isPermutationOf
                                        (Internal.unifyConnections conns)
-                                       (Internal.unifyConnections shuffledCons))) ] ]
+                                       (Internal.unifyConnections shuffledCons)))
+
+                testProperty "Is associative"
+                <| Prop.forAll MyArbitraries.connectionList
+                       (fun conns1 ->
+                            Prop.forAll MyArbitraries.connectionList
+                               (fun conns2 ->
+                                   isPermutationOf
+                                       (Internal.unifyConnections (Internal.unifyConnections conns1)@conns2)
+                                       (Internal.unifyConnections conns1@(Internal.unifyConnections conns2)))) ] ]
 
 let private permutationsOf lst =
     Arb.fromGen (Gen.map List.ofArray <| Gen.shuffle lst)
