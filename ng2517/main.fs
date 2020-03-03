@@ -29,7 +29,7 @@ let state:WaveformState =
         svgVals = Polyline([0.0, 3.0], styleprops, None)
     }
 
-let toFile (modName, svgString) = writeStringToFile (sprintf "../../../outputsvg/%s.svg" modName) svgString
+let toFile (modName, svgString) = writeStringToFile (sprintf "outputsvg/%s.svg" modName) svgString
 
 [<EntryPoint>]
 let main argv =    
