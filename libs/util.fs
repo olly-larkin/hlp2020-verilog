@@ -6,11 +6,14 @@ open Verishot.CoreTypes
 let print x = printfn "%A" x
 
 let readFileToString (filename: string): string =
-    File.ReadAllLines(filename)
+    File.ReadAllLines filename
     |> String.concat "\n"
 
+let createPathFolder (pathString: string) =
+    Directory.CreateDirectory pathString |> ignore
+
 let writeStringToFile (filename: string) (content: string) =
-    File.WriteAllText(filename, content)
+    File.WriteAllText (filename, content)
 
 /// Get the number of bits a Range represents
 let rangeWidth range =

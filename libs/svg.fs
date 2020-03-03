@@ -199,7 +199,7 @@ let output (elem: SVGElement) (style: string Option) (script: string Option) (gr
     sprintf
         "<?xml version='1.0' encoding='UTF-8'?>\n"
         + "<!-- SVG Output - Verishot Simulator -->\n"
-        + sprintf "<svg class='global' xmlns='http://www.w3.org/2000/svg' width='%s' height='%s' viewBox='%s'>\n" ((|TOPX|) w) ((|TOPX|) h) viewBoxStr
+        + sprintf "<svg xmlns='http://www.w3.org/2000/svg' width='%s' height='%s' viewBox='%s'>\n" ((|TOPX|) w) ((|TOPX|) h) viewBoxStr
         + "<style type='text/css'>\n"
         + sprintf "%s\n" styleStr
         + "</style>\n"
@@ -209,5 +209,4 @@ let output (elem: SVGElement) (style: string Option) (script: string Option) (gr
         + sprintf "%s\n" gridOutput
         + sprintf "%s\n" borderOutput
         + sprintf "%s\n" svgOutput
-        + "<use id='use' href='#none'/>\n"
         + "</svg>"
