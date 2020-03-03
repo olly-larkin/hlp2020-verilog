@@ -9,6 +9,7 @@
     <Compile Include="../libs/svg.fs" />
     <Compile Include="wave_types.fs" />
     <Compile Include="waveform.fs" />
+    <Compile Include="waveform_testing.fs" />
     <Compile Include="main.fs" />
   </ItemGroup>
   <ItemGroup>
