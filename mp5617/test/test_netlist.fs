@@ -465,6 +465,56 @@ let fullModuleTests =
                     expectNetlist decls moduleAST expectedNetlist
                 }
 
+                test "Wire output to 2 instances" {
+                    let decls =
+                        [ { name = "B"
+                            ports = [ (Output, "bOut", Single) ] }
+                          { name = "C"
+                            ports = [ (Input, "cIn", Single) ] } ]
+
+                    let moduleAST =
+                        { name = "A"
+                          ports = []
+                          items =
+                              [ ItemWireDecl(Single, "between")
+                                ItemInstantiation
+                                    ("B", "theB", [ ExprIdentifier "between" ])
+                                ItemInstantiation
+                                    ("C", "C1", [ ExprIdentifier "between" ])
+                                ItemInstantiation
+                                    ("C", "C2", [ ExprIdentifier "between" ]) ] }
+
+                    let expectedNetlist =
+                        { moduleName = "A"
+                          nodes =
+                              [ ModuleInstance
+                                  ({ moduleName = StringIdentifier "B"
+                                     instanceName = "theB"
+                                     connections =
+                                         Map
+                                             [ "bOut",
+                                               [ { srcRange = Single
+                                                   targetRange = Single
+                                                   target =
+                                                       InstanceTarget
+                                                           ("C1", "cIn") }
+                                                 { srcRange = Single
+                                                   targetRange = Single
+                                                   target =
+                                                       InstanceTarget
+                                                           ("C2", "cIn") }] ] })
+                                ModuleInstance
+                                    ({ moduleName = StringIdentifier "C"
+                                       instanceName = "C1"
+                                       connections = Map.empty })
+                                ModuleInstance
+                                    ({ moduleName = StringIdentifier "C"
+                                       instanceName = "C2"
+                                       connections = Map.empty }) ] }
+
+                    expectNetlist decls moduleAST expectedNetlist
+                }
+
                 test "Wire 2 modules together with bus" {
                     let decls =
                         [ { name = "B"
