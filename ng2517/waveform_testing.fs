@@ -33,9 +33,9 @@ let waveStateChangeFunctionTests =
                 testWaveformState |> High2Low,
                     {prevVal = 0; svgVals = Polyline([0.0,3.0;0.0,3.0;5.0,3.0], styleprops,None)}
 
-            "High2Low Functional 1 to 1 test",
+            "High2High Functional 1 to 1 test",
                 testWaveformState |> High2High,
-                    {prevVal = 1; svgVals = Polyline([0.0,3.0;5.0,3.0], styleprops,None)}
+                    {prevVal = 1; svgVals = Polyline([0.0,3.0;5.0,0.0], styleprops,None)}
                  
 
 
@@ -80,8 +80,8 @@ let waveStateChangeMatchTests =
                     {prevVal = 0; svgVals = Polyline([0.0,3.0;0.0,3.0;5.0,3.0], styleprops,None)} 
 
             "High2High Call test",
-                (initHighTestWaveformState,0) ||> SingleWireCycle,
-                    {prevVal = 1; svgVals = Polyline([0.0,3.0;5.0,3.0], styleprops,None)} 
+                (initHighTestWaveformState,1) ||> SingleWireCycle,
+                    {prevVal = 1; svgVals = Polyline([0.0,3.0;5.0,0.0], styleprops,None)} 
 
             ] |> List.map equalTestAsync)
         ([
@@ -136,7 +136,7 @@ let busStateChangeFunctionTests =
                     "Error constructing bus waveform"
              
             "busChangeVal Error test",
-               (fun _ -> busChangeVal incorrectBusWaveformState |> ignore),
+               (fun _ -> busChangeVal incorrectBusWaveformState 0 |> ignore),
                     "Error constructing wave"
             
             ] |> List.map exceptionTestAsync)
@@ -152,19 +152,19 @@ let busStateChangeMatchTests =
     let incorrectBusWaveformState:WaveformState = {prevVal=0; svgVals = Polyline([0.0, 3.0], styleprops, None)}
     testList "Bus State Change Tests for match function" ([
         ([
-            "busSameVal Call test",
+            "busSameVal Call test1",
                 (testBusState1,0) ||> SingleBusCycle,
                     test1ExpOutput                 
 
-            "Low2High Call test",
+            "busSameVal Call test2",
                 (testBusState2,5) ||> SingleBusCycle,
                     test2ExpOutput
                  
-            "High2Low Call test",
+            "busChangeVal Call test1",
                 (testBusState1,5) ||> SingleBusCycle,
                     test3ExpOutput 
 
-            "High2High Call test",
+            "busChangeVal Call test2",
                 (testBusState2,0) ||> SingleBusCycle,
                     test4ExpOutput
 
@@ -176,8 +176,62 @@ let busStateChangeMatchTests =
     ] |> List.collect id)
 
 
-//TODO: Add helper function tests.
-//       -This should complete the tests for GenWireWaveform
-//      Add tests for the sub-functions in GenBusWaveform
+
+
+//Helper function tests.
+
+let helperFunctionTests = 
+    let testSVGElement = Polyline([0.0, 3.0;5.0,3.0], styleprops, None)
+    let errorSVGElement = Group([], styleprops, None)
+    let (testMap:Map<int, int list>) = Map[(1,[0;1])]
+    let textBoxFuncTest =
+        equalTestAsync ("Function: testBox, Input:string, Output:SVGElement" , (textBox "testString"), Group([Rectangle((0.0,0.0),(9.0, 4.0) ,[("fill", "none"); ("stroke","black")], Some "testString");Text((1.0,2.2),"testString",[("fill", "black")],Some "testString")],[],None))
+
+    let wrappedWaveFuncTest =
+        equalTestAsync ("Function: wrappedWave, Input:SVGElement, Output:SVGElement", (wrappedWave testSVGElement), Group([Rectangle((0.0,0.0),(5.5,4.0),[("fill", "none"); ("stroke","black")], None );Polyline([0.5, 3.5;5.5,3.5], styleprops, None) ], [], None))
+            
+    let setPortPositionFuncTest =
+        equalTestAsync ("Function: setPortPosition, Input:(float, SVGElement), Output:SVGElement", (setPortPosition 3.0 testSVGElement),(Polyline([0.0, 6.0;5.0,6.0], styleprops, None), 6.0))
+    
+    let addPinValToMapTest1 =
+        equalTestAsync ("Function: addPinValToMap, Input:Map, int*int, Output:Map Test:Add element to pre-existing key", (addPinValToMap testMap (1,1)), Map[(1,[0;1;1])])
+
+    let addPinValToMapTest2 =
+        equalTestAsync ("Function: addPinValToMap, Input:(Map, int*int), Output:Map Test:Add element to key not in map", (addPinValToMap testMap (2,1)), Map[(1,[0;1]);(2,[1])])
+
+    let keyCheckTest1 =
+        equalTestAsync ("Function: KeyCheck, Input:(Map, int), Output:int list, Test: Check for key already in map", (keyCheck testMap 1), [0;1])
+    
+    let keyCheckTest2 =
+        equalTestAsync ("Function: KeyCheck, Input:(Map, int), Output:int list, Test: Check for key not in map", (keyCheck testMap 2), [])
+    
+    let clkCycleFuncTest =
+        equalTestAsync ("Function: clkCycle, Input:(SVGElement, int), Output:SVGElement, Test: Able to add a single scycle to a line", (clkCycle testSVGElement 1), Polyline([0.0,3.0; 5.0,3.0; 5.0,0.0; 7.5,0.0; 7.5,3.0; 10.0,3.0], styleprops, None))
+
+    let clkCycleErrorTest =
+        exceptionTestAsync ("Function: clkCycle, Input:(SVGElement, int), Output:SVGElement, Test: Throw error when input isn't a polyline", (fun _ -> clkCycle errorSVGElement 1 |> ignore), "Error generating clock")
+
+    testList "Functional Tests for all helper functions" [
+        textBoxFuncTest
+        wrappedWaveFuncTest
+        setPortPositionFuncTest
+        addPinValToMapTest1
+        addPinValToMapTest2
+        keyCheckTest1
+        keyCheckTest2
+        clkCycleFuncTest
+        clkCycleErrorTest
+    ]       
+       
+
+let runAllTests() =
+    let collatedTests = testList "All tests collated" [
+            waveStateChangeFunctionTests
+            waveStateChangeMatchTests
+            busStateChangeFunctionTests
+            busStateChangeMatchTests
+            helperFunctionTests
+        ]
+    runTests defaultConfig collatedTests |>ignore
 //      Add tests for clock generation
 //      Add tests for sim output match function

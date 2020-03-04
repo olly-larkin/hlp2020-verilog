@@ -20,8 +20,14 @@ let wrappedWave waveform =
     Group([Rectangle((0.0,0.0),(fst(snd(waveDimension))+0.5,4.0),[("fill", "none"); ("stroke","black")], None);
            translateSVG (0.5,0.5) waveform], [], None)               
 
-let SetPortPosition (offset:float) (port:PortWaveform) = 
-    (translateSVG (0.0, offset) port.waveBlock), offset + snd(snd(getDimensionElem port.waveBlock))
+let setPortPosition (offset:float) (port:SVGElement) = 
+    (translateSVG (0.0, offset) port), offset + snd(snd(getDimensionElem port))
+
+let keyCheck (map: Map<int, int list>) (idx:int) = 
+    if map.ContainsKey idx then map.[idx] else []
+
+let addPinValToMap (map: Map<int, int list>) (pinVal:(int*int)) = 
+    map.Add ((fst(pinVal)),((keyCheck map (fst(pinVal))) @ [snd(pinVal)]))
 
 let initWireState:WaveformState = {prevVal=0; svgVals = Polyline([0.0, 3.0], styleprops, None)}
 let initBusState:WaveformState = {prevVal=0; svgVals = Group([Polyline([0.0, 3.0], [], None)], styleprops, None)}
@@ -144,15 +150,14 @@ let GenPortBusWaveform (initialState:WaveformState) (portVals:int list) =
 let GenWireWaveform (portName:string) (vals:int list) =
     let waveform = GenPortWireWaveform initWireState vals
     let wireBlock = Group([textBox portName; translateSVG (9.0,0.0) (wrappedWave waveform.svgVals)],[], None)
-    {waveBlock = wireBlock}
+    wireBlock
 
 let GenBusWaveform (portName:string) (portRange: int) (vals:int list) =
     let pinName pinNo = portName + "[" + string pinNo + "]"
-    let decToBinary (dec:int) (idx:int)  = (idx, dec%2), dec/2 
     let singlePortWaveform = GenPortWireWaveform initWireState
-    let keyCheck (map: Map<int, int list>) (idx:int) = if map.ContainsKey idx then map.[idx] else []
-    let addPinValToMap (map: Map<int, int list>) (pinVal:(int*int)) = map.Add ((fst(pinVal)),((keyCheck map (fst(pinVal))) @ [snd(pinVal)]))
-    let addCycleToMap (busWaveforms: Map<int, int list>) (decVal: (int*int) list) = (busWaveforms, decVal) ||> List.fold addPinValToMap 
+    let decToBinary (dec:int) (idx:int) = (idx, dec%2), dec/2  //mapFolding function which returns a list of index, value tuples
+    let addCycleToMap (busWaveforms: Map<int, int list>) (decVal: (int*int) list) = 
+        (busWaveforms, decVal) ||> List.fold addPinValToMap 
     let decToPinVals (dec:int) =
         [0..(portRange-1)]
         |> List.mapFold decToBinary dec
@@ -163,25 +168,25 @@ let GenBusWaveform (portName:string) (portRange: int) (vals:int list) =
         |> List.fold addCycleToMap Map.empty
         |> Map.toList
     let createWaveBox (inp:(int * int list)) = 
-        let elemList = 
+        let svgList = 
             [(singlePortWaveform (snd(inp))).svgVals
                 |> wrappedWave
                 |> translateSVG (9.0,0.0)]
             |> (@) [textBox (pinName (fst(inp)))]
-        Group(elemList,[], None)
+        Group(svgList,[], None)
     let individualPortWaveform (offset:float) (inp:(int * int list)) = translateSVG (0.0,4.0 * offset) (createWaveBox inp) , (offset + 1.0)
     let busBox  = 
-        let elemList = 
+        let svgList = 
             [(GenPortBusWaveform initBusState vals).svgVals
                 |> wrappedWave
                 |> translateSVG (9.0,0.0)]
             |> (@) [textBox portName]
-        Group(elemList,[], None)
+        Group(svgList,[], None)
     let blockList =
         List.mapFold individualPortWaveform 1.0 decToWaveformList
         |> fst
         |> (@) [busBox]
-    {waveBlock = Group(blockList,[], None)}
+    Group(blockList,[], None)
 
 
 
@@ -205,5 +210,5 @@ let SimOutputToWaveform (inp:SimulatorPort list) =
         | SimWire wire -> GenWireWaveform wire.portName wire.output
         | SimBus bus   -> GenBusWaveform bus.portName bus.range bus.output
     let waveformList = List.map portToWaveform inp
-    let groupedWaveforms = Group(fst(List.mapFold SetPortPosition 0.0 waveformList),[], None)
+    let groupedWaveforms = Group(fst(List.mapFold setPortPosition 0.0 waveformList),[], None)
     Group([groupedWaveforms ; GenClock groupedWaveforms], [], None)

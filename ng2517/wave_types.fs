@@ -8,9 +8,6 @@ type WaveformState =
           svgVals: SVGElement}
 
 
-type PortWaveform = //final result of the waveform, contains a block with all the waveforms for that port within in
-  { waveBlock: SVGElement}
-
 type SimulatorWire =  
     { portName: string
       output: int list}  // List of wire values at corresponding clock cycles

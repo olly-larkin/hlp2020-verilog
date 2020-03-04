@@ -8,6 +8,7 @@ open System.IO
 open Verishot.Waveform
 open Verishot.CoreTypes
 open Verishot.SVG
+open Verishot.WaveformTesting
 open Verishot.Util
 open WaveTypes
 
@@ -27,8 +28,9 @@ let toFile (modName, svgString) = writeStringToFile (sprintf "outputsvg/%s.svg" 
 
 [<EntryPoint>]
 let main argv =    
-    let svgGroup = testInput |> Waveform.SimOutputToWaveform
-    let outString =  output svgGroup None None false
-    ("Test",outString) |> toFile
+    // let svgGroup = testInput |> Waveform.SimOutputToWaveform
+    // let outString =  output svgGroup None None false
+    // ("Test",outString) |> toFile
+    runAllTests() |> ignore
 
     0 // return an integer exit code
