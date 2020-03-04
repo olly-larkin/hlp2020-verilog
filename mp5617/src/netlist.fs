@@ -49,7 +49,8 @@ module Internal =
         let operatorIdx = ref 0
 
         let initialState =
-            {| netRanges = Map.empty<Identifier, Range> // Map wires to their declared sizes
+            {| netRanges =
+                   Map.empty<Identifier, Range> // Map wires to their declared sizes
                nodes = []
                connections = [] |}
 
@@ -140,48 +141,88 @@ module Internal =
                            nodes = state.nodes @ newNodes |}
 
                 | AST.ItemWireDecl(size, name) ->
-                    {| state with netRanges = Map.add name size state.netRanges |})
+                    {| state with netRanges =
+                           Map.add name size state.netRanges |})
 
         |> (fun state -> state.connections, state.nodes)
 
     let unifyConnections (connections: IntermediateConnection list): IntermediateConnection list =
-        ([], connections)
-        // Remove all references
-        ||> List.fold (fun directConns conn ->
-                match conn.src, conn.target with
-                | (NameEndpoint(_) as src), (NameEndpoint(_) as target) ->
-                    directConns
-                    |> List.confirmedMap (fun existingConn ->
-                        if existingConn.target = src then
-                            { existingConn with target = target }, true
-                        elif existingConn.src = target then
-                            { existingConn with src = src }, true
-                        else
-                            existingConn, false)
-                    |> (function
-                    | (newConns, true) -> newConns
-                    | (sameConns, false) -> conn :: sameConns)
-                | NameEndpoint(_) as src, target ->
-                    directConns
-                    |> List.confirmedMap (fun existingConn ->
-                        if existingConn.target = src
-                        then { existingConn with target = target }, true
-                        else existingConn, false)
-                    |> (function
-                    | (newConns, true) -> newConns
-                    | (sameConns, false) -> conn :: sameConns)
-                | src, (NameEndpoint(_) as target) ->
-                    directConns
-                    |> List.confirmedMap (fun existingConn ->
-                        if existingConn.src = target then
-                            { existingConn with src = src }, true
-                        else
-                            existingConn, false)
-                    |> (function
-                    | (newConns, true) -> newConns
-                    | (sameConns, false) -> conn :: sameConns)
-                | _, _ -> conn :: directConns)
-    // TODO Verify that there is no undriven wire, or any wires driving nothing
+        // Detect wire drive by multiple sources
+        let drivers = connections |> List.groupBy (fun c -> c.target)
+
+        match drivers |> List.tryFind (fun (_, srcs) -> srcs.Length > 1) with
+        | Some(pin, pinDrivers) ->
+            failwithf "Wire or pin %A is driven by: \n%A" pin pinDrivers
+        | None -> ()
+
+        // We group connections by source because connections are 1-to-many.
+        // I.e. A wire can only be driven by one pin but can drive many pins
+        let groupedConnections =
+            connections |> List.groupBy (fun conn -> conn.src)
+
+         //printf "\n<=============================================>\n\n"
+         //printf "Grouped connections:\n%A" groupedConnections
+
+        // Find the connections driven by a wire and eliminate the wires by
+        // merging connections together
+        ([], groupedConnections)
+        ||> List.fold (fun directConns (src, wireConns) ->
+                match src with
+                | NameEndpoint _srcName as wire ->
+
+                     //printf "\n===\n"
+                     //printf "wire: %A\n" wire
+                    // Try to find a connection driving the wire. If it exists,
+                    // remove it and change the src of the wire to that
+                    // connection's src (i.e. adjust the connections' target)
+                    // If it doesn't exist then either the wire is actually a pin or we haven't
+                    // encountered its driver yet, so just leave the source as it
+                    // is (just the name of the NameEndpoint for the wire)
+                    let wireSrcRange, wireSrc, targetAdjustedConns =
+                        directConns
+                        |> List.tryFindAndRemove (fun c -> c.target = wire)
+                        |> (function
+                        | Some c, ys -> Some(c.srcRange), c.src, ys
+                        | None, ys -> None, wire, ys)
+
+                     //printf "wireSource: %A(%A)\n" wireSrc wireSrcRange
+                     //printf "targetAdjustedConns:\n%A\n" targetAdjustedConns
+
+                    // Find the connections that are driving and existing connection.
+                    let intermediateConns, newConns =
+                        wireConns
+                        |> List.map (fun c ->
+                            { c with
+                                  src = wireSrc
+                                  srcRange =
+                                      wireSrcRange
+                                      |> Option.defaultValue c.srcRange })
+                        |> List.splitBy
+                            (fun c ->
+                                List.exists (fun dc -> c.target = dc.src)
+                                    directConns)
+
+                     //printf "intermediateConns:\n%A\n" intermediateConns
+                     //printf "newConns:\n%A\n" newConns
+
+                    // Apply the intermediate connections
+                    let srcAdjustedConns =
+                        [ for dc in targetAdjustedConns ->
+                            if List.exists (fun ic -> ic.target = dc.src)
+                                   intermediateConns then
+                                { dc with
+                                      src = wireSrc
+                                      srcRange =
+                                          wireSrcRange
+                                          |> Option.defaultValue dc.srcRange }
+                            else
+                                dc ]
+                     //printf "srcAdjustedConns:\n%A\n" srcAdjustedConns
+
+                     //printf "Final directConns:\n%A\n" (srcAdjustedConns @ newConns)
+                    srcAdjustedConns @ newConns
+                | _ -> directConns @ wireConns)
+    // // TODO Verify that there is no undriven wire, or any wires driving nothing
 
     let applyConnections (intermediateConnections: IntermediateConnection list)
         (intermediateNodes: Node list): Node list =
