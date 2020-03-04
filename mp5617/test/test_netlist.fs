@@ -638,16 +638,17 @@ module private MyArbitraries =
             Gen.oneof [ portEndpoint; constantEndpoint; nameEndpoint ]
         let targetEndpoint = Gen.oneof [ portEndpoint; nameEndpoint ]
 
-        Arb.fromGen (Gen.listOf (connectionOf endpoint targetEndpoint))
+        Arb.fromGenShrink
+            (Gen.listOf (connectionOf endpoint targetEndpoint), Arb.shrink)
         |> Arb.filter validConnectionList
 
     let nonNamedEndpointConnectionList =
         let nonNamedEndpoint = Gen.oneof [ portEndpoint; constantEndpoint ]
         let nonNamedTargetEndpoint = portEndpoint
 
-        Arb.fromGen
-            (Gen.listOf (connectionOf nonNamedEndpoint nonNamedTargetEndpoint))
-        |> Arb.filter validConnectionList
+        Arb.fromGenShrink
+            (Gen.listOf (connectionOf nonNamedEndpoint nonNamedTargetEndpoint),
+             Arb.shrink) |> Arb.filter validConnectionList
 
     let private range =
         Gen.oneof
