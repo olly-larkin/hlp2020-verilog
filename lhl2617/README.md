@@ -24,7 +24,7 @@ Known limitations:
 
 ## Individual Statement 
 * Code will be inserted into Team part after `Verishot.AST` and `Verishot.Netlist` modules, as this module requires the output from the netlist which follows output of the AST module.
-* The main API required for this module is the `visualiseNetlists` function defined in `src/visualiser/visualise.fs`. It requires the project name, all netlists, all user-defined module declarations, an optional CSS styles and an optional JavaScript script.
+* The main API required for this module is the `visualiseNetlists` function defined in `src/visualiser/visualise.fs`. It requires the project name, all netlists, all user-defined module declarations, an optional CSS stylesheet and an optional JavaScript script.
 * I wrote the SVG library (`Verishot.SVG`) located in `../libs/svg.fs`. More information is provided below. 
 * This module heavily relies on core types (located in `../libs/core_types.fs`) co-developed by the team. We discussed on the interfacing types before and during work to make sure the features supported are adequate.
 
