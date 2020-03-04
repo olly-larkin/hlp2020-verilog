@@ -20,8 +20,11 @@ let wrappedWave waveform =
     Group([Rectangle((0.0,0.0),(fst(snd(waveDimension))+0.5,4.0),[("fill", "none"); ("stroke","black")], None);
            translateSVG (0.5,0.5) waveform], [], None)               
 
+let SetPortPosition (offset:float) (port:PortWaveform) = 
+    (translateSVG (0.0, offset) port.waveBlock), offset + snd(snd(getDimensionElem port.waveBlock))
+
 let initWireState:WaveformState = {prevVal=0; svgVals = Polyline([0.0, 3.0], styleprops, None)}
-let initBusState:WaveformState = {prevVal=0; svgVals = Group([Polyline([0.0, 3.0], styleprops, None)], styleprops, None)}
+let initBusState:WaveformState = {prevVal=0; svgVals = Group([Polyline([0.0, 3.0], [], None)], styleprops, None)}
 
 let Low2Low state:WaveformState = 
     //print some SVG using state
@@ -90,7 +93,7 @@ let busSameVal state newVal =
         let busLine = [Polyline([addXY endPoint 0.0 -3.0; addXY endPoint 5.0 -3.0],[],None);Polyline([endPoint; addXY endPoint 5.0 0.0],[],None)]
         let newBusWave = match w.svgVals with
                             | Group(x, y, z) -> Group(x @ busLine ,y ,z)
-                            | _ -> failwith "Error constructing bus"
+                            | _ -> failwith "Error constructing bus waveform"
         {w with svgVals = newBusWave}
     
     let updateState (w:WaveformState) = {w with prevVal = newVal}
@@ -107,7 +110,7 @@ let busChangeVal state newVal =
         let busLineAndVal = busLine @ [Text((addXY endPoint 0.6 -1.1),busVal,[("fill", "black")],None)]
         let newBusWave = match w.svgVals with
                             | Group(x, y, z) -> Group(x @ busLineAndVal ,y ,z)
-                            | _ -> failwith "Error constructing bus"
+                            | _ -> failwith "Error constructing bus waveform"
         {w with svgVals = newBusWave}
     
     let updateState (w:WaveformState) = {w with prevVal = newVal}
@@ -123,7 +126,7 @@ let SingleWireCycle state (cycle:int) =
     | 0,1 -> Low2High state
     | 1,0 -> High2Low state
     | 1,1 -> High2High state
-    | _ -> failwith "Input value not valid" // DEFO NEEDS TO BE CHANGED ADD ERROS
+    | _ -> failwith "Input value not valid"
     
 let SingleBusCycle state (newVal:int) = 
     match state.prevVal = newVal with
@@ -180,8 +183,7 @@ let GenBusWaveform (portName:string) (portRange: int) (vals:int list) =
         |> (@) [busBox]
     {waveBlock = Group(blockList,[], None)}
 
-let SetPortPosition (offset:float) (port:PortWaveform) = 
-    (translateSVG (0.0, offset) port.waveBlock), offset + snd(snd(getDimensionElem port.waveBlock))
+
 
 let clkCycle (state: SVGElement) (iteration: int) = 
     let endPoint = snd(getDimensionElem state)
