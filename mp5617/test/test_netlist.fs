@@ -673,15 +673,36 @@ module private MyArbitraries =
         }
 
     let private validConnectionList conns =
-        let srcPorts = conns |> Seq.map (fun conn -> conn.src)
-        let targetPorts = conns |> Seq.map (fun conn -> conn.target)
+        let individualConnsValid =
+            conns
+            |> Seq.forall (fun conn ->
+                conn.srcRange = conn.targetRange && conn.src <> conn.target)
 
-        let rangesMatch =
-            conns |> Seq.forall (fun conn -> conn.srcRange = conn.targetRange)
-        let noLoops =
+        // If a port has been used as a src then it is a module output
+        let outputPorts =
+            conns
+            |> Seq.choose (fun conn ->
+                match conn.src with
+                | Internal.PortEndpoint(instance, port) -> Some(instance, port)
+                | _ -> None)
+        // If a port has been used as a target then it is a module input
+        let inputPorts =
+            conns
+            |> Seq.choose (fun conn ->
+                match conn.target with
+                | Internal.PortEndpoint(instance, port) -> Some(instance, port)
+                | _ -> None)
+
+        let singleDriver: bool =
+            conns
+            |> List.groupBy (fun c -> c.target)
+            |> Seq.forall (fun (_, reps) -> Seq.length reps = 1)
+
+        let unidirectionalPorts =
             Set.isEmpty
-                (Set.intersect (Set.ofSeq srcPorts) (Set.ofSeq targetPorts))
-        rangesMatch && noLoops
+                (Set.intersect (Set.ofSeq outputPorts) (Set.ofSeq inputPorts))
+
+        individualConnsValid && unidirectionalPorts && singleDriver
 
     let private portEndpoint =
         Arb.generate<NonNull<string> * NonNull<string>>
