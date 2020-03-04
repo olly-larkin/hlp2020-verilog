@@ -53,4 +53,4 @@ The `Expecto` testbench is designed to be easily-extendable, and the definition 
 
 ## Future work
 * Integration of heuristics for smart block placement
-* Allow user-draggable elements and block-diagram input as an alternative to Verilog code
+* Allow user-draggable elements and block-diagram input as an alternative to Verilog code input
