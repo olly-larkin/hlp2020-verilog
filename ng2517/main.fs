@@ -23,12 +23,6 @@ let testInput = [
 
 let styleprops = [("fill", "none");("stroke","black");("stroke-width","1")]
 
-let state:WaveformState =
-    {
-        prevVal=0;
-        svgVals = Polyline([0.0, 3.0], styleprops, None)
-    }
-
 let toFile (modName, svgString) = writeStringToFile (sprintf "outputsvg/%s.svg" modName) svgString
 
 [<EntryPoint>]
