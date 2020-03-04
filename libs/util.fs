@@ -41,6 +41,37 @@ module List =
                 let (result, thisFlag) = f el
                 (result, flag || thisFlag))
 
+    /// Works like List.tryFind, except it also returns a list without the element found
+    /// if it is found.
+    let tryFindAndRemove (pred: 'a -> bool) (lst: 'a list): 'a option * 'a list =
+        let rec go acc lst =
+            match (acc, lst) with
+            | ((None, prev), (hd :: tl)) when pred hd -> (Some hd, prev @ tl)
+            | ((None, prev), (hd :: tl)) -> go (None, prev @ [ hd ]) tl
+            | ((Some el, prev), rest) -> (Some el, prev @ rest)
+            | (_, []) -> acc
+
+        go (None, []) lst
+
+    let splitBy (pred: 'a -> bool) (lst: 'a list): 'a list * 'a list =
+        // There's only 2 elements in this list, one for true, one for false
+        let grouped: (bool * 'a list) list = List.groupBy pred lst
+
+        // The find will choose only the element we want and we can then
+        // throw away the first part of the tuple which is just the bool
+        let trueElems =
+            grouped
+            |> List.tryFind (fun (p, _) -> p)
+            |> Option.defaultValue (true, [])
+            |> snd
+
+        let falseElems =
+            grouped
+            |> List.tryFind (fun (p, _) -> not p)
+            |> Option.defaultValue (false, [])
+            |> snd
+
+        (trueElems, falseElems)
 
 
 module Map =
