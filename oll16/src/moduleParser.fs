@@ -6,18 +6,22 @@ open Verishot.ParserUtils
 open Verishot.Expression
 open Verishot.Token
 
+/// Top level parser for modules
+/// Parses the top level (module definition)
 let rec ParseModuleDefinition inp =
     inp |> (Keyword.Module >=> Identifier >=> ListOfPortsParser >=> Symbol.Semmicolon ?=> ModuleItemListParser >=> Keyword.Endmodule <&> fun (((((_,a),b),_),c),_) -> 
         match c with
         | None -> { name = a; ports = b; items = [] }
         | Some c -> { name = a; ports = b; items = c })
 
+/// Parses the list of ports in brackets
 and ListOfPortsParser inp =
     inp |> (Symbol.LeftRoundBra ?=> PortListParser >=> Symbol.RightRoundBra <&> fun ((_,a),_) ->
         match a with
         | None -> []
         | Some (a) -> a)
 
+/// Parses list of ports
 and PortListParser inp =
     inp |> (Identifier ?=> (Symbol.Comma >=> PortListParser) <&> fun (a, b) ->
         match b with
