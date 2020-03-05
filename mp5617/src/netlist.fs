@@ -21,6 +21,9 @@ let moduleNetlist (allModules: ModuleDecl list) (thisModule: AST.Module): Netlis
               finalNodes }
 
 module Internal =
+    /// A terminator to a connection. Somewhat similar to Netlist.ConnectionTarget,
+    /// except it also includes constants. Also NameEndpoint is conceptually different
+    /// to PinTarget, in that it can represent a wire, not just a pin
     type Endpoint =
         | NameEndpoint of Identifier
         | PortEndpoint of nodeName: Identifier * portName: Identifier
