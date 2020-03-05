@@ -152,7 +152,7 @@ module Internal =
 
         match drivers |> List.tryFind (fun (_, srcs) -> srcs.Length > 1) with
         | Some(pin, pinDrivers) ->
-            failwithf "Wire or pin %A is driven by: \n%A" pin pinDrivers
+            failwithf "Wire or pin %A is driven by more than one connection: \n%A" pin pinDrivers
         | None -> ()
 
         // We group connections by source because connections are 1-to-many.
@@ -160,16 +160,10 @@ module Internal =
         let groupedConnections =
             connections |> List.groupBy (fun conn -> conn.src)
 
-        // printf "\n<=============================================>\n\n"
-        // printf "Grouped connections:\n%A" groupedConnections
-
         // Find the connections driven by a wire and eliminate the wires by
         // merging connections together
         ([], groupedConnections)
         ||> List.fold (fun directConns (src, wireConns) ->
-                // printf "\n===\n"
-                // printf "source: %A\n" src
-
                 // Try to find a connection driving the wire. If it exists,
                 // remove it and change the src of the wire to that
                 // connection's src (i.e. adjust the connections' target)
@@ -186,9 +180,6 @@ module Internal =
                         | None, ys -> None, wire, ys)
                     | _ -> None, src, directConns
 
-                // printf "srcDriver: %A(%A)\n" wireSrc wireSrcRange
-                // printf "removed driving connection:\n%A\n" directConns
-
                 // Find the connections that are driving and existing connection.
                 let intermediateConns, newConns =
                     wireConns
@@ -202,9 +193,6 @@ module Internal =
                         (fun c ->
                             List.exists (fun dc -> c.target = dc.src)
                                 directConns)
-
-                // printf "outgoing connections (to existing endpoints):\n%A\n" intermediateConns
-                // printf "outgoing connections (to new endpoints):\n%A\n" newConns
 
                 // Apply the intermediate connections
                 let directConns =
@@ -222,7 +210,6 @@ module Internal =
 
                 // printf "Final connections:\n%A\n" (directConns @ newConns)
                 directConns @ newConns)
-    // // TODO Verify that there is no undriven wire, or any wires driving nothing
 
     let applyConnections (intermediateConnections: IntermediateConnection list)
         (intermediateNodes: Node list): Node list =
