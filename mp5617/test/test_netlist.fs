@@ -591,7 +591,60 @@ let fullModuleTests =
                                        connections = Map.empty }) ] }
 
                     expectNetlist decls moduleAST expectedNetlist
-                } ]
+                }
+
+                test "Connect part of input to output" {
+                    let decls = []
+
+                    let moduleAST =
+                        { name = "A"
+                          ports = []
+                          items =
+                              [ ItemPort(Input, Range(5,0), "in")
+                                ItemPort(Output, Range(3,0), "out")
+                                ItemAssign("out", ExprIndex(ExprIdentifier "in", IndexRange(5, 2))) ] }
+
+                    let expectedNetlist =
+                        { moduleName = "A"
+                          nodes =
+                              [ InputPin
+                                  ("in",
+                                   [ { srcRange = Range(5, 2)
+                                       targetRange = Range(3, 0)
+                                       target = PinTarget "out" } ])
+                                OutputPin("out") ] }
+
+                    expectNetlist decls moduleAST expectedNetlist
+                }
+
+                test "Connect part of input to submodule" {
+                    let decls =
+                        [ { name = "B"
+                            ports = [ (Input, "bIn", Range(3, 0)) ] } ]
+
+                    let moduleAST =
+                        { name = "A"
+                          ports = [ "aIn" ]
+                          items =
+                              [ ItemPort(Input, Range(5, 0), "aIn")
+                                ItemInstantiation
+                                    ("B", "theB", [ ExprIndex((ExprIdentifier "aIn"), IndexRange(5, 2))  ]) ] }
+
+                    let expectedNetlist =
+                        { moduleName = "A"
+                          nodes =
+                              [ InputPin
+                                  ("aIn",
+                                   [ { srcRange = Range(5, 2)
+                                       targetRange = Range(3, 0)
+                                       target = InstanceTarget("theB", "bIn") } ])
+                                ModuleInstance
+                                    ({ moduleName = StringIdentifier "B"
+                                       instanceName = "theB"
+                                       connections = Map.empty }) ] }
+
+                    expectNetlist decls moduleAST expectedNetlist
+                }]
 
           testList "Unification of connections"
               [ testProperty "Has no effect if there are no named endpoints"
@@ -607,23 +660,16 @@ let fullModuleTests =
                            (Netlist.Internal.unifyConnections
                             <| Netlist.Internal.unifyConnections conns))
 
+
                 testProperty "Is commutative"
                 <| Prop.forAll MyArbitraries.connectionList
-                       (fun conns ->
-                           Prop.forAll (permutationsOf conns)
-                               (fun shuffledCons ->
-                                   isPermutationOf
-                                       (Internal.unifyConnections conns)
-                                       (Internal.unifyConnections shuffledCons)))
-
-                testProperty "Is associative"
-                <| Prop.forAll MyArbitraries.connectionList
-                       (fun conns1 ->
-                            Prop.forAll MyArbitraries.connectionList
-                               (fun conns2 ->
-                                   isPermutationOf
-                                       (Internal.unifyConnections (Internal.unifyConnections conns1)@conns2)
-                                       (Internal.unifyConnections conns1@(Internal.unifyConnections conns2)))) ] ]
+                    (fun conns ->
+                        Prop.forAll (permutationsOf conns)
+                            (fun shuffledCons ->
+                                isPermutationOf
+                                    (Internal.unifyConnections conns)
+                                    (Internal.unifyConnections shuffledCons)))
+                ] ]
 
 let private permutationsOf lst =
     Arb.fromGen (Gen.map List.ofArray <| Gen.shuffle lst)
@@ -650,15 +696,15 @@ module private MyArbitraries =
             (Gen.listOf (connectionOf nonNamedEndpoint nonNamedTargetEndpoint),
              Arb.shrink) |> Arb.filter validConnectionList
 
-    let private range =
-        Gen.oneof
-            [ gen { return Single }
-              gen {
-                  let! start = Arb.generate<NonNegativeInt>
-                               |> Gen.map (fun x -> x.Get)
-                  let! size = Arb.generate<NonNegativeInt>
-                              |> Gen.map (fun x -> x.Get + 1)
-                  return Range(start + size, start) } ]
+    let private range = Gen.constant Single
+        // Gen.oneof
+        //     [ gen { return Single }
+        //       gen {
+        //           let! start = Arb.generate<NonNegativeInt>
+        //                        |> Gen.map (fun x -> x.Get)
+        //           let! size = Arb.generate<NonNegativeInt>
+        //                       |> Gen.map (fun x -> x.Get + 1)
+        //           return Range(start + size, start) } ]
 
     let private connectionOf srcGen targetGen =
         gen {

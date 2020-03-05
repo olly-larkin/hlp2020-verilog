@@ -108,9 +108,8 @@ module Internal =
                             match port with
                             | (Input, portName, range) ->
                                 Some
-                                    (exprNodesWithOutput operatorIdx expr
-                                         (PortEndpoint(instanceName, portName),
-                                          range))
+                                    (exprNodesWithOutput operatorIdx expr None
+                                         (PortEndpoint(instanceName, portName), range))
                             | (Output, _, _) -> None)
                         |> List.unzip
                         |> fun (xss, yss) ->
@@ -134,7 +133,7 @@ module Internal =
                                     targetNodeName)
 
                     let (newConns, newNodes) =
-                        exprNodesWithOutput operatorIdx expression
+                        exprNodesWithOutput operatorIdx expression None
                             (NameEndpoint targetNodeName, targetRange)
                     {| state with
                            connections = state.connections @ newConns
@@ -179,11 +178,11 @@ module Internal =
                 let wireSrcRange, wireSrc, directConns =
                     match src with
                     | NameEndpoint _srcName as wire ->
-                            directConns
-                            |> List.tryFindAndRemove (fun c -> c.target = wire)
-                            |> (function
-                            | Some c, ys -> Some(c.srcRange), c.src, ys
-                            | None, ys -> None, wire, ys)
+                        directConns
+                        |> List.tryFindAndRemove (fun c -> c.target = wire)
+                        |> (function
+                        | Some c, ys -> Some(c.srcRange), c.src, ys
+                        | None, ys -> None, wire, ys)
                     | _ -> None, src, directConns
 
                 // printf "srcDriver: %A(%A)\n" wireSrc wireSrcRange
@@ -194,10 +193,10 @@ module Internal =
                     wireConns
                     |> List.map (fun c ->
                         { c with
-                                src = wireSrc
-                                srcRange =
-                                    wireSrcRange
-                                    |> Option.defaultValue c.srcRange })
+                              src = wireSrc
+                              srcRange =
+                                  wireSrcRange
+                                  |> Option.defaultValue c.srcRange })
                     |> List.splitBy
                         (fun c ->
                             List.exists (fun dc -> c.target = dc.src)
@@ -210,19 +209,18 @@ module Internal =
                 let directConns =
                     [ for dc in directConns ->
                         if List.exists (fun ic -> ic.target = dc.src)
-                                intermediateConns then
+                               intermediateConns then
                             { dc with
-                                    src = wireSrc
-                                    srcRange =
-                                        wireSrcRange
-                                        |> Option.defaultValue dc.srcRange }
+                                  src = wireSrc
+                                  srcRange =
+                                      wireSrcRange
+                                      |> Option.defaultValue dc.srcRange }
                         else
                             dc ]
                 // printf "Fixed source on driven connections:\n%A\n" directConns
 
                 // printf "Final connections:\n%A\n" (directConns @ newConns)
-                directConns @ newConns
-                )
+                directConns @ newConns)
     // // TODO Verify that there is no undriven wire, or any wires driving nothing
 
     let applyConnections (intermediateConnections: IntermediateConnection list)
@@ -286,14 +284,17 @@ module Internal =
         | Constant constant -> sprintf "%d'%d" constant.width constant.value
         | ModuleInstance { instanceName = name } -> name
 
+
     let exprNodesWithOutput (operatorIdx: int ref) (expr: AST.Expr)
-        (target: RangedEndpoint): IntermediateConnection list * Node list =
+        (srcRangeSelect: Range option) (target: RangedEndpoint): IntermediateConnection list * Node list =
         let targetEndpoint, targetRange = target
+        let srcRange =
+            Option.defaultValue (moveRangeToBase targetRange) srcRangeSelect
 
         match expr with
         | AST.ExprIdentifier name ->
             ([ { src = NameEndpoint(name)
-                 srcRange = moveRangeToBase targetRange
+                 srcRange = srcRange
                  target = targetEndpoint
                  targetRange = targetRange } ], [])
 
@@ -308,18 +309,16 @@ module Internal =
                       connections = Map.empty })
             let outputConnection =
                 { src = PortEndpoint(operatorNodeName, "output")
-                  srcRange = moveRangeToBase targetRange
+                  srcRange = srcRange
                   target = targetEndpoint
                   targetRange = targetRange }
 
-            let inputRange = moveRangeToBase targetRange
-
             let (leftConnections, leftNodes) =
-                exprNodesWithOutput operatorIdx left
-                    (PortEndpoint(operatorNodeName, "left"), inputRange)
+                exprNodesWithOutput operatorIdx left None
+                    (PortEndpoint(operatorNodeName, "left"), srcRange)
             let (rightConnections, rightNodes) =
-                exprNodesWithOutput operatorIdx right
-                    (PortEndpoint(operatorNodeName, "right"), inputRange)
+                exprNodesWithOutput operatorIdx right None
+                    (PortEndpoint(operatorNodeName, "right"), srcRange)
 
             (outputConnection :: leftConnections @ rightConnections,
              operatorNode :: leftNodes @ rightNodes)
@@ -334,14 +333,13 @@ module Internal =
                       connections = Map.empty }
             let outputConnection =
                 { src = PortEndpoint(operatorNodeName, "output")
-                  srcRange = moveRangeToBase targetRange
+                  srcRange = srcRange
                   target = targetEndpoint
                   targetRange = targetRange }
 
-            let inputRange = moveRangeToBase targetRange
             let (exprConnections, exprNodes) =
-                exprNodesWithOutput operatorIdx expr
-                    (PortEndpoint(operatorNodeName, "input"), inputRange)
+                exprNodesWithOutput operatorIdx expr None
+                    (PortEndpoint(operatorNodeName, "input"), srcRange)
 
             (outputConnection :: exprConnections, operatorNode :: exprNodes)
         | AST.ExprNumber(givenWidth, value) ->
@@ -352,13 +350,19 @@ module Internal =
                 { src = ConstantEndpoint
                           {| width = width
                              value = value |}
-                  srcRange = moveRangeToBase targetRange
+                  srcRange = srcRange
                   target = targetEndpoint
                   targetRange = targetRange }
             ([ connection ], [])
 
-        | AST.ExprIndex _ ->
-            failwith "Not yet implemented (indexing expressions)"
+        | AST.ExprIndex(subExpr, index) ->
+            match index with
+            | AST.IndexNum n ->
+                exprNodesWithOutput operatorIdx subExpr (Some(Range(n, n)))
+                    target
+            | AST.IndexRange(high, low) ->
+                exprNodesWithOutput operatorIdx subExpr
+                    (Some(Range(high, low))) target
         | AST.ExprIfThenElse _ ->
             failwith "Not yet implemented (if-then-else expressions)"
         | AST.ExprConcateneation _ ->
