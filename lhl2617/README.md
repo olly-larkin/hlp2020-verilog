@@ -2,6 +2,22 @@
 
 This folder contains code for the `Verishot.Visualise` module, which is used to visualise Verilog code (converted into a netlist) with a block diagram. The output is in SVG format.
 
+## Individual Statement 
+### How will my code be used by team including what order are modules in your team project compiled?
+* Code will be inserted into Team part after `Verishot.AST` and `Verishot.Netlist` modules, as this module requires the output from the netlist which follows output of the AST module.
+* The main API required for this module is the `visualiseNetlists` function defined in `src/visualiser/visualise.fs`. It requires the project name, all netlists, all user-defined module declarations, an optional CSS stylesheet and an optional JavaScript script.
+### Which parts if any are code written for other people?
+* I wrote the SVG library (`Verishot.SVG`) located in `../libs/svg.fs`. More information is provided below. 
+
+### Which parts if any of code you use is written by others?
+* None
+
+### What help have you obtained/given others debugging or doing code review?
+* Contributed to `oll16` and `ng2517`'s Expecto testing infrastructure 
+
+### How did you work out (who de)
+* This module heavily relies on core types (located in `../libs/core_types.fs`) co-developed by the team. We discussed on the interfacing types before and during work to make sure the features supported are adequate.
+
 ## Details and examples
 Example SVGs are located in the `SVGOutput` folder (best viewed using `Google Chrome`). These are produced by running `dotnet run` in this folder, and the netlist and declarations used to generate these SVGs are located in `src/main.fs`. 
 
@@ -21,12 +37,6 @@ There are also extra features, such as:
 Known limitations:
 * Complex modules may take up excessive horizontal space (work required to integrate smart block placement)
 * Overlapping of bus-width labels when busses are concatenated into a common bus input (does not occur in code a lot, but hover-highlighting is a workaround to clearly visualise. Quartus has the same problem and does not have a workaround.)
-
-## Individual Statement 
-* Code will be inserted into Team part after `Verishot.AST` and `Verishot.Netlist` modules, as this module requires the output from the netlist which follows output of the AST module.
-* The main API required for this module is the `visualiseNetlists` function defined in `src/visualiser/visualise.fs`. It requires the project name, all netlists, all user-defined module declarations, an optional CSS stylesheet and an optional JavaScript script.
-* I wrote the SVG library (`Verishot.SVG`) located in `../libs/svg.fs`. More information is provided below. 
-* This module heavily relies on core types (located in `../libs/core_types.fs`) co-developed by the team. We discussed on the interfacing types before and during work to make sure the features supported are adequate.
 
 ## SVG Library
 The SVG library is intended to be a easy-to-use and easy-to-extend generic SVG library. The library currently contains SVG elements required by this module and also for another teammate's module (`Verishot.Waveform`), but can be easily extended to contain more SVG elements. It is _not_ specific to this project and can be used in any F# project requiring SVG visualisation.
