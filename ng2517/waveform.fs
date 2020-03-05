@@ -125,7 +125,7 @@ let busChangeVal state newVal =
     |> updateState
     |> addLine
 
-
+/// Chooses the correct state transition for the current wire waveform being generated
 let SingleWireCycle state (cycle:int) = 
     match (state.prevVal, cycle) with
     | 0,0 -> Low2Low state
@@ -133,7 +133,8 @@ let SingleWireCycle state (cycle:int) =
     | 1,0 -> High2Low state
     | 1,1 -> High2High state
     | _ -> failwith "Input value not valid"
-    
+
+/// Checks whether or not the bus value has changed from the previous cycle, and calls the corresponding function to generate the bus waveform
 let SingleBusCycle state (newVal:int) = 
     match state.prevVal = newVal with
     | true  -> busSameVal state newVal
@@ -146,12 +147,14 @@ let GenPortWireWaveform (initialState:WaveformState) (portVals:int list) =
 let GenPortBusWaveform (initialState:WaveformState) (portVals:int list) = 
     (initialState, portVals) ||> List.fold SingleBusCycle
 
-
+/// This function handles creating and formatting the waveforms for a bus. Vals is a list of values (can be either 0 or 1) the wire takes at each cycle.
 let GenWireWaveform (portName:string) (vals:int list) =
     let waveform = GenPortWireWaveform initWireState vals
     let wireBlock = Group([textBox portName; translateSVG (9.0,0.0) (wrappedWave waveform.svgVals)],[], None)
     wireBlock
 
+
+/// This function handles creating and formatting the waveforms for a bus. Vals is a list of values the bus takes at each cycle.
 let GenBusWaveform (portName:string) (portRange: int) (vals:int list) =
     let pinName pinNo = portName + "[" + string pinNo + "]"
     let singlePortWaveform = GenPortWireWaveform initWireState
@@ -197,6 +200,7 @@ let clkCycle (state: SVGElement) (iteration: int) =
                         | _ -> failwith "Error generating clock"
     newPolyline
 
+///Generate an SVGElement with the clock waveform, should be called after generating simulator waveforms.
 let GenClock (waveformList:SVGElement) =
     let viewerDimensions = getDimensionElem(waveformList)
     let noOfCylces = int((fst(snd(viewerDimensions)) - fst(fst(viewerDimensions)) - 9.5) / 5.0) // (MaxX - MinX - offsets)/width per cycle to get the number of cycles
@@ -204,6 +208,8 @@ let GenClock (waveformList:SVGElement) =
         ((Polyline([0.0, 3.0], styleprops, None)), [1..noOfCylces]) ||> List.fold clkCycle 
     translateSVG (0.0,snd(snd(viewerDimensions))) (Group([textBox "clk"; translateSVG (9.0,0.0) (wrappedWave clkWaveform)],[], None))
 
+
+///Main function of the module. Take in the simulator output and returns an SVG element with all waveforms formatted and ready to be printed.
 let SimOutputToWaveform (inp:SimulatorPort list) =
     let portToWaveform (prt:SimulatorPort) =
         match prt with
