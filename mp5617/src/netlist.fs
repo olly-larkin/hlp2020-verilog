@@ -194,9 +194,7 @@ module Internal =
                                       |> Option.defaultValue dc.srcRange }
                         else
                             dc ]
-                // printf "Fixed source on driven connections:\n%A\n" directConns
 
-                // printf "Final connections:\n%A\n" (directConns @ newConns)
                 directConns @ newConns)
 
     let applyConnections (intermediateConnections: IntermediateConnection list)
