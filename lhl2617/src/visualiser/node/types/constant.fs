@@ -52,11 +52,11 @@ let verifyConstantConnections (cons: Connection list) =
     | _ -> failwithf "ERROR: Constants can only connect to one Pin or Module Instance."
 
 let getDiamond (x, y) = 
-    let o = defaultGraphicsProps.diamondOffset
-    let top = (x, y - o)
-    let right = (x + o, y)
-    let btm = (x, y + o)
-    let left = (x - o, y)
+    let offset = defaultGraphicsProps.diamondOffset
+    let top = (x, y - offset)
+    let right = (x + offset, y)
+    let btm = (x, y + offset)
+    let left = (x - offset, y)
 
     Polyline ([top; right; btm; left; top], ["class", "label-diamond"], None)
 

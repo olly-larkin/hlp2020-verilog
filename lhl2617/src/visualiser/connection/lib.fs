@@ -130,27 +130,28 @@ let getLinesAndBlobsToTarget (targets: (Identifier * ConnectionRange) list) (tar
 
     *)
     let linesSVG = 
+        let getLines (targetPortId, conRange) =
+            let sourceRange = conRange.inputRange
+            let targetRange = conRange.outputRange
+
+            let endpointProp = getPortPropFromVNode targetNode Input targetPortId 
+            let pt4 = endpointProp.coord
+            let pt3 = fst pt2, snd pt4
+
+            let sourceStr = truncConnectionText "" defaultGraphicsProps.maxConnectionTextLen sourceRange
+            let targetStr = truncConnectionText "" defaultGraphicsProps.maxConnectionTextLen targetRange
+            
+            let line = Polyline([pt2; pt3; pt4], [("class", getLineClassName sourceRange)], None)
+
+            let textY = snd pt4 - defaultGraphicsProps.varTextTransformUp
+
+            let sourceText = Text((fst pt3 + defaultGraphicsProps.varTextOffset, textY), sourceStr, [("class", "input-var-text-source")], Some <| sprintf "Source Bus: %s" sourceStr)
+            let targetText = Text((fst pt4 - defaultGraphicsProps.varTextOffset, textY), targetStr, [("class", "input-var-text-target")], Some <| sprintf "Target Bus: %s" targetStr)
+
+            [line; sourceText; targetText] |> groupSVG [] None
+      
         targets 
-        |> List.map 
-            (fun (targetPortId, conRange) -> 
-                let sourceRange = conRange.inputRange
-                let targetRange = conRange.outputRange
-
-                let endpointProp = getPortPropFromVNode targetNode Input targetPortId 
-                let pt4 = endpointProp.coord
-                let pt3 = fst pt2, snd pt4
-
-                let sourceStr = truncConnectionText "" defaultGraphicsProps.maxConnectionTextLen sourceRange
-                let targetStr = truncConnectionText "" defaultGraphicsProps.maxConnectionTextLen targetRange
-                
-                let line = Polyline([pt2; pt3; pt4], [("class", getLineClassName sourceRange)], None)
-
-                let textY = snd pt4 - defaultGraphicsProps.varTextTransformUp
-
-                let sourceText = Text((fst pt3 + defaultGraphicsProps.varTextOffset, textY), sourceStr, [("class", "input-var-text-source")], Some <| sprintf "Source Bus: %s" sourceStr)
-                let targetText = Text((fst pt4 - defaultGraphicsProps.varTextOffset, textY), targetStr, [("class", "input-var-text-target")], Some <| sprintf "Target Bus: %s" targetStr)
-
-                [line; sourceText; targetText] |> groupSVG [] None)
+        |> List.map getLines
         |> groupSVG [] None
 
     let targetYs = 
