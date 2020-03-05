@@ -302,10 +302,10 @@ module Internal =
                   target = targetEndpoint
                   targetRange = targetRange }
 
-            let (leftConnections, leftNodes) =
+            let leftConnections, leftNodes =
                 exprNodesWithOutput operatorIdx left None
                     (PortEndpoint(operatorNodeName, "left"), srcRange)
-            let (rightConnections, rightNodes) =
+            let rightConnections, rightNodes =
                 exprNodesWithOutput operatorIdx right None
                     (PortEndpoint(operatorNodeName, "right"), srcRange)
 
@@ -326,7 +326,7 @@ module Internal =
                   target = targetEndpoint
                   targetRange = targetRange }
 
-            let (exprConnections, exprNodes) =
+            let exprConnections, exprNodes =
                 exprNodesWithOutput operatorIdx expr None
                     (PortEndpoint(operatorNodeName, "input"), srcRange)
 
@@ -353,6 +353,8 @@ module Internal =
                 exprNodesWithOutput operatorIdx subExpr
                     (Some(Range(high, low))) target
         | AST.ExprIfThenElse(cond, tExpr, fExpr) ->
+            // An if-then-else expression is essentially a 2-way mux
+            // with the condition being the selector
             let muxNodeName = sprintf "mux2-%d" !operatorIdx
             operatorIdx := !operatorIdx + 1
 
@@ -367,13 +369,13 @@ module Internal =
                   target = targetEndpoint
                   targetRange = targetRange }
 
-            let (condConnections, condNodes) =
+            let condConnections, condNodes =
                 exprNodesWithOutput operatorIdx cond None
                     (PortEndpoint(muxNodeName, "cond"), Single)
-            let (leftConnections, leftNodes) =
+            let leftConnections, leftNodes =
                 exprNodesWithOutput operatorIdx tExpr None
                     (PortEndpoint(muxNodeName, "true"), srcRange)
-            let (rightConnections, rightNodes) =
+            let rightConnections, rightNodes =
                 exprNodesWithOutput operatorIdx fExpr None
                     (PortEndpoint(muxNodeName, "false"), srcRange)
 
