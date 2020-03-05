@@ -55,7 +55,6 @@ module Internal =
                connections = [] |}
 
         (initialState, thisModule.items)
-        // We need to use collect because each item can require multiple nodes (e.g. expressions)
         ||> List.fold (fun state item ->
                 match item with
                 | AST.ItemPort(Output, range, name) ->
@@ -68,63 +67,50 @@ module Internal =
                            nodes = Netlist.InputPin(name, []) :: state.nodes |}
                 | AST.ItemInstantiation(moduleName, instanceName,
                                         connectionExpressions) ->
-                    // Find the ports of the instantiated module from its declaration
-                    let ports =
-                        allModules
-                        |> List.tryFind (fun decl -> decl.name = moduleName)
-                        |> function
-                        // TODO Make this return a result
-                        | None ->
-                            failwithf "Module %s does not exist" moduleName
-                        | Some decl -> decl.ports
-
                     let instance =
                         Netlist.ModuleInstance
                             ({ moduleName = StringIdentifier moduleName
                                instanceName = instanceName
                                connections = Map.empty })
 
-                    // Figure out what the outputs connect to
-                    let outConnections: IntermediateConnection list =
+                    // We need the ports of the instantiated module to know
+                    // which port each expression connects to
+                    let ports =
+                        allModules
+                        |> List.tryFind (fun decl -> decl.name = moduleName)
+                        |> Option.defaultWith
+                            (fun () ->
+                                failwithf "Module %s does not exist" moduleName)
+                        |> fun decl -> decl.ports
+
+                    let newConnections, newNodes =
                         List.zip ports connectionExpressions
-                        |> List.choose (function
-                            | ((Output, portName, portRange),
-                               AST.ExprIdentifier targetName) ->
-                                Some
-                                    { src = PortEndpoint(instanceName, portName)
-                                      srcRange = portRange
-                                      target = NameEndpoint targetName
-                                      targetRange = moveRangeToBase portRange }
+                        |> List.map
+                            (function
+                            | (Input, portName, range), expr ->
+                                exprNodesWithOutput operatorIdx expr None
+                                    (PortEndpoint(instanceName, portName), range)
+                            | (Output, portName, portRange),
+                              AST.ExprIdentifier targetName ->
+                                ([ { src = PortEndpoint(instanceName, portName)
+                                     srcRange = portRange
+                                     target = NameEndpoint targetName
+                                     targetRange = moveRangeToBase portRange } ],
+                                 [])
                             | ((Output, _, _), _) ->
                                 failwith
-                                    "Not yet implemented (Connecting module output to anything other than an output pin)"
-                            | ((Input, _, _), _) -> None)
-
-
-                    let (inConnections: IntermediateConnection list,
-                         inNodes: Node list) =
-                        List.zip ports connectionExpressions
-                        |> List.choose (fun (port, expr) ->
-                            match port with
-                            | (Input, portName, range) ->
-                                Some
-                                    (exprNodesWithOutput operatorIdx expr None
-                                         (PortEndpoint(instanceName, portName),
-                                          range))
-                            | (Output, _, _) -> None)
+                                    "Module output can only be connected to identifiers")
                         |> List.unzip
-                        |> fun (xss, yss) ->
-                            (List.concat xss, List.concat yss)
-
+                        |> Tuple.bimap List.concat List.concat
 
                     {| state with
-                           connections =
-                               List.concat
-                                   [ state.connections; inConnections; outConnections ]
-                           nodes = instance :: (state.nodes @ inNodes) |}
-
+                           connections = state.connections @ newConnections
+                           nodes = instance :: (state.nodes @ newNodes) |}
 
                 | AST.ItemAssign(targetNodeName, expression) ->
+                    // We assume that the entirety of the wire is connected
+                    // this would change if we allowed indexing on the left hand
+                    // of assignments
                     let targetRange =
                         state.netRanges
                         |> Map.tryFind targetNodeName
@@ -133,18 +119,18 @@ module Internal =
                                 failwithf "Net %s does not exist"
                                     targetNodeName)
 
-                    let (newConns, newNodes) =
+                    let newConnections, newNodes =
                         exprNodesWithOutput operatorIdx expression None
                             (NameEndpoint targetNodeName, targetRange)
+
                     {| state with
-                           connections = state.connections @ newConns
+                           connections = state.connections @ newConnections
                            nodes = state.nodes @ newNodes |}
 
                 | AST.ItemWireDecl(size, name) ->
                     {| state with netRanges =
                            Map.add name size state.netRanges |})
-
-        |> (fun state -> state.connections, state.nodes)
+        |> fun state -> state.connections, state.nodes
 
     let unifyConnections (connections: IntermediateConnection list): IntermediateConnection list =
         // Detect wire drive by multiple sources
@@ -152,7 +138,9 @@ module Internal =
 
         match drivers |> List.tryFind (fun (_, srcs) -> srcs.Length > 1) with
         | Some(pin, pinDrivers) ->
-            failwithf "Wire or pin %A is driven by more than one connection: \n%A" pin pinDrivers
+            failwithf
+                "Wire or pin %A is driven by more than one connection: \n%A"
+                pin pinDrivers
         | None -> ()
 
         // We group connections by source because connections are 1-to-many.
