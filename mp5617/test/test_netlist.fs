@@ -644,6 +644,54 @@ let fullModuleTests =
                                        connections = Map.empty }) ] }
 
                     expectNetlist decls moduleAST expectedNetlist
+                }
+
+                test "Connect if-then-else to output" {
+                    let decls = []
+
+                    let moduleAST =
+                        { name = "A"
+                          ports = [ "aIn"; "aOut" ]
+                          items =
+                              [ ItemPort(Input, Single, "aIn")
+                                ItemPort(Output, Range(2, 0), "aOut")
+                                ItemAssign("aOut", ExprIfThenElse(ExprIdentifier "aIn", ExprNumber(Some 3, 5), ExprNumber(Some 3, 1))) ] }
+
+                    let expectedNetlist =
+                        { moduleName = "A"
+                          nodes =
+                              [ InputPin
+                                  ("aIn",
+                                   [ { srcRange = Single
+                                       targetRange = Single
+                                       target = InstanceTarget("mux2-0", "cond") } ])
+                                Constant
+                                    {| width=3
+                                       value=5
+                                       connections=
+                                        [ { srcRange = Range(2, 0)
+                                            targetRange = Range(2, 0)
+                                            target = InstanceTarget("mux2-0", "true") } ] |}
+                                Constant
+                                    {| width=3
+                                       value=1
+                                       connections=
+                                        [ { srcRange = Range(2, 0)
+                                            targetRange = Range(2, 0)
+                                            target = InstanceTarget("mux2-0", "false") } ] |}
+                                ModuleInstance
+                                    ({ moduleName = StringIdentifier "mux2"
+                                       instanceName = "mux2-0"
+                                       connections =
+                                           Map
+                                               [ "output",
+                                                 [ { srcRange = Range(2, 0)
+                                                     targetRange = Range(2, 0)
+                                                     target = PinTarget "aOut" } ] ] })
+                                OutputPin("aOut") ] }
+
+
+                    expectNetlist decls moduleAST expectedNetlist
                 }]
 
           testList "Unification of connections"

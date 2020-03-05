@@ -109,7 +109,8 @@ module Internal =
                             | (Input, portName, range) ->
                                 Some
                                     (exprNodesWithOutput operatorIdx expr None
-                                         (PortEndpoint(instanceName, portName), range))
+                                         (PortEndpoint(instanceName, portName),
+                                          range))
                             | (Output, _, _) -> None)
                         |> List.unzip
                         |> fun (xss, yss) ->
@@ -289,7 +290,7 @@ module Internal =
         (srcRangeSelect: Range option) (target: RangedEndpoint): IntermediateConnection list * Node list =
         let targetEndpoint, targetRange = target
         let srcRange =
-            Option.defaultValue (moveRangeToBase targetRange) srcRangeSelect
+            srcRangeSelect |> Option.defaultValue (moveRangeToBase targetRange)
 
         match expr with
         | AST.ExprIdentifier name ->
@@ -363,7 +364,34 @@ module Internal =
             | AST.IndexRange(high, low) ->
                 exprNodesWithOutput operatorIdx subExpr
                     (Some(Range(high, low))) target
-        | AST.ExprIfThenElse _ ->
-            failwith "Not yet implemented (if-then-else expressions)"
+        | AST.ExprIfThenElse(cond, tExpr, fExpr) ->
+            let muxNodeName = sprintf "mux2-%d" !operatorIdx
+            operatorIdx := !operatorIdx + 1
+
+            let muxNode =
+                (ModuleInstance
+                    { instanceName = muxNodeName
+                      moduleName = StringIdentifier "mux2"
+                      connections = Map.empty })
+            let outputConnection =
+                { src = PortEndpoint(muxNodeName, "output")
+                  srcRange = srcRange
+                  target = targetEndpoint
+                  targetRange = targetRange }
+
+            let (condConnections, condNodes) =
+                exprNodesWithOutput operatorIdx cond None
+                    (PortEndpoint(muxNodeName, "cond"), Single)
+            let (leftConnections, leftNodes) =
+                exprNodesWithOutput operatorIdx tExpr None
+                    (PortEndpoint(muxNodeName, "true"), srcRange)
+            let (rightConnections, rightNodes) =
+                exprNodesWithOutput operatorIdx fExpr None
+                    (PortEndpoint(muxNodeName, "false"), srcRange)
+
+            (outputConnection
+             :: List.concat
+                 [ condConnections; leftConnections; rightConnections ],
+             muxNode :: List.concat [ condNodes; leftNodes; rightNodes ])
         | AST.ExprConcateneation _ ->
             failwith "Not yet implemented (concatenation expressions)"
