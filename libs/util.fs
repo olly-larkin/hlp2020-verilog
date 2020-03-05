@@ -31,15 +31,19 @@ module List =
             | Some item -> [ item ]
             | None -> [])
 
-    /// Map a function onto a list, with an additional 'confirmation' result.
-    /// Return the resulting list, as well as a bool for whether any of the
-    /// applications of `f` returned true
-    /// Useful for functions that only change certain elements on a list
-    let confirmedMap (f: 'a -> ('b * bool)) (lst: 'a list): 'b list * bool =
-        (false, lst)
-        ||> List.mapFold (fun flag el ->
-                let (result, thisFlag) = f el
-                (result, flag || thisFlag))
+    /// Map a partial function onto a list. Only return a Some if
+    /// the function returns Some for at least one element
+    let confirmedMap (f: 'a -> 'a option) (lst: 'a list): 'a list option =
+        let newLst = List.map f lst
+
+        if List.exists Option.isSome newLst then
+            List.zip lst newLst
+            |> List.map (function
+                | _, Some el -> el
+                | el, None -> el)
+            |> Some
+        else
+            None
 
     /// Works like List.tryFind, except it also returns a list without the element found
     /// if it is found.

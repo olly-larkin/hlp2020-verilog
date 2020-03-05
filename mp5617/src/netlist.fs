@@ -200,50 +200,45 @@ module Internal =
     let applyConnections (intermediateConnections: IntermediateConnection list)
         (intermediateNodes: Node list): Node list =
         (intermediateNodes, intermediateConnections)
-        ||> List.fold (fun intermediateNodes connection ->
-                let finalConnection: Netlist.Connection =
-                    { srcRange = connection.srcRange
-                      target = endpointToTarget connection.target
-                      targetRange = connection.targetRange }
-                match connection.src with
+        ||> List.fold (fun intermediateNodes intermediateConnection ->
+                let connection: Netlist.Connection =
+                    { srcRange = intermediateConnection.srcRange
+                      target = endpointToTarget intermediateConnection.target
+                      targetRange = intermediateConnection.targetRange }
+
+                match intermediateConnection.src with
                 | NameEndpoint srcName ->
                     intermediateNodes
                     |> List.confirmedMap (function
                         | InputPin(pinName, conns) when pinName = srcName ->
-                            (InputPin(pinName, finalConnection :: conns), true)
-                        | node -> (node, false))
-                    |> (function
-                    | (finalNodes, true) -> finalNodes
-                    | (_, false) -> failwithf "Pin %s was not found" srcName)
-
+                            Some(InputPin(pinName, connection :: conns))
+                        | _ -> None)
+                    |> Option.defaultWith
+                        (fun () -> failwithf "Pin %s was not found" srcName)
                 | ConstantEndpoint constantSpec ->
                     Constant
-                        {| constantSpec with connections = [ finalConnection ] |}
+                        {| constantSpec with connections = [ connection ] |}
                     :: intermediateNodes
                 | PortEndpoint(instanceName, portName) ->
                     intermediateNodes
                     |> List.confirmedMap (function
                         | ModuleInstance instance when instance.instanceName =
                                                            instanceName ->
-                            let existingPinConnections =
-                                instance.connections
-                                |> Map.tryFind portName
-                                |> Option.defaultValue []
-
                             let newConnections =
                                 instance.connections
-                                |> Map.add portName
-                                       (finalConnection
-                                        :: existingPinConnections)
+                                |> Map.update portName
+                                       (function
+                                       | None -> [ connection ]
+                                       | Some existingConnections ->
+                                           connection :: existingConnections)
 
-                            (ModuleInstance
-                                { instance with connections = newConnections },
-                             true)
-                        | node -> (node, false))
-                    |> (function
-                    | (finalNodes, true) -> finalNodes
-                    | (_, false) ->
-                        failwithf "Instance %s was not found" instanceName))
+                            Some
+                            <| ModuleInstance
+                                { instance with connections = newConnections }
+                        | _ -> None)
+                    |> Option.defaultWith
+                        (fun () ->
+                            failwithf "Instance %s was not found" instanceName))
 
     let endpointToTarget (endpoint: Endpoint): Netlist.ConnectionTarget =
         match endpoint with
