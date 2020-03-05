@@ -24,7 +24,7 @@ module Internal =
     type Endpoint =
         | NameEndpoint of Identifier
         | PortEndpoint of nodeName: Identifier * portName: Identifier
-        | ConstantEndpoint of {| value: int; width: int |}
+        | ConstantEndpoint of width: int * value: int
 
     /// A connection target along with a range. Useful when instantiating expressions feeding
     /// into a module port
@@ -218,10 +218,11 @@ module Internal =
                         | _ -> None)
                     |> Option.defaultWith
                         (fun () -> failwithf "Pin %s was not found" srcName)
-                | ConstantEndpoint constantSpec ->
+                | ConstantEndpoint(width, value) ->
                     Constant
-                        {| constantSpec with connections = [ connection ] |}
-                    :: intermediateNodes
+                        {| value = value
+                           width = width
+                           connections = [ connection ] |} :: intermediateNodes
                 | PortEndpoint(instanceName, portName) ->
                     intermediateNodes
                     |> List.confirmedMap (function
@@ -332,9 +333,7 @@ module Internal =
                 givenWidth |> Option.defaultValue (rangeWidth targetRange)
 
             let connection =
-                { src = ConstantEndpoint
-                          {| width = width
-                             value = value |}
+                { src = ConstantEndpoint(width, value)
                   srcRange = srcRange
                   target = targetEndpoint
                   targetRange = targetRange }
