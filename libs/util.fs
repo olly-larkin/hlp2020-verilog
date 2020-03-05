@@ -86,5 +86,11 @@ module Map =
     let mapValues (f: 'a -> 'b) (map: Map<'k, 'a>) =
         map |> Map.map (fun _ v -> f v)
 
+    // Update the value for a key in a Map. If the key does not exist
+    // it gets created with the value `f None`
+    let update (key: 'k) (f: 'v option -> 'v) (map: Map<'k, 'v>): Map<'k, 'v> =
+        let newVal = f (Map.tryFind key map)
+        map |> Map.add key newVal
+
 module Tuple =
     let bimap f g (a, b) = (f a, g b)
