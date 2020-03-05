@@ -45,7 +45,7 @@ module Internal =
     /// this needs to be processed further to get the final list of nodes
     let getIntermediateNodes (allModules: ModuleDecl list)
         (thisModule: AST.Module): IntermediateConnection list * Node list =
-        // We use a single, mutable reference
+        // See documentation of exprNodesWithOutput for a rationale behind using a ref
         let operatorIdx = ref 0
 
         let initialState =
@@ -261,6 +261,19 @@ module Internal =
         | ModuleInstance { instanceName = name } -> name
 
 
+    /// Generate a list of nodes and connections according to an expression
+    ///
+    /// srcRangeSelect and target allow for control of the final, outgoing connection.
+    /// srcRangeSelect (if not None) is the srcRange on that connection. target is
+    /// its target
+    ///
+    /// We use an int ref to give unique names to multiple instances of expression
+    /// blocks. It would be possible to do this by threading an int parameter
+    /// around the various functions that need it. Simply pass in the current value
+    /// and return the updated one (after some indices have been used).
+    /// This was deemed to be both cumbersome and error-prone. You could very easily
+    /// pass in a stale version of operatorIdx without noticing and the compiler would
+    /// not be able to know.
     let exprNodesWithOutput (operatorIdx: int ref) (expr: AST.Expr)
         (srcRangeSelect: Range option) (target: RangedEndpoint): IntermediateConnection list * Node list =
         let targetEndpoint, targetRange = target
