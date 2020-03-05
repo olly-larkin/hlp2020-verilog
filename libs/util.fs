@@ -85,3 +85,6 @@ module Map =
 
     let mapValues (f: 'a -> 'b) (map: Map<'k, 'a>) =
         map |> Map.map (fun _ v -> f v)
+
+module Tuple =
+    let bimap f g (a, b) = (f a, g b)
