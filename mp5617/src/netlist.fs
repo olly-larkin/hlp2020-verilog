@@ -148,54 +148,57 @@ module Internal =
         let groupedConnections =
             connections |> List.groupBy (fun conn -> conn.src)
 
-        // Find the connections driven by a wire and eliminate the wires by
-        // merging connections together
         ([], groupedConnections)
-        ||> List.fold (fun directConns (src, wireConns) ->
-                // Try to find a connection driving the wire. If it exists,
-                // remove it and change the src of the wire to that
-                // connection's src (i.e. adjust the connections' target)
-                // If it doesn't exist then either the wire is actually a pin or we haven't
-                // encountered its driver yet, so just leave the source as it
-                // is (just the name of the NameEndpoint for the wire)
-                let wireSrcRange, wireSrc, directConns =
+        ||> List.fold (fun existingConns (src, outConns) ->
+                // Existing srcRange is here so that if a connection is driving
+                // this one, then we don't overwrite its range. The src range
+                // should be the one from the very first src and the
+                // intermediate ranges can vanish
+                let existingSrcRange, src, existingConns =
                     match src with
-                    | NameEndpoint _srcName as wire ->
-                        directConns
-                        |> List.tryFindAndRemove (fun c -> c.target = wire)
+                    | NameEndpoint _srcName ->
+                        existingConns
+                        |> List.tryFindAndRemove (fun c -> c.target = src)
                         |> (function
-                        | Some c, ys -> Some(c.srcRange), c.src, ys
-                        | None, ys -> None, wire, ys)
-                    | _ -> None, src, directConns
+                        | Some c, conns -> Some(c.srcRange), c.src, conns
+                        | None, conns -> None, src, conns)
+                    | _ -> None, src, existingConns
 
-                // Find the connections that are driving and existing connection.
-                let intermediateConns, newConns =
-                    wireConns
+                let srcAdjustedOutConns =
+                    outConns
                     |> List.map (fun c ->
                         { c with
-                              src = wireSrc
+                              src = src
                               srcRange =
-                                  wireSrcRange
+                                  existingSrcRange
                                   |> Option.defaultValue c.srcRange })
+
+                // We separate the connections that connect to an existing
+                // connection (intermediateConns) from the ones that are
+                // completely new (newConns)
+                let intermediateConns, newConns =
+                    srcAdjustedOutConns
                     |> List.splitBy
                         (fun c ->
                             List.exists (fun dc -> c.target = dc.src)
-                                directConns)
+                                existingConns)
 
-                // Apply the intermediate connections
-                let directConns =
-                    [ for dc in directConns ->
+                // We apply the intermediateConns to the existing connections
+                // (existingConns) which are simply the connections that have
+                // already been processed (the accumulator)
+                let finalConns =
+                    existingConns
+                    |> List.map (fun dc ->
                         if List.exists (fun ic -> ic.target = dc.src)
                                intermediateConns then
                             { dc with
-                                  src = wireSrc
+                                  src = src
                                   srcRange =
-                                      wireSrcRange
+                                      existingSrcRange
                                       |> Option.defaultValue dc.srcRange }
                         else
-                            dc ]
-
-                directConns @ newConns)
+                            dc)
+                finalConns @ newConns)
 
     let applyConnections (intermediateConnections: IntermediateConnection list)
         (intermediateNodes: Node list): Node list =
