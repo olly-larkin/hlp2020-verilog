@@ -744,15 +744,10 @@ module private MyArbitraries =
             (Gen.listOf (connectionOf nonNamedEndpoint nonNamedTargetEndpoint),
              Arb.shrink) |> Arb.filter validConnectionList
 
+    /// Test with only single ports. Making sure that more complicated
+    /// networks are valid is too complicated and would be way too much for
+    /// test code
     let private range = Gen.constant Single
-        // Gen.oneof
-        //     [ gen { return Single }
-        //       gen {
-        //           let! start = Arb.generate<NonNegativeInt>
-        //                        |> Gen.map (fun x -> x.Get)
-        //           let! size = Arb.generate<NonNegativeInt>
-        //                       |> Gen.map (fun x -> x.Get + 1)
-        //           return Range(start + size, start) } ]
 
     let private connectionOf srcGen targetGen =
         gen {
