@@ -7,16 +7,16 @@ This folder contains code for the `Verishot.Visualise` module, which is used to 
 * Code will be inserted into Team part after `Verishot.AST` and `Verishot.Netlist` modules, as this module requires the output from the netlist which follows output of the AST module.
 * The main API required for this module is the `visualiseNetlists` function defined in `src/visualiser/visualise.fs`. It requires the project name, all netlists, all user-defined module declarations, an optional CSS stylesheet and an optional JavaScript script.
 ### Which parts if any are code written for other people?
-* I wrote the SVG library (`Verishot.SVG`) located in `../libs/svg.fs`. More information is provided below. 
+* I wrote the SVG library (`Verishot.SVG`) located in `../libs/svg.fs`. More information is provided below in the SVG Library header 
 
 ### Which parts if any of code you use is written by others?
 * None
 
 ### What help have you obtained/given others debugging or doing code review?
-* Contributed to `oll16` and `ng2517`'s Expecto testing infrastructure 
+* Contributed to `oll16`'s and `ng2517`'s testing infrastructure 
 
 ### How did you work out (who de)
-* This module heavily relies on core types (located in `../libs/core_types.fs`) co-developed by the team. We discussed on the interfacing types before and during work to make sure the features supported are adequate.
+* This module heavily relies on core types (located in `../libs/core_types.fs`) co-developed by the team. We discussed (and changed accordingly) the interfacing types before and during work to make sure the features supported are adequate.
 
 ## Details and examples
 Example SVGs are located in the `SVGOutput` folder (best viewed using `Google Chrome`). These are produced by running `dotnet run` in this folder, and the netlist and declarations used to generate these SVGs are located in `src/main.fs`. 
