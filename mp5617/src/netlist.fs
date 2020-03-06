@@ -46,8 +46,10 @@ module Internal =
 
     /// Gather IntermediateNode's from a module AST in a single pass. The output of
     /// this needs to be processed further to get the final list of nodes
-    let getIntermediateNodes (allModules: ModuleDecl list)
-        (thisModule: AST.Module): IntermediateConnection list * Node list =
+    let getIntermediateNodes
+            (allModules: ModuleDecl list)
+            (thisModule: AST.Module)
+            : IntermediateConnection list * Node list =
         // See documentation of exprNodesWithOutput for a rationale behind using a ref
         let operatorIdx = ref 0
 
@@ -135,7 +137,9 @@ module Internal =
                            Map.add name size state.netRanges |})
         |> fun state -> state.connections, state.nodes
 
-    let unifyConnections (connections: IntermediateConnection list): IntermediateConnection list =
+    let unifyConnections
+            (connections: IntermediateConnection list)
+            : IntermediateConnection list =
         // Detect wire drive by multiple sources
         let drivers = connections |> List.groupBy (fun c -> c.target)
 
@@ -203,8 +207,10 @@ module Internal =
                             dc)
                 finalConns @ newConns)
 
-    let applyConnections (intermediateConnections: IntermediateConnection list)
-        (intermediateNodes: Node list): Node list =
+    let applyConnections
+            (intermediateConnections: IntermediateConnection list)
+            (intermediateNodes: Node list)
+            : Node list =
         (intermediateNodes, intermediateConnections)
         ||> List.fold (fun intermediateNodes intermediateConnection ->
                 let connection: Netlist.Connection =
@@ -274,8 +280,12 @@ module Internal =
     /// This was deemed to be both cumbersome and error-prone. You could very easily
     /// pass in a stale version of operatorIdx without noticing and the compiler would
     /// not be able to know.
-    let exprNodesWithOutput (operatorIdx: int ref) (expr: AST.Expr)
-        (srcRangeSelect: Range option) (target: RangedEndpoint): IntermediateConnection list * Node list =
+    let exprNodesWithOutput
+            (operatorIdx: int ref)
+            (expr: AST.Expr)
+            (srcRangeSelect: Range option)
+            (target: RangedEndpoint)
+            : IntermediateConnection list * Node list =
         let targetEndpoint, targetRange = target
         let srcRange =
             srcRangeSelect |> Option.defaultValue (moveRangeToBase targetRange)
