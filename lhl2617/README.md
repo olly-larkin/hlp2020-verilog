@@ -15,7 +15,7 @@ This folder contains code for the `Verishot.Visualise` module, which is used to 
 ### What help have you obtained/given others debugging or doing code review?
 * Contributed to `oll16`'s and `ng2517`'s testing infrastructure 
 
-### How did you work out (who de)
+### How did you work out (who decided what - how do you revise) the types that interface your code with others?
 * This module heavily relies on core types (located in `../libs/core_types.fs`) co-developed by the team. We discussed (and changed accordingly) the interfacing types before and during work to make sure the features supported are adequate.
 
 ## Details and examples
