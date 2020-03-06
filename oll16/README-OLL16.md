@@ -16,6 +16,8 @@ None.
 
 LH in my group showed me a very neat way to organise the tests with helper functions which streamlined the writing of tests.
 
+Mike in my group gave me a bit of help with designing the parser combinator structure with which combinatros would be useful.
+
 ## How did you work out the types that interface your code with others?
 
 We discussed it in a group setting and then discussed and made changes when we realised that there were redundancies or things needed to be added.
