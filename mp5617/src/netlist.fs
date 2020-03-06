@@ -138,7 +138,7 @@ module Internal =
     let unifyConnections
             (connections: IntermediateConnection list)
             : IntermediateConnection list =
-        // Detect wire drive by multiple sources
+        // Detect wire driven by multiple sources
         let drivers = connections |> List.groupBy (fun c -> c.target)
 
         match drivers |> List.tryFind (fun (_, srcs) -> srcs.Length > 1) with
