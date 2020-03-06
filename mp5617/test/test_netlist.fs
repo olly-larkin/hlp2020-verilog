@@ -12,15 +12,13 @@ open Verishot.Netlist
 module Netlist = Verishot.Netlist
 
 let expectNetlist decls ast expectedNetlist =
-    match moduleNetlist decls ast with
-    | Some actualNetlist ->
-        Expect.equal actualNetlist.moduleName expectedNetlist.moduleName
-            "Should have same name"
-        Expect.containsAll actualNetlist.nodes expectedNetlist.nodes
-            "Should have all expected nodes"
-        Expect.containsAll expectedNetlist.nodes actualNetlist.nodes
-            "Should not have any extra nodes"
-    | None -> Expect.equal None (Some expectedNetlist) "Should not fail"
+    let actualNetlist = moduleNetlist decls ast
+    Expect.equal actualNetlist.moduleName expectedNetlist.moduleName
+        "Should have same name"
+    Expect.containsAll actualNetlist.nodes expectedNetlist.nodes
+        "Should have all expected nodes"
+    Expect.containsAll expectedNetlist.nodes actualNetlist.nodes
+        "Should not have any extra nodes"
 
 [<Tests>]
 let fullModuleTests =

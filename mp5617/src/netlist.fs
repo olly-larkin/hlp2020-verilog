@@ -7,18 +7,16 @@ open Verishot.Util
 module AST = Verishot.CoreTypes.VerilogAST
 module Netlist = Verishot.CoreTypes.Netlist
 
-let moduleNetlist (allModules: ModuleDecl list) (thisModule: AST.Module): Netlist option =
-    Some
-        { moduleName = thisModule.name
-          nodes =
-              let (intermediateConnections, intermediateNodes) =
-                  Internal.getIntermediateNodes allModules thisModule
-              let unifiedConnections =
-                  Internal.unifyConnections intermediateConnections
-              let finalNodes =
-                  Internal.applyConnections unifiedConnections
-                      intermediateNodes
-              finalNodes }
+let moduleNetlist (allModules: ModuleDecl list) (thisModule: AST.Module): Netlist =
+    { moduleName = thisModule.name
+      nodes =
+          let (intermediateConnections, intermediateNodes) =
+              Internal.getIntermediateNodes allModules thisModule
+          let unifiedConnections =
+              Internal.unifyConnections intermediateConnections
+          let finalNodes =
+              Internal.applyConnections unifiedConnections intermediateNodes
+          finalNodes }
 
 module Internal =
     /// A terminator to a connection. Somewhat similar to Netlist.ConnectionTarget,
