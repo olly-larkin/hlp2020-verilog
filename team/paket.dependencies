@@ -1,12 +1,13 @@
 source https://nuget.org/api/v2
 storage:none
 
-clitool dotnet-fable prerelease
-nuget Fable.Core prerelease
-nuget Fable.Import.Browser
+clitool dotnet-fable >= 2.0.11
+nuget Fable.Core >= 2.0.3
+nuget Fable.Import.Browser >= 1.3.0
 nuget Fable.Import.Node
 nuget Fable.Import.Electron
-nuget Fable.PowerPack
-
-github fable-compiler/Fable src/dotnet/Fable.JS/Interfaces.fs
+nuget Fable.PowerPack >= 3.0.0
+nuget Fable.Elmish.React
+github fable-compiler/Fable src/dotnet/Fable.Repl/Interfaces.fs
 nuget Expecto
+nuget Expecto.FsCheck
