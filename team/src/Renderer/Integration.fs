@@ -135,16 +135,16 @@ let resetEmulator() =
     Tooltips.deleteAllContentWidgets()
     Editors.removeEditorDecorations currentFileTabId
     Editors.enableEditors()
-    memoryMap <- Map.empty
-    symbolMap <- Map.empty
-    regMap <- initialRegMap
-    setMode ResetMode
-    updateMemory()
-    updateSymTable()
-    resetRegs()
-    resetFlags()
-    updateRegisters()
-    updateClockTime (0uL, 0uL)
+    // memoryMap <- Map.empty
+    // symbolMap <- Map.empty
+    // regMap <- initialRegMap
+    // setMode ResetMode
+    // updateMemory()
+    // updateSymTable()
+    // resetRegs()
+    // resetFlags()
+    // updateRegisters()
+    // updateClockTime (0uL, 0uL)
 
 /// Display current execution state in GUI from stored runMode
 let showInfoFromCurrentMode() =
@@ -287,11 +287,11 @@ let currentFileTabProgramIsChanged (pInfo : RunInfo) =
 /// Return LoadImage on parse success or None.
 let tryParseAndIndentCode tId =
     let lim = imageOfTId tId
-    let editorASM = lim.EditorText
+    // let editorASM = lim.EditorText
     // See if any errors exist, if they do display them
     match lim with
     | { Errors = [] } as lim ->
-        //Browser.console.log(sprintf "%A" lim)
+        Browser.console.log(sprintf "%A" lim)
         let editor = editors.[tId]
         let trimmed line = String.trimEnd [| '\r'; '\n' |] line
         let newCode = List.map trimmed lim.Source
@@ -431,37 +431,45 @@ let prepareModeForExecution() =
 /// Parses and runs the assembler program in the current tab
 /// Aborts after steps instructions, unless steps is 0, or
 /// if breackCondition happens
-let runEditorTab breakCondition steps =
+let runEditorTab breakCondition =
     if currentFileTabId = -1 then
         showVexAlert "No file tab in editor to run!"
         ()
     else
+        printfn "hello"
         prepareModeForExecution()
-        match runMode with
-        | ResetMode
-        | ParseErrorMode _ ->
-            let tId = currentFileTabId
-            removeEditorDecorations tId
-            match tryParseAndIndentCode tId with
-            | Some(lim, _) ->
-                disableEditors()
-                let ri = lim |> getRunInfoFromImage breakCondition
-                setCurrentModeActiveFromInfo RunState.Running ri
-                asmStepDisplay breakCondition steps ri
-            | _ -> ()
-        | ActiveMode(RunState.Paused, ri) ->
-            asmStepDisplay breakCondition (steps + ri.StepsDone) ri
-        | ActiveMode _
-        | RunErrorMode _
-        | FinishedMode _ -> ()
+        let tId = currentFileTabId
+        removeEditorDecorations tId
+        match tryParseAndIndentCode tId with 
+        | Some (lim, _) -> 
+            printfn "%A" lim.Source
+            ()        
+        | _ -> ()
+        // match runMode with
+        // | ResetMode
+        // | ParseErrorMode _ ->
+        //     let tId = currentFileTabId
+        //     removeEditorDecorations tId
+        //     match tryParseAndIndentCode tId with
+        //     | Some(lim, _) ->
+        //         disableEditors()
+        //         let ri = lim |> getRunInfoFromImage breakCondition
+        //         setCurrentModeActiveFromInfo RunState.Running ri
+        //         asmStepDisplay breakCondition steps ri
+        //     | _ -> ()
+        // | ActiveMode(RunState.Paused, ri) ->
+        //     asmStepDisplay breakCondition (steps + ri.StepsDone) ri
+        // | ActiveMode _
+        // | RunErrorMode _
+        // | FinishedMode _ -> ()
 
 
 
 /// Step simulation forward by 1
-let stepCode() =
-    match currentTabIsTB() with
-    | false -> runEditorTab NoBreak 1L
-    | true -> showVexAlert "Current file is a testbench: switch to an assembly tab"
+// let stepCode() =
+//     match currentTabIsTB() with
+//     | false -> runEditorTab NoBreak 1L
+//     | true -> showVexAlert "Current file is a testbench: switch to an assembly tab"
 
 /// Step simulation back by numSteps
 let stepCodeBackBy numSteps =
@@ -539,18 +547,16 @@ let startTest test =
 /// Top-level simulation execute
 /// If current tab is TB run TB if this is possible
 let runCode breakCondition () =
-    match currentTabIsTB() with
-    | true -> runTestbenchOnCode()
-    | false ->
-        match runMode with
-        | FinishedMode _
-        | RunErrorMode _ -> resetEmulator()
-        | _ -> ()
-        match runMode with
-        | ActiveMode(RunState.Running, ri) -> setCurrentModeActiveFromInfo (RunState.Stopping) ri
-        | _ ->
-            runEditorTab breakCondition <|
-                match int64 Refs.vSettings.SimulatorMaxSteps with
-                | 0L -> System.Int64.MaxValue
-                | n when n > 0L -> n
-                | _ -> System.Int64.MaxValue
+    runEditorTab breakCondition
+    // match runMode with
+    // | FinishedMode _
+    // | RunErrorMode _ -> resetEmulator()
+    // | _ -> ()
+    // match runMode with
+    // | ActiveMode(RunState.Running, ri) -> setCurrentModeActiveFromInfo (RunState.Stopping) ri
+    // | _ ->
+    //     runEditorTab breakCondition <|
+    //         match int64 Refs.vSettings.SimulatorMaxSteps with
+    //         | 0L -> System.Int64.MaxValue
+    //         | n when n > 0L -> n
+    //         | _ -> System.Int64.MaxValue

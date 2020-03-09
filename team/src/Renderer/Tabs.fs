@@ -59,11 +59,11 @@ let setExecutionCompleteStatus() =
 
 let setStepExecutionStatus() = setStatusButton "Stepping" "btn-primary"
 
-let setNoStatus() =
-    Refs.statusBar.classList.remove ("btn-negative")
-    Refs.statusBar.classList.remove ("btn-positive")
-    Refs.statusBar.classList.remove ("btn-primary")
-    Refs.statusBar.innerHTML <- "-"
+let setNoStatus() = ignore
+    // Refs.statusBar.classList.remove ("btn-negative")
+    // Refs.statusBar.classList.remove ("btn-positive")
+    // Refs.statusBar.classList.remove ("btn-primary")
+    // Refs.statusBar.innerHTML <- "-"
 
 let setRunButton (mode : ExecutionTop.RunMode) =
     match mode with
@@ -77,7 +77,7 @@ let setMode (rm : ExecutionTop.RunMode) =
     | ExecutionTop.ParseErrorMode -> setErrorStatus "Errors in Code"
     | ExecutionTop.RunErrorMode _ -> setErrorStatus "Runtime Error"
     | ExecutionTop.ResetMode ->
-        setNoStatus()
+        // setNoStatus()
         Tooltips.deleteAllContentWidgets()
     | ExecutionTop.ActiveMode(_, _) -> setStepExecutionStatus()
     | ExecutionTop.FinishedMode _ -> setExecutionCompleteStatus()

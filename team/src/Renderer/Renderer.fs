@@ -13,10 +13,6 @@ open Fable.Core.JsInterop
 open Fable.Import
 open Fable.Import.Browser
 
-// open DevTools to see the message
-// Menu -> View -> Toggle Developer Tools
-Browser.console.log "Hi from renderer.fs" |> ignore
-
 open Refs
 open MenuBar
 
@@ -74,17 +70,14 @@ let init() =
         )) |> ignore
 
 
-
-
     // Actions for the buttons
-    Refs.openFileBtn.addEventListener_click (fun _ -> MenuBar.openFile)
+    Refs.openFileBtn.addEventListener_click (fun _ -> MenuBar.openFile())
 
-    Refs.saveFileBtn.addEventListener_click (fun _ -> Files.saveFile)
+    Refs.saveFileBtn.addEventListener_click (fun _ -> Files.saveFile())
 
     Refs.runSimulationBtn.addEventListener_click (fun _ ->
-        // Stats.readOnlineInfo Stats.RunningCode
-        // Integration.runCode ExecutionTop.NoBreak () :> obj
         Browser.console.log "sim"
+        Integration.runCode ExecutionTop.NoBreak () :> obj
     )
 
     Refs.visualiseBtn.addEventListener_click(fun _ -> 
@@ -93,7 +86,7 @@ let init() =
 
     (Refs.newFileTab).addEventListener_click(fun _ ->
         Browser.console.log "Creating a new file tab" |> ignore
-        MenuBar.interlock "create a new tab" (fun () -> Tabs.createFileTab() |> ignore))
+        Tabs.createFileTab())
 
     // create electron menus
     MenuBar.mainMenu()
@@ -106,7 +99,7 @@ let init() =
 
     Tooltips.addFixedToolTips()
 
-    Stats.readOnlineInfo Stats.Startup
+    // Stats.readOnlineInfo Stats.Startup
 
 /// top-level function that runs the renderer code
 let handleMonacoReady = { new EventListenerObject with

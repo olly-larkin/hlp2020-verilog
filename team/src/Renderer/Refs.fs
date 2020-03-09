@@ -22,7 +22,7 @@ open EEExtensions
 //                                  App Version
 // **********************************************************************************
 
-let appVersion = "1.06.10"
+let appVersion = "0.0.1"
 
 // **********************************************************************************
 //                               Types used in this module
@@ -572,7 +572,7 @@ let mutable runMode : ExecutionTop.RunMode = ExecutionTop.ResetMode
 
 /// Global debug level set from main process.
 /// 0 => production. 1 => development. 2 => debug parameter.
-let mutable debugLevel = 0
+let mutable debugLevel = 1
 
 
 /// Online data matched time
