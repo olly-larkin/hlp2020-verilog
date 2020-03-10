@@ -10,15 +10,16 @@
 		["{", "}"],
 		["[", "]"],
 		["(", ")"],
-		["case", "endcase"],
-		["function", "endfunction"],
+		// ["case", "endcase"],
+		// ["function", "endfunction"],
 		["module", "endmodule"],
-		["task", "endtask"]
+		// ["task", "endtask"]
 	],
 
 	"autoClosingPairs": [
+		{"open":"/*", "close":"*/"},
 		{"open":"(", "close":")", "notIn":["string", "comment"]},
 		{"open":"[", "close":"]", "notIn":["string", "comment"]},
-		{"open":"{", "close":"}", "notIn":["string", "comment"]}
+		{"open":"{", "close":"}", "notIn":["string", "comment"]},
 	]
 }
