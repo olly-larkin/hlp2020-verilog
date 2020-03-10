@@ -32,6 +32,10 @@
     <Compile Include="src/Visualiser/connection/types/pin.fs" />
     <Compile Include="src/Visualiser/visualise.fs" />
 
+    <!-- WAVEFORM -->
+    <Compile Include="src/Waveform/wave_types.fs" />
+    <Compile Include="src/Waveform/waveform.fs" />
+
     <Compile Include="Program.fs" />
   </ItemGroup>
 
