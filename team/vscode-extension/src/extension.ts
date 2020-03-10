@@ -1,82 +1,10 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import * as cp from 'child_process';
+import { execIntellisense } from './intellisense';
+import { execVerishot } from './verishot';
+import { VerishotMode } from './util';
 
-
-enum VerishotMode {
-	lint,
-	simulate,
-	visualise,
-}
-
-export const checkFilePath = (filePath: string | undefined, suppress: boolean): boolean => {
-	if (!filePath) {
-		if (!suppress) { vscode.window.showErrorMessage("ERROR: No active file found. Please open a `.v` Verilog file"); }
-		return false;
-	}
-	else if (filePath.substr(filePath.length - 2) !== ".v") {
-		if (!suppress) { vscode.window.showErrorMessage("ERROR: Only `.v` Verilog files are allowed"); }
-		return false;
-	}
-	return true;
-};
-
-const execVerishot = (verishotMode: number) => {
-	const filePath = vscode.window.activeTextEditor?.document.fileName;
-	const workspacePath = vscode.workspace.rootPath;
-	const terminalName = "Verishot";
-
-	// if a terminal with the required terminal name already exists, use that terminal
-	const getTerminal = (terminalName: string) => {
-		const terms = vscode.window.terminals.filter((term: vscode.Terminal) => term.name === terminalName);
-		if (terms.length) { return terms[0]; }
-		return vscode.window.createTerminal(terminalName);
-	};
-	const terminal = getTerminal(terminalName);
-
-	if (!checkFilePath(filePath, false)) {
-		return;
-	}
-	terminal.show();
-	if (verishotMode === VerishotMode.lint) {
-		terminal.sendText(`verishot --lint ${filePath}`);
-	}
-	else if (verishotMode === VerishotMode.simulate) {
-		terminal.sendText(`verishot --simulate ${filePath} ${workspacePath}`);
-	}
-	else if (verishotMode === VerishotMode.visualise) {
-		terminal.sendText(`verishot --visualise ${filePath} ${workspacePath}`);
-	}
-	else {
-		vscode.window.showErrorMessage("ERROR: Something went wrong...");
-	}
-};
-
-const execIntellisense = (editor: vscode.TextEditor, doc: vscode.TextDocument, diagcol: vscode.DiagnosticCollection) => {
-	diagcol.clear();
-	const filePath = doc.fileName;
-	if (checkFilePath(filePath, true)) {
-		cp.exec(`verishot --intellisense ${filePath}`, (err: any, stdout: any, stderr: any) => {
-			if (stdout && stdout.length) {
-				console.log(stdout);
-				let splitted = stdout.split("#####");
-				if (splitted.length === 3) {
-					let line: number = parseInt(splitted[0])-1; // 1-indexed
-					let char: number = parseInt(splitted[1]);
-					let errMsg: string = splitted[2];
-					const diagnostics: vscode.Diagnostic[] =
-						[{
-							severity: vscode.DiagnosticSeverity.Error,
-							range: new vscode.Range(line, 0, line, char),
-							message: errMsg,
-						}];
-					diagcol.set(editor.document.uri, diagnostics);
-				}
-			}
-		});
-	}
-};
 
 export const activate = (context: vscode.ExtensionContext) => {
 	// console.log("[VERISHOT ACTIVATED]");
