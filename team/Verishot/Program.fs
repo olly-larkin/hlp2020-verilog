@@ -15,19 +15,29 @@ let exitCodes: Map<string, int> =
         ("LintError", 10)
     ]
    
-let lint filePath intellisense =
+let lint filePath =
     filePath
     |> readFileToString
     |> Seq.toList
     |> ParseSource
     |> function
         | Ok _ -> 
-            if not intellisense then printf "Lint: No Errors"
+            printf "Lint: No Errors"
             exitCodes.["Success"]
         | Error (errStr, loc) -> 
-            if intellisense then printf "%d;%d;%s" loc.line loc.character errStr
-            else printf "Lint Error: %s at Line %d, Char %d" errStr loc.line loc.character
+            printf "Lint Error: %s at Line %d, Char %d" errStr loc.line loc.character
             exitCodes.["LintError"]
+
+let intellisense code =
+    code 
+    |> Seq.toList
+    |> ParseSource
+    |> function
+        | Error (errStr, loc) -> 
+            printf "%d;%d;%s" loc.line loc.character errStr
+            exitCodes.["LintError"]
+        | _ ->
+            exitCodes.["Success"]
             
 let getAST filePath =
     filePath 
@@ -56,13 +66,12 @@ let main argv =
         printf "verishot <flag> <infile> [<workspacefolder]
 flag: --lint, --simulate, --visualise"
         exitCodes.["Success"]
-    
     | 2 when argv.[0] = "--lint" ->
         let filePath = argv.[1]
-        lint filePath false
+        lint filePath
     | 2 when argv.[0] = "--intellisense" -> 
-        let filePath = argv.[1]
-        lint filePath true
+        let code = argv.[1]
+        intellisense code
     | 3 -> 
         let flag = argv.[0]
         let filePath = argv.[1]
