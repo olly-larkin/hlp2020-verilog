@@ -63,7 +63,7 @@ let main argv =
 `verishot --help` for usage guide" 
         exitCodes.["Success"]
     | _ ->
-        match argv.[9] with 
+        match argv.[0] with 
         | "--help" ->
             printf "verishot <flag> <infile> [<workspacefolder]
     flag: --lint, --simulate, --visualise"

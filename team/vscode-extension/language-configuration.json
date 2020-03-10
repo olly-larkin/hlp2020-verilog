@@ -21,6 +21,5 @@
 		{"open":"(", "close":")", "notIn":["string", "comment"]},
 		{"open":"[", "close":"]", "notIn":["string", "comment"]},
 		{"open":"{", "close":"}", "notIn":["string", "comment"]},
-		{"open":"module", "close":"endmodule", "notIn":["string", "comment"]}
 	]
 }
