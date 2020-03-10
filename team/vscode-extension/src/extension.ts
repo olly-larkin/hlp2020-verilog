@@ -1,55 +1,74 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as cp from 'child_process';
 
 enum VerishotMode {
+	lint,
 	simulate,
 	visualise,
 }
 
-const checkFilePath = (filePath: string | undefined): boolean => {
+const checkFilePath = (filePath: string | undefined, suppress: boolean): boolean => {
 	if (!filePath) {
-		vscode.window.showErrorMessage("ERROR: No active file found. Please open a `.v` Verilog file");
+		if (!suppress) { vscode.window.showErrorMessage("ERROR: No active file found. Please open a `.v` Verilog file"); }
 		return false;
 	}
 	else if (filePath.substr(filePath.length - 2) !== ".v") {
-		vscode.window.showErrorMessage("ERROR: Only `.v` Verilog files are allowed");
+		if (!suppress) { vscode.window.showErrorMessage("ERROR: Only `.v` Verilog files are allowed"); }
 		return false;
 	}
 	return true;
 };
 
+
 const execVerishot = (verishotMode: number) => {
 	const filePath = vscode.window.activeTextEditor?.document.fileName;
 	const workspacePath = vscode.workspace.rootPath;
+	const terminalName = "Verishot";
 
-	if (!checkFilePath(filePath)) {
+	// if a terminal with the required terminal name already exists, use that terminal
+	const getTerminal = (terminalName: string) => {
+		const terms = vscode.window.terminals.filter((term: vscode.Terminal) => term.name === terminalName);
+		if (terms.length) { return terms[0]; }
+		return vscode.window.createTerminal(terminalName);
+	};
+	const terminal = getTerminal(terminalName);
+
+	if (!checkFilePath(filePath, false)) {
 		return;
 	}
-	if (verishotMode === VerishotMode.simulate) {
-		const terminalName = "Verishot: Simulate";
-		const terminal = vscode.window.createTerminal(terminalName);
-		terminal.show();
-		terminal.sendText(`verishot ${filePath} --simulate ${workspacePath}`);
+	terminal.show();
+	if (verishotMode === VerishotMode.lint) {
+		terminal.sendText(`verishot --lint ${filePath}`);
+	}
+	else if (verishotMode === VerishotMode.simulate) {
+		terminal.sendText(`verishot --simulate ${filePath} ${workspacePath}`);
 	}
 	else if (verishotMode === VerishotMode.visualise) {
-		const terminalName = "Verishot: Visualise";
-		const terminal = vscode.window.createTerminal(terminalName);
-		terminal.show();
-		terminal.sendText(`verishot ${filePath} --visualise ${workspacePath}`);
+		terminal.sendText(`verishot --visualise ${filePath} ${workspacePath}`);
 	}
 	else {
 		vscode.window.showErrorMessage("ERROR: Something went wrong...");
 	}
 };
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export const activate = (context: vscode.ExtensionContext) => {
+const execIntellisense = () => {
+	const filePath = vscode.window.activeTextEditor?.document.fileName;
+	cp.exec(`verishot --intellisense ${filePath}`, (err: any, stdout: any, stderr: any) => {
+		if (stdout && stdout.length) {
+			console.log(stdout);
+		}
+	});
+};
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	// console.log('Congratulations, your extension "hello-world" is now active!');
+export const activate = (context: vscode.ExtensionContext) => {
+	console.log("[VERISHOT ACTIVATED]");
+	const lint = vscode.commands.registerCommand('extension.lint', () => {
+		vscode.window.showInformationMessage('Linting...');
+		execVerishot(VerishotMode.lint);
+	});
+	context.subscriptions.push(lint);
 
 	const simulate = vscode.commands.registerCommand('extension.simulate', () => {
 		vscode.window.showInformationMessage('Simulating...');
@@ -62,6 +81,15 @@ export const activate = (context: vscode.ExtensionContext) => {
 		execVerishot(VerishotMode.visualise);
 	});
 	context.subscriptions.push(visualise);
+
+	// intellisense on save
+	vscode.workspace.onDidSaveTextDocument((event: vscode.TextDocument) => {
+		if (checkFilePath(event.fileName, true)) {
+			execIntellisense();
+		};
+	});
+
+
 };
 
 // this method is called when your extension is deactivated

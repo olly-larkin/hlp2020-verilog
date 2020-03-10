@@ -7,8 +7,8 @@
 
   <ItemGroup>
     <!-- LIBRARIES -->
-    <Compile Include="src/libs/util.fs" />
     <Compile Include="src/libs/core_types.fs" />
+    <Compile Include="src/libs/util.fs" />
     <Compile Include="src/libs/svg.fs" />
 
     <!-- PARSER -->

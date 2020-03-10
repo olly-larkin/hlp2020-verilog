@@ -5,7 +5,7 @@ open Verishot.CoreTypes
 
 let print x = printfn "%A" x
 
-let readFileToString (filename: string): string =
+let readFileToString (filename: string) =
     File.ReadAllLines filename
     |> String.concat "\n"
 

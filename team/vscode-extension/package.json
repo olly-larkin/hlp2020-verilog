@@ -10,12 +10,44 @@
 		"Other"
 	],
 	"activationEvents": [
+		"onLanguage:verilog",
+		"onCommand:extension.lint",
 		"onCommand:extension.simulate",
 		"onCommand:extension.visualise"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"languages": [
+			{
+				"id": "verilog",
+				"aliases": [
+					"Verilog",
+					"verilog"
+				],
+				"extensions": [
+					".v"
+				],
+				"configuration": "./language-configuration.json"
+			}
+		],
+		"grammars": [
+			{
+				"language": "verilog",
+				"scopeName": "source.verilog",
+				"path": "./grammars/verilog.tmLanguage"
+			}
+		],
+		"snippets": [
+			{
+				"language": "verilog",
+				"path": "./snippets/verilog.json"
+			}
+		],
 		"commands": [
+			{
+				"command": "extension.lint",
+				"title": "Verishot: Lint"
+			},
 			{
 				"command": "extension.simulate",
 				"title": "Verishot: Simulate"
