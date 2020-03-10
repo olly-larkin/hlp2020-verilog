@@ -10,22 +10,6 @@
 		],
 		"description": "module ... endmodule"
 	},
-	"beginend": {
-		"prefix": "beginend",
-		"body": [
-			"begin",
-			"\t$1",
-			"end"
-		],
-		"description": "begin ... end"
-	},
-	"reg": {
-		"prefix": "reg",
-		"body": [
-			"reg $1;"
-		],
-		"description": "reg reg_name;"
-	},
 	"wire": {
 		"prefix": "wire",
 		"body": [
@@ -39,12 +23,5 @@
 			"wire [$1:$2] $3;"
 		],
 		"description": "wire [N:0] wire_name;"
-	},
-	"parameter": {
-		"prefix": "param",
-		"body": [
-			"parameter $1 = $2;"
-		],
-		"description": "paramter var = val;"
 	}
 }
