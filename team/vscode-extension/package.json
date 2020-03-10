@@ -11,6 +11,7 @@
 	],
 	"activationEvents": [
 		"onLanguage:verilog",
+		"onCommand:extension.playground",
 		"onCommand:extension.lint",
 		"onCommand:extension.simulate",
 		"onCommand:extension.visualise"
@@ -44,6 +45,10 @@
 			}
 		],
 		"commands": [
+			{
+				"command": "extension.playground",
+				"title": "Verishot: Playground"
+			},
 			{
 				"command": "extension.lint",
 				"title": "Verishot: Lint"

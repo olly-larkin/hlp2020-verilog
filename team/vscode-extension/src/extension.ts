@@ -7,6 +7,21 @@ import { VerishotMode } from './util';
 
 
 export const activate = (context: vscode.ExtensionContext) => {
+	const playground = vscode.commands.registerCommand('extension.playground', () => {
+		vscode.window.showInformationMessage('playground.');
+		const result = vscode.window.showInputBox({
+			value: 'abcdef',
+			valueSelection: [2, 4],
+			placeHolder: 'For example: fedcba. But not: 123',
+			validateInput: text => {
+				vscode.window.showInformationMessage(`Validating: ${text}`);
+				return text === '123' ? 'Not 123!' : null;
+			}
+		});
+		vscode.window.showInformationMessage(`Got: ${result}`);
+	});
+	context.subscriptions.push(playground);
+
 	// console.log("[VERISHOT ACTIVATED]");
 	const lint = vscode.commands.registerCommand('extension.lint', () => {
 		vscode.window.showInformationMessage('Linting...');
