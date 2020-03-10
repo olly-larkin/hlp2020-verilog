@@ -10,7 +10,7 @@ enum VerishotMode {
 	visualise,
 }
 
-const checkFilePath = (filePath: string | undefined, suppress: boolean): boolean => {
+export const checkFilePath = (filePath: string | undefined, suppress: boolean): boolean => {
 	if (!filePath) {
 		if (!suppress) { vscode.window.showErrorMessage("ERROR: No active file found. Please open a `.v` Verilog file"); }
 		return false;
@@ -53,29 +53,29 @@ const execVerishot = (verishotMode: number) => {
 	}
 };
 
-const execIntellisense = (editor: vscode.TextEditor, diagcol: vscode.DiagnosticCollection) => {
-	const rawCode = `\"${editor.document.getText()}\"`;
-	const code = rawCode.replace(/\n/g, "");
-	// console.log(code);
-	cp.exec(`verishot --intellisense ${code}`, (err: any, stdout: any, stderr: any) => {
-		if (stdout && stdout.length) {
-			console.log(stdout);
-			let splitted = stdout.split("#####");
-			if (splitted.length === 3) {
-				let line: number = parseInt(splitted[0]);
-				let char: number = parseInt(splitted[1]);
-				let tooltipErr: string = splitted[2];
-				const diagnostics: vscode.Diagnostic[] =
-					[{
-						severity: vscode.DiagnosticSeverity.Error,
-						range: new vscode.Range(line, 0, line, char),
-						message: tooltipErr,
-					}];
-
-				diagcol.set(editor.document.uri, diagnostics);
+const execIntellisense = (editor: vscode.TextEditor, doc: vscode.TextDocument, diagcol: vscode.DiagnosticCollection) => {
+	diagcol.clear();
+	const filePath = doc.fileName;
+	if (checkFilePath(filePath, true)) {
+		cp.exec(`verishot --intellisense ${filePath}`, (err: any, stdout: any, stderr: any) => {
+			if (stdout && stdout.length) {
+				console.log(stdout);
+				let splitted = stdout.split("#####");
+				if (splitted.length === 3) {
+					let line: number = parseInt(splitted[0])-1; // 1-indexed
+					let char: number = parseInt(splitted[1]);
+					let errMsg: string = splitted[2];
+					const diagnostics: vscode.Diagnostic[] =
+						[{
+							severity: vscode.DiagnosticSeverity.Error,
+							range: new vscode.Range(line, 0, line, char),
+							message: errMsg,
+						}];
+					diagcol.set(editor.document.uri, diagnostics);
+				}
 			}
-		}
-	});
+		});
+	}
 };
 
 export const activate = (context: vscode.ExtensionContext) => {
@@ -103,24 +103,18 @@ export const activate = (context: vscode.ExtensionContext) => {
 	let timeout: NodeJS.Timer | undefined = undefined;
 	const diagnosticCollection = vscode.languages.createDiagnosticCollection();
 	
-	const triggerIntellisense = (activeEditor: vscode.TextEditor) => {
+	const triggerIntellisense = (editor: vscode.TextEditor, doc: vscode.TextDocument) => {
 		if (timeout) {
 			clearTimeout(timeout);
 			timeout = undefined;
 		}
-		timeout = setTimeout(() => execIntellisense(activeEditor, diagnosticCollection), 1000);
+		timeout = setTimeout(() => execIntellisense(editor, doc, diagnosticCollection), 1000);
 	};
 
-	vscode.window.onDidChangeActiveTextEditor((editor) => {
-		if (editor) {
-			triggerIntellisense(editor);
-		}
-	}, null, context.subscriptions);
-
-	vscode.workspace.onDidChangeTextDocument((event) => {
-		const editor = vscode.window.activeTextEditor;
-		if (editor && event.document === editor.document) {
-			triggerIntellisense(editor);
+	vscode.workspace.onDidSaveTextDocument((doc: vscode.TextDocument) => {
+		const editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
+		if (editor && editor.document === doc) {
+			triggerIntellisense(editor, doc);
 		}
 	}, null, context.subscriptions);
 };

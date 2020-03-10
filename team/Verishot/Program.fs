@@ -15,30 +15,23 @@ let exitCodes: Map<string, int> =
         ("LintError", 10)
     ]
    
-let lint filePath =
+let lint filePath intellisense =
     filePath
     |> readFileToString
     |> Seq.toList
     |> ParseSource
     |> function
-        | Ok _ -> 
-            printf "Lint: No Errors"
+        | Ok _ ->
+            match intellisense with 
+            | true -> ()
+            | false -> printf "Verishot Lint: No Errors"
             exitCodes.["Success"]
         | Error (errStr, loc) -> 
-            printf "Lint Error: %s at Line %d, Char %d" errStr loc.line loc.character
+            match intellisense with 
+            | true -> printf "%d#####%d#####%s" loc.line loc.character errStr
+            | flase -> printf "Lint Error: %s at Line %d, Char %d" errStr loc.line loc.character
             exitCodes.["LintError"]
 
-
-let intellisense code =
-    code 
-    |> Seq.toList
-    |> ParseSource
-    |> function
-        | Error (errStr, loc) ->
-            printf "%d#####%d#####%s" loc.line loc.character errStr
-            exitCodes.["LintError"]
-        | _ ->
-            exitCodes.["Success"]
             
 let getAST filePath =
     filePath 
@@ -69,10 +62,10 @@ flag: --lint, --simulate, --visualise"
         exitCodes.["Success"]
     | 2 when argv.[0] = "--lint" ->
         let filePath = argv.[1]
-        lint filePath
-    | 2 when argv.[0] = "--intellisense" -> 
-        let code = argv.[1]
-        intellisense code
+        lint filePath false
+    | 2 when argv.[0] = "--intellisense" ->
+        let filePath = argv.[1]
+        lint filePath true
     | 3 -> 
         let flag = argv.[0]
         let filePath = argv.[1]
