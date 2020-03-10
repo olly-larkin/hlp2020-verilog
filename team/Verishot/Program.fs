@@ -28,13 +28,14 @@ let lint filePath =
             printf "Lint Error: %s at Line %d, Char %d" errStr loc.line loc.character
             exitCodes.["LintError"]
 
+
 let intellisense code =
     code 
     |> Seq.toList
     |> ParseSource
     |> function
-        | Error (errStr, loc) -> 
-            printf "%d;%d;%s" loc.line loc.character errStr
+        | Error (errStr, loc) ->
+            printf "%d#####%d#####%s" loc.line loc.character errStr
             exitCodes.["LintError"]
         | _ ->
             exitCodes.["Success"]

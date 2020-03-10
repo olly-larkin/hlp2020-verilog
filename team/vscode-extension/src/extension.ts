@@ -54,19 +54,21 @@ const execVerishot = (verishotMode: number) => {
 };
 
 const execIntellisense = (editor: vscode.TextEditor, diagcol: vscode.DiagnosticCollection) => {
-	const code = `\"${editor.document.getText()}\"`;
+	const rawCode = `\"${editor.document.getText()}\"`;
+	const code = rawCode.replace(/\n/g, "");
+	// console.log(code);
 	cp.exec(`verishot --intellisense ${code}`, (err: any, stdout: any, stderr: any) => {
 		if (stdout && stdout.length) {
 			console.log(stdout);
-			let splitted = stdout.split(";");
-			if (splitted.length >= 3) {
+			let splitted = stdout.split("#####");
+			if (splitted.length === 3) {
 				let line: number = parseInt(splitted[0]);
 				let char: number = parseInt(splitted[1]);
 				let tooltipErr: string = splitted[2];
 				const diagnostics: vscode.Diagnostic[] =
 					[{
 						severity: vscode.DiagnosticSeverity.Error,
-						range: new vscode.Range(line, char, line+1, 0),
+						range: new vscode.Range(line, 0, line, char),
 						message: tooltipErr,
 					}];
 
@@ -77,7 +79,7 @@ const execIntellisense = (editor: vscode.TextEditor, diagcol: vscode.DiagnosticC
 };
 
 export const activate = (context: vscode.ExtensionContext) => {
-	console.log("[VERISHOT ACTIVATED]");
+	// console.log("[VERISHOT ACTIVATED]");
 	const lint = vscode.commands.registerCommand('extension.lint', () => {
 		vscode.window.showInformationMessage('Linting...');
 		execVerishot(VerishotMode.lint);
