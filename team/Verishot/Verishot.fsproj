@@ -6,6 +6,32 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- LIBRARIES -->
+    <Compile Include="src/libs/util.fs" />
+    <Compile Include="src/libs/core_types.fs" />
+    <Compile Include="src/libs/svg.fs" />
+
+    <!-- PARSER -->
+    <Compile Include="src/Parser/parserUtils.fs" />
+    <Compile Include="src/Parser/tokenParser.fs" />
+    <Compile Include="src/Parser/expressionParser.fs" />
+    <Compile Include="src/Parser/moduleParser.fs" />
+    <Compile Include="src/Parser/parser.fs" />
+
+    <!-- NETLIST -->
+    <Compile Include="src/Netlist/netlist.fs" />
+
+    <!-- VISUALISER -->
+    <Compile Include="src/Visualiser/maps.fs" />
+    <Compile Include="src/Visualiser/util.fs" />
+    <Compile Include="src/Visualiser/node/types/moduleinstance.fs" />
+    <Compile Include="src/Visualiser/node/types/pin.fs" />
+    <Compile Include="src/Visualiser/node/types/constant.fs" />
+    <Compile Include="src/Visualiser/connection/lib.fs" />
+    <Compile Include="src/Visualiser/connection/types/moduleinstance.fs" />
+    <Compile Include="src/Visualiser/connection/types/pin.fs" />
+    <Compile Include="src/Visualiser/visualise.fs" />
+
     <Compile Include="Program.fs" />
   </ItemGroup>
 
