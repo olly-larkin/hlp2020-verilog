@@ -5,8 +5,17 @@ open Verishot.CoreTypes
 
 let print x = printfn "%A" x
 
+let readFileToStringList (filename: string) =
+    match File.Exists filename with 
+    | true ->
+        File.ReadAllLines filename
+        |> Array.toList
+    | false -> 
+        failwithf "File `%s` not found." filename
+
 let readFileToString (filename: string) =
-    File.ReadAllLines filename
+    filename
+    |> readFileToStringList 
     |> String.concat "\n"
 
 let createPathFolder (pathString: string) =

@@ -70,6 +70,10 @@
 			{
 				"command": "extension.newproject",
 				"title": "Verishot: New Project"
+			},
+			{
+				"command": "extension.deletemodule",
+				"title": "Verishot: Delete Module"
 			}
 		]
 	},

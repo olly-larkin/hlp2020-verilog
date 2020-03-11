@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
-import { getNumberOfProjectFiles, dirSlash, getProjectName } from './utility';
-import { getInput } from './input';
+import { getExistingModuleNamesFromVProj, getNumberOfProjectFiles, dirSlash, getProjectName, readLinesFromFile, stripFileExtension, getWorkspacePath, deleteFileIfExists } from './utility';
+import { getInput, getPick } from './input';
 import * as fs from 'fs';
+
+
 
 // workspacePath has no / at the end
 const createNewProject = (projectName: string, workspacePath: string) => {
@@ -9,102 +11,103 @@ const createNewProject = (projectName: string, workspacePath: string) => {
         createNewModule(projectName, workspacePath, projectName);
     }
     else {
-        vscode.window.showErrorMessage("This workspace already contains an existing project.");
+        vscode.window.showErrorMessage(`This workspace already contains an existing project.`);
     }
 };
 
 const getModuleTemplate = (moduleName: string) => {
     return `module ${moduleName}(\n);\nendmodule`;
-}
+};
 
 const createNewModule = (moduleName: string, workspacePath: string, projectName: string) => {
     const numberOfProjectFiles = getNumberOfProjectFiles(workspacePath);
     if (numberOfProjectFiles > 1) {
         vscode.window.showErrorMessage("More than one project file exists.");
     }
+    else if (getExistingModuleNamesFromVProj(workspacePath, projectName).includes(`${moduleName}`)) {
+        vscode.window.showErrorMessage(`Module already exists. Please use the \`Verishot: Delete module\` command to delete it.`);
+    }
     else {
         const moduleFileName = `${moduleName}.v`;
 
-        // add to .vproj
         try {
+            // add to .vproj
             const vprojFilePath = `${workspacePath}${dirSlash}${projectName}.vproj`;
-            const vprojLines = fs.existsSync(vprojFilePath) ?
-                fs.readFileSync(vprojFilePath, 'utf-8')
-                    .split('\n')
-                    .filter(Boolean)
-                :
-                [];
+            const vprojLines = readLinesFromFile(vprojFilePath);
             const lastLine = vprojLines.pop();
             vprojLines.push(moduleFileName);
             if (lastLine) { vprojLines.push(lastLine); }
             const vprojContent = vprojLines.join('\n');
             fs.writeFileSync(vprojFilePath, vprojContent);
 
-        }
-        catch (err) {
-            vscode.window.showErrorMessage(err.message);
-        }
-
-        // create the new module
-        try {
+            // create the new module
             const moduleTemplateContent = getModuleTemplate(moduleName);
             const moduleFilePath = `${workspacePath}${dirSlash}${moduleName}.v`;
             fs.writeFileSync(moduleFilePath, moduleTemplateContent);
+            
+            vscode.workspace.openTextDocument(moduleFilePath).then(doc => vscode.window.showTextDocument(doc));
+            console.log("opening!");
         }
         catch (err) {
             vscode.window.showErrorMessage(err.message);
         }
+    }
+};
 
+const deleteModule = (moduleName: string, workspacePath: string, projectName: string) => {
+    try {    
+        // update vproj
+        const vprojFilePath = `${workspacePath}${dirSlash}${projectName}.vproj`;
+        const vprojLines = readLinesFromFile(vprojFilePath);
+        const newvprojLines = vprojLines.filter((line) => line !== `${moduleName}.v`);
+        const vprojContent = newvprojLines.join('\n');
+        fs.writeFileSync(vprojFilePath, vprojContent);
+
+        // delete the file
+        const moduleFilePath = `${workspacePath}${dirSlash}${moduleName}.v`;
+        deleteFileIfExists(moduleFilePath);
+    }
+    catch (err) {
+        vscode.window.showErrorMessage(err.message);
     }
 };
 
 export const newProjectHandler = () => {
-    const folders = vscode.workspace.workspaceFolders || [];
-    if (folders.length === 1) {
-        const workspacePath = folders[0].uri.fsPath;
-        getInput(`Enter project name`,
-            (text: string) => { if (/[a-zA-Z][a-zA-Z0-9_]*/.test(text) && text.length) { return undefined; } return `Enter a valid project name`; })
-            .then((projectName) => {
-                if (projectName) {
-                    createNewProject(projectName, workspacePath);
-                }
-                else {
-                    vscode.window.showErrorMessage(`Enter a valid project name.`);
-                }
-            });
-    }
-    else {
-        vscode.window.showErrorMessage(`Verishot only supports 1 project folder.`);
-    }
+    const workspacePath = getWorkspacePath();
+    if (!workspacePath) { return; }
+    getInput(`Enter project name`,
+        (text: string) => { if (/[a-zA-Z][a-zA-Z0-9_]*/.test(text) && text.length) { return undefined; } return `Enter a valid project name`; })
+        .then((projectName) => {
+            if (projectName) {
+                createNewProject(projectName, workspacePath);
+            }
+        });
 };
 
 export const newModuleHandler = () => {
-    const folders = vscode.workspace.workspaceFolders || [];
-    if (folders.length === 1) {
-        const workspacePath = folders[0].uri.fsPath;
-        const projectName = getProjectName(workspacePath);
-        if (projectName) {
-            getInput(`Enter module name`,
-                (text: string) => { if (/[a-zA-Z][a-zA-Z0-9_]*/.test(text)) { return undefined; } return `Enter a valid module name`; })
-                .then((moduleName) => {
-                    if (moduleName && projectName) {
-                        createNewModule(moduleName, workspacePath, projectName);
-                    }
-                    else {
-                        vscode.window.showErrorMessage(`Enter a valid module name`);
-                    }
-                });
-        }
-        else {
-            if (!getNumberOfProjectFiles(workspacePath)) {
-                vscode.window.showErrorMessage(`Create a new project first`);
+    const workspacePath = getWorkspacePath();
+    if (!workspacePath) { return; }
+    const projectName = getProjectName(workspacePath);
+    if (!projectName) { return; }
+    getInput(`Enter module name`,
+        (text: string) => { if (/[a-zA-Z][a-zA-Z0-9_]*/.test(text)) { return undefined; } return `Enter a valid module name`; })
+        .then((moduleName) => {
+            if (moduleName && projectName) {
+                createNewModule(moduleName, workspacePath, projectName);
             }
-            else {
-                vscode.window.showErrorMessage(`More than 1 project files found`);
-            }
+        });
+};
+
+export const deleteModuleHandler = () => {
+    const workspacePath = getWorkspacePath();
+    if (!workspacePath) { return; }
+    const projectName = getProjectName(workspacePath);
+    if (!projectName) { return; }
+    const allModulesWithTopLevelModule = getExistingModuleNamesFromVProj(workspacePath, projectName);
+    const allModules = allModulesWithTopLevelModule.filter((moduleName) => moduleName !== `${projectName}`);
+    getPick(allModules, `Select module to delete`).then((moduleName) => {
+        if (moduleName) {
+            deleteModule(moduleName, workspacePath, projectName);
         }
-    }
-    else {
-        vscode.window.showErrorMessage(`Verishot only supports 1 project folder.`);
-    }
+    });
 };
