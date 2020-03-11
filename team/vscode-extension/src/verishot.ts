@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { checkFilePath, VerishotMode } from './util';
+import { checkFilePath, VerishotMode } from './utility';
 
-export const execVerishot = (verishotMode: number) => {
+export const execVerishot = (verishotMode: number, kwargs: Object = {}) => {
 	const filePath = vscode.window.activeTextEditor?.document.fileName;
 	const workspacePath = vscode.workspace.rootPath;
 	const terminalName = "Verishot";
@@ -19,12 +19,15 @@ export const execVerishot = (verishotMode: number) => {
 	}
 	terminal.show();
 	if (verishotMode === VerishotMode.lint) {
+		vscode.window.showInformationMessage('Linting...');
 		terminal.sendText(`verishot --lint ${filePath}`);
 	}
 	else if (verishotMode === VerishotMode.simulate) {
+		vscode.window.showInformationMessage('Simulating...');
 		terminal.sendText(`verishot --simulate ${filePath} ${workspacePath}`);
 	}
 	else if (verishotMode === VerishotMode.visualise) {
+		vscode.window.showInformationMessage('Visualising...');
 		terminal.sendText(`verishot --visualise ${filePath} ${workspacePath}`);
 	}
 	else {
