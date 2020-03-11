@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as cp from 'child_process';
-import { checkFilePath } from './util';
+import { checkFilePath } from './utility';
 
 export const execIntellisense = (editor: vscode.TextEditor, doc: vscode.TextDocument, diagcol: vscode.DiagnosticCollection) => {
 	diagcol.clear();

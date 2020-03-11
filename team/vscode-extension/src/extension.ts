@@ -3,7 +3,9 @@
 import * as vscode from 'vscode';
 import { execIntellisense } from './intellisense';
 import { execVerishot } from './verishot';
-import { VerishotMode } from './util';
+import { VerishotMode } from './utility';
+import { newModuleHandler, newProjectHandler } from './project';
+import { getInput } from './input';
 
 
 export const activate = (context: vscode.ExtensionContext) => {
@@ -22,30 +24,33 @@ export const activate = (context: vscode.ExtensionContext) => {
 	});
 	context.subscriptions.push(playground);
 
-	// console.log("[VERISHOT ACTIVATED]");
+
+
+
+	// --lint, --simulate, --visualise
 	const lint = vscode.commands.registerCommand('extension.lint', () => {
-		vscode.window.showInformationMessage('Linting...');
 		execVerishot(VerishotMode.lint);
 	});
 	context.subscriptions.push(lint);
 
 	const simulate = vscode.commands.registerCommand('extension.simulate', () => {
-		vscode.window.showInformationMessage('Simulating...');
 		execVerishot(VerishotMode.simulate);
 	});
 	context.subscriptions.push(simulate);
 
 	const visualise = vscode.commands.registerCommand('extension.visualise', () => {
-		vscode.window.showInformationMessage('Visualising...');
 		execVerishot(VerishotMode.visualise);
 	});
 	context.subscriptions.push(visualise);
 
 
+
+
+
 	// INTELLISENSE
 	let timeout: NodeJS.Timer | undefined = undefined;
 	const diagnosticCollection = vscode.languages.createDiagnosticCollection();
-	
+
 	const triggerIntellisense = (editor: vscode.TextEditor, doc: vscode.TextDocument) => {
 		if (timeout) {
 			clearTimeout(timeout);
@@ -60,7 +65,22 @@ export const activate = (context: vscode.ExtensionContext) => {
 			triggerIntellisense(editor, doc);
 		}
 	}, null, context.subscriptions);
+
+
+
+
+
+	const newproject = vscode.commands.registerCommand('extension.newproject', () => {
+		newProjectHandler();
+	});
+	context.subscriptions.push(newproject);
+
+	const newmodule = vscode.commands.registerCommand('extension.newmodule', () => {
+		newModuleHandler();
+	});
+	context.subscriptions.push(newmodule);
+
 };
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }
