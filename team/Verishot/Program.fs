@@ -1,10 +1,13 @@
 ﻿// Learn more about F# at http://fsharp.org
 
 open System
+open System.IO
 open Verishot.Util
 open Verishot.Parser
 open Verishot.Netlist
 open Verishot.Visualise
+
+let dirSlash = Path.DirectorySeparatorChar |> Char.ToString
 
 let exitCodes: Map<string, int> = 
     Map [
@@ -14,12 +17,19 @@ let exitCodes: Map<string, int> =
         // LINT
         ("LintError", 10)
     ]
-   
-let lint filePath intellisense =
+
+let getWorkspacePathFromVprojPath (vprojPath: string): string = 
+    vprojPath.[0 .. vprojPath.LastIndexOf dirSlash - 1]
+
+let lintHelper filePath =
     filePath
     |> readFileToString
     |> Seq.toList
     |> ParseSource
+   
+let lint filePath intellisense =
+    filePath
+    |> lintHelper
     |> function
         | Ok _ ->
             match intellisense with 
@@ -29,28 +39,78 @@ let lint filePath intellisense =
         | Error (errStr, loc) -> 
             match intellisense with 
             | true -> printf "%d#####%d#####%s" loc.line loc.character errStr
-            | flase -> printf "Lint Error: %s at Line %d, Char %d" errStr loc.line loc.character
+            | false -> printf "Lint Error: %s at Line %d, Char %d" errStr loc.line loc.character
             exitCodes.["LintError"]
 
-            
-let getAST filePath =
-    filePath 
-    |> readFileToString
-    |> Seq.toList
-    |> ParseSource
-    |> function 
-        | Ok ast -> ast 
-        | _ -> failwith "Fatal Error" // should not happen as we've linted
+let checkModulesExist allModules workspacePath = 
+    let getModuleFilePathPair moduleFileName = moduleFileName, File.Exists <| workspacePath + dirSlash + moduleFileName
 
-let visualise filePath workspacePath = 
-    let success = exitCodes.["Success"]
-    let lintErr = exitCodes.["LintError"]
-    match lint filePath with
-    | success ->        
+    let logNotFound (modName, exists) = 
+        match exists with
+        | true -> true
+        | false -> 
+            printf "ERROR: Module '%s' not found in folder\n" modName
+            false
+
+    allModules 
+    |> List.map (getModuleFilePathPair >> logNotFound)
+    |> List.reduce (&&)
+                
+let checkModulesLint allModules workspacePath =
+    let linter filePath =
         filePath
-        |> getAST 
-        |> failwith "TODO"
-    | lintErr -> exitCodes.["LintError"]
+        |> lintHelper
+        |> function
+            | Ok _ -> true, ""
+            | Error (errStr, loc) ->
+                false, sprintf "Lint Error: %s at Line %d, Char %d" errStr loc.line loc.character
+
+    let getModuleFilePathPair moduleFileName = moduleFileName, linter <| workspacePath + dirSlash + moduleFileName
+
+    let logLintError (modName, (passed, lintErr)) =
+        match passed with 
+        | true -> true
+        | false -> 
+            printf "ERROR: Lint error in module `%s`: %s\n" modName lintErr 
+            false
+
+    allModules
+    |> List.map (getModuleFilePathPair >> logLintError)
+    |> List.reduce (&&)
+
+let vProjSanityCheck vProjFilePath =
+    let allModules = readFileToStringList vProjFilePath
+    let workspacePath = getWorkspacePathFromVprojPath vProjFilePath
+
+    if not (checkModulesExist allModules workspacePath) then 
+        failwithf "Module(s) not found"
+    
+    if not (checkModulesLint allModules workspacePath) then
+        failwithf "Module(s) failing lint test"
+
+    true
+   
+
+
+
+// let getAST filePath =
+//     filePath 
+//     |> readFileToString
+//     |> Seq.toList
+//     |> ParseSource
+//     |> function 
+//         | Ok ast -> ast 
+//         | _ -> failwith "Fatal Error" // should not happen as we've linted
+
+// let visualise filePath workspacePath = 
+//     let success = exitCodes.["Success"]
+//     let lintErr = exitCodes.["LintError"]
+//     match lint filePath with
+//     | success ->        
+//         filePath
+//         |> getAST 
+//         |> failwith "TODO"
+//     | lintErr -> exitCodes.["LintError"]
 
     
 [<EntryPoint>]
@@ -68,17 +128,15 @@ let main argv =
             printf "verishot <flag> <infile> [<workspacefolder]
     flag: --lint, --simulate, --visualise"
             exitCodes.["Success"]
-        | "--lint" | "--intellisense" ->
-            if Array.length argv = 2 then
-                let filePath = argv.[1]
-                lint filePath (argv.[0] = "--intellisense")
-            else 
-                printf "Invalid command! run `verishot --help` for a guide."
-                exitCodes.["InvalidCmd"]
-        | "--simulate" -> 
-            failwith "TODO"
-        | "--visualise" -> 
-            failwith "TODO"
+        | "--lint" | "--intellisense" when argv.Length = 2 ->
+            let filePath = argv.[1]
+            lint filePath (argv.[0] = "--intellisense")
+        | "--simulate" when argv.Length = 2 -> 
+            let vprojPath = argv.[1]
+            if vProjSanityCheck vprojPath then failwith "TODO1" else failwith "TODO2"
+        | "--visualise" when argv.Length = 2 -> 
+            let vprojPath = argv.[1]
+            if vProjSanityCheck vprojPath then failwith "TODO1" else failwith "TODO2"
         | _ -> 
             printf "Invalid command! run `verishot --help` for a guide."
             exitCodes.["InvalidCmd"]

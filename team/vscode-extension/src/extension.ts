@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { execIntellisense } from './intellisense';
 import { execVerishot } from './verishot';
 import { VerishotMode } from './utility';
-import { newModuleHandler, newProjectHandler } from './project';
+import { newModuleHandler, newProjectHandler, deleteModuleHandler } from './project';
 import { getInput } from './input';
 
 
@@ -79,6 +79,11 @@ export const activate = (context: vscode.ExtensionContext) => {
 		newModuleHandler();
 	});
 	context.subscriptions.push(newmodule);
+
+	const deletemodule = vscode.commands.registerCommand('extension.deletemodule', () => {
+		deleteModuleHandler();
+	});
+	context.subscriptions.push(deletemodule);
 
 };
 
