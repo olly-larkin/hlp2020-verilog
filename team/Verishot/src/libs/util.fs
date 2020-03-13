@@ -24,6 +24,9 @@ let readFileToString (filename: string) =
 let createPathFolder (pathString: string) =
     Directory.CreateDirectory pathString |> ignore
 
+let deleteFolder path =
+    if Directory.Exists path then Directory.Delete(path, true) |> ignore
+
 let writeStringToFile (filename: string) (content: string) =
     File.WriteAllText (filename, content)
 

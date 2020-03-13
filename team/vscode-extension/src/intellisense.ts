@@ -11,7 +11,7 @@ export const execIntellisense = (editor: vscode.TextEditor, doc: vscode.TextDocu
 				console.log(stdout);
 				let splitted = stdout.split("#####");
 				if (splitted.length === 3) {
-					let line: number = parseInt(splitted[0])-1; // 1-indexed
+					let line: number = parseInt(splitted[0]) - 1; // 1-indexed
 					let char: number = parseInt(splitted[1]);
 					let errMsg: string = splitted[2];
 					const diagnostics: vscode.Diagnostic[] =
@@ -25,4 +25,53 @@ export const execIntellisense = (editor: vscode.TextEditor, doc: vscode.TextDocu
 			}
 		});
 	}
+};
+
+const runLiveIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCollection) => {
+	diagCol.clear();
+	const code = doc.getText().split("\n").map(line => "\"" + line + "\"").join(" ");
+	cp.exec(`verishot --liveIntellisense ${code}`, (err: any, stdout: any, stderr: any) => {
+		
+		console.log("err" , err);
+		console.log("stdout", stdout);
+		console.log("stderr", stderr);
+		if (stdout && stdout.length) {
+			console.log(stdout);
+			let splitted = stdout.split("#####");
+			if (splitted.length === 3) {
+				let line: number = parseInt(splitted[0]) - 1; // 1-indexed
+				let char: number = parseInt(splitted[1]);
+				let errMsg: string = splitted[2];
+				const diagnostics: vscode.Diagnostic[] =
+					[{
+						severity: vscode.DiagnosticSeverity.Error,
+						range: new vscode.Range(line, 0, line, char),
+						message: errMsg,
+					}];
+				diagCol.set(doc.uri, diagnostics);
+			}
+		}
+	});
+};
+
+export const subscribeToDocumentChanges = (context: vscode.ExtensionContext, diagCol: vscode.DiagnosticCollection) => {
+	if (vscode.window.activeTextEditor) {
+		runLiveIntellisense(vscode.window.activeTextEditor.document, diagCol);
+	}
+
+	context.subscriptions.push(
+		vscode.window.onDidChangeActiveTextEditor(editor => {
+			if (editor) {
+				runLiveIntellisense(editor.document, diagCol);
+			}
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.workspace.onDidChangeTextDocument(e => runLiveIntellisense(e.document, diagCol))
+	);
+
+	context.subscriptions.push(
+		vscode.workspace.onDidCloseTextDocument(doc => diagCol.delete(doc.uri))
+	);
 };

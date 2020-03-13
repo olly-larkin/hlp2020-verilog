@@ -5,8 +5,7 @@ import { execIntellisense } from './intellisense';
 import { execVerishot } from './verishot';
 import { VerishotMode } from './utility';
 import { newModuleHandler, newProjectHandler, deleteModuleHandler } from './project';
-import { getInput } from './input';
-
+import { subscribeToDocumentChanges } from './intellisense';
 
 export const activate = (context: vscode.ExtensionContext) => {
 	const playground = vscode.commands.registerCommand('extension.playground', () => {
@@ -59,16 +58,14 @@ export const activate = (context: vscode.ExtensionContext) => {
 		timeout = setTimeout(() => execIntellisense(editor, doc, diagnosticCollection), 1000);
 	};
 
-	vscode.workspace.onDidSaveTextDocument((doc: vscode.TextDocument) => {
-		const editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
-		if (editor && editor.document === doc) {
-			triggerIntellisense(editor, doc);
-		}
-	}, null, context.subscriptions);
+	// vscode.workspace.onDidSaveTextDocument((doc: vscode.TextDocument) => {
+	// 	const editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
+	// 	if (editor && editor.document === doc) {
+	// 		triggerIntellisense(editor, doc);
+	// 	}
+	// }, null, context.subscriptions);
 
-
-
-
+	subscribeToDocumentChanges(context, diagnosticCollection);
 
 	const newproject = vscode.commands.registerCommand('extension.newproject', () => {
 		newProjectHandler();
