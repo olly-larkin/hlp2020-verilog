@@ -1,42 +1,22 @@
 import * as vscode from 'vscode';
 import * as cp from 'child_process';
-import { checkFilePath } from './utility';
 
-export const execIntellisense = (editor: vscode.TextEditor, doc: vscode.TextDocument, diagcol: vscode.DiagnosticCollection) => {
-	diagcol.clear();
-	const filePath = doc.fileName;
-	if (checkFilePath(filePath, true)) {
-		cp.exec(`verishot --intellisense ${filePath}`, (err: any, stdout: any, stderr: any) => {
-			if (stdout && stdout.length) {
-				console.log(stdout);
-				let splitted = stdout.split("#####");
-				if (splitted.length === 3) {
-					let line: number = parseInt(splitted[0]) - 1; // 1-indexed
-					let char: number = parseInt(splitted[1]);
-					let errMsg: string = splitted[2];
-					const diagnostics: vscode.Diagnostic[] =
-						[{
-							severity: vscode.DiagnosticSeverity.Error,
-							range: new vscode.Range(line, 0, line, char),
-							message: errMsg,
-						}];
-					diagcol.set(editor.document.uri, diagnostics);
-				}
-			}
-		});
+// INTELLISENSE
+let timeout: NodeJS.Timer | undefined = undefined;
+
+const triggerIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCollection) => {
+	if (timeout) {
+		clearTimeout(timeout);
+		timeout = undefined;
 	}
+	timeout = setTimeout(() => execIntellisense(doc, diagCol), 1000);
 };
 
-const runLiveIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCollection) => {
+const execIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCollection) => {
 	diagCol.clear();
 	const code = doc.getText().split("\n").map(line => "\"" + line + "\"").join(" ");
-	cp.exec(`verishot --liveIntellisense ${code}`, (err: any, stdout: any, stderr: any) => {
-		
-		console.log("err" , err);
-		console.log("stdout", stdout);
-		console.log("stderr", stderr);
+	cp.exec(`verishot --intellisense ${code}`, (err: any, stdout: any, stderr: any) => {
 		if (stdout && stdout.length) {
-			console.log(stdout);
 			let splitted = stdout.split("#####");
 			if (splitted.length === 3) {
 				let line: number = parseInt(splitted[0]) - 1; // 1-indexed
@@ -54,21 +34,21 @@ const runLiveIntellisense = (doc: vscode.TextDocument, diagCol: vscode.Diagnosti
 	});
 };
 
-export const subscribeToDocumentChanges = (context: vscode.ExtensionContext, diagCol: vscode.DiagnosticCollection) => {
+export const subscribeIntellisense = (context: vscode.ExtensionContext, diagCol: vscode.DiagnosticCollection) => {
 	if (vscode.window.activeTextEditor) {
-		runLiveIntellisense(vscode.window.activeTextEditor.document, diagCol);
+		triggerIntellisense(vscode.window.activeTextEditor.document, diagCol);
 	}
 
 	context.subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor(editor => {
 			if (editor) {
-				runLiveIntellisense(editor.document, diagCol);
+				triggerIntellisense(editor.document, diagCol);
 			}
 		})
 	);
 
 	context.subscriptions.push(
-		vscode.workspace.onDidChangeTextDocument(e => runLiveIntellisense(e.document, diagCol))
+		vscode.workspace.onDidChangeTextDocument(e => triggerIntellisense(e.document, diagCol))
 	);
 
 	context.subscriptions.push(

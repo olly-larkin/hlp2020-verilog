@@ -35,7 +35,7 @@ let lintHelper filePath =
     |> Seq.toList
     |> ParseSource
 
-let liveIntellisense (codeLines) =
+let intellisense codeLines =
     codeLines
     |> String.concat "\n"
     |> Seq.toList
@@ -47,19 +47,15 @@ let liveIntellisense (codeLines) =
             printf "%d#####%d#####%s" loc.line loc.character errStr
             exitCodes.["LintError"]
 
-let lint filePath intellisense =
+let lint filePath =
     filePath
     |> lintHelper
     |> function
         | Ok _ ->
-            match intellisense with 
-            | true -> ()
-            | false -> printf "Verishot Lint: No Errors"
+            printf "Verishot Lint: No Errors"
             exitCodes.["Success"]
         | Error (errStr, loc) -> 
-            match intellisense with 
-            | true -> printf "%d#####%d#####%s" loc.line loc.character errStr
-            | false -> printf "Lint Error: %s at Line %d, Char %d" errStr loc.line loc.character
+            printf "Lint Error: %s at Line %d, Char %d" errStr loc.line loc.character
             exitCodes.["LintError"]
 
 let checkModulesExist allModules workspacePath = 
@@ -149,12 +145,12 @@ let main argv =
             printf "verishot <flag> <infile> [<workspacefolder]
     flag: --lint, --simulate, --visualise"
             exitCodes.["Success"]
-        | "--lint" | "--intellisense" when argv.Length = 2 ->
+        | "--lint" when argv.Length = 2 ->
             let filePath = argv.[1]
-            lint filePath (argv.[0] = "--intellisense")
-        | "--liveIntellisense" -> 
+            lint filePath
+        | "--intellisense" -> 
             let rawCode = argv.[1..]
-            liveIntellisense rawCode
+            intellisense rawCode
         | "--simulate" when argv.Length = 2 -> 
             let vprojPath = argv.[1]
             if vProjSanityCheck vprojPath then failwith "TODO1" else failwith "TODO2"
