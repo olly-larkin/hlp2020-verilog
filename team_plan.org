@@ -1,0 +1,64 @@
+* Simulator
+** Generate instance inputs and output
+** Simulator types
+#+BEGIN_SRC fsharp
+type WireVal = uint64
+
+type State = Map<string, StateVal>
+type StateVal =
+    | SubModuleState of State
+    | RegState of StateVar
+
+type StateVar =
+    | DFFState of WireVal
+    | MyModuleState of string
+
+type Instance =
+    | NetlistInstance of Netlist
+    | FSharpInstance of (State -> WireVal list -> (WireVal list * int State))
+#+END_SRC
+
+** Simulator function
+#+BEGIN_SRC fsharp
+let simulate
+    (instance: Instance)
+    (lastState: State)
+    (inputs: WireVal list)
+    : WireVal list * State =
+    match instance with
+    | FSharpInstance f -> f lastState inputs
+#+END_SRC
+
+
+
+** Megafunctions
+
+We have a ~megafunctions.fs~ file where you add the state types and
+implementation functions for the various megafunctions.
+
+The state types are added into a discriminated union and the implementations
+into a list
+#+BEGIN_SRC fsharp
+type MegafunctionState =
+    | CounterState of int
+
+type MegaFunction =
+    { declaration: ModuleDecl
+      initialState: MegafunctionState
+      simulate: MegafunctionState -> WireVal list -> (WireVal list * MegafunctionState) }
+
+let counterFun state inputs =
+    let reset = List.head inputs
+
+    match reset, state with
+    | 1, CounterState _ -> ([0], CounterState 0)
+    | 0, CounterState n -> ([n+1], CounterState(n+1))
+    | _, _ -> failwith "state should be CounterState"
+
+let megafunctions: MegaFunction list = [
+    { declaration =
+        { name="Counter1"
+          ports=[(Input, "reset", Single)] }
+      initialState=CounterState(0)
+      simulate=counterFun } ]
+#+END_SRC
