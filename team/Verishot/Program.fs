@@ -7,8 +7,6 @@ open Verishot.Parser
 open Verishot.Netlist
 open Verishot.Visualise
 
-let dirSlash = Path.DirectorySeparatorChar |> Char.ToString
-
 let exitCodes: Map<string, int> = 
     Map [
         ("Success", 0)
@@ -17,9 +15,6 @@ let exitCodes: Map<string, int> =
         // LINT
         ("LintError", 10)
     ]
-
-let getWorkspacePathFromVprojPath (vprojPath: string): string = 
-    vprojPath.[0 .. vprojPath.LastIndexOf dirSlash - 1]
 
 let lintHelper filePath =
     filePath
@@ -80,18 +75,10 @@ let checkModulesLint allModules workspacePath =
 
 let vProjSanityCheck vProjFilePath =
     let allModules = readFileToStringList vProjFilePath
-    let workspacePath = getWorkspacePathFromVprojPath vProjFilePath
+    let workspacePath = getFolderPath vProjFilePath
 
-    if not (checkModulesExist allModules workspacePath) then 
-        failwithf "Module(s) not found"
-    
-    if not (checkModulesLint allModules workspacePath) then
-        failwithf "Module(s) failing lint test"
-
-    true
+    checkModulesExist allModules workspacePath && checkModulesLint allModules workspacePath
    
-
-
 
 // let getAST filePath =
 //     filePath 
