@@ -36,6 +36,10 @@
     <Compile Include="src/Waveform/wave_types.fs" />
     <Compile Include="src/Waveform/waveform.fs" />
 
+    <!-- SIMULATOR -->
+    <Compile Include="src/Simulator/megafunctions.fs" />
+    <Compile Include="src/Simulator/simulator.fs" />
+
     <Compile Include="Program.fs" />
   </ItemGroup>
 
