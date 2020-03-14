@@ -104,7 +104,9 @@ let simulatorTests =
 
               let actual =
                   getNetlistOutput netlistIn Map.empty None
-                      (Map [ ("in1", 0x5UL); ("in2", 0x3UL) ])
+                      (Map
+                          [ ("in1", 0x5UL)
+                            ("in2", 0x3UL) ])
 
               Expect.equal actual.["out"] 0x35UL "Is Equal"
           }
