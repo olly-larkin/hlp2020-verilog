@@ -18,6 +18,7 @@ open Verishot.VisualiserUtil.Pin
 open Verishot.VisualiseModuleInstanceConnection
 open Verishot.VisualisePinConnection
 open Verishot.VisualiseConstant
+open Verishot.VisualiseStyles
 
 let visualiseNodes (inputPins, moduleInstances, outputPins, _) declMap currDecl =
     let inputPinsIds = inputPins |> List.map fst
@@ -79,16 +80,20 @@ let visualiseNetlist netlist declMap: SVGElement =
 
     [blocksSVG; constSVG; consSVG] |> groupSVG [] None
 
-let visualiseNetlists (projName: string) (netlists: Netlist list) (decls: ModuleDecl list) (styles: string option) (script: string option) =
+let visualiseNetlists (netlists: Netlist list) (decls: ModuleDecl list) =
     let declMap = 
         decls
         |> List.map (fun decl -> (decl.name, decl))
         |> Map.ofList
 
+    let styles = Some <| loadStyles unitPx
+    let script = None
+
     let toSvg = fun netlist -> netlist.moduleName, visualiseNetlist netlist declMap
     let toString = fun (modName, svg) -> modName, output svg styles script true
-    createPathFolder projName |> ignore
-    let toFile = fun (modName, svgString) -> writeStringToFile (sprintf "./%s/%s.svg" projName modName) svgString
+    deleteFolder "visualisation"
+    createPathFolder "visualisation" 
+    let toFile = fun (modName, svgString) -> writeStringToFile (sprintf "./visualisation/%s.svg" modName) svgString
 
     netlists 
     |> List.map (toSvg >> toString >> toFile)

@@ -1,9 +1,12 @@
 module Verishot.Util
 
+open System
 open System.IO
 open Verishot.CoreTypes
 
 let print x = printfn "%A" x
+
+let dirSlash = Path.DirectorySeparatorChar |> Char.ToString
 
 let readFileToStringList (filename: string) =
     match File.Exists filename with 
@@ -21,8 +24,14 @@ let readFileToString (filename: string) =
 let createPathFolder (pathString: string) =
     Directory.CreateDirectory pathString |> ignore
 
+let deleteFolder path =
+    if Directory.Exists path then Directory.Delete(path, true) |> ignore
+
 let writeStringToFile (filename: string) (content: string) =
     File.WriteAllText (filename, content)
+
+let getFolderPath (filePath: string): string = 
+    filePath.[0 .. filePath.LastIndexOf dirSlash - 1]
 
 /// Get the number of bits a Range represents
 let rangeWidth range =

@@ -48,10 +48,6 @@
 		],
 		"commands": [
 			{
-				"command": "extension.playground",
-				"title": "Verishot: Playground"
-			},
-			{
 				"command": "extension.lint",
 				"title": "Verishot: Lint"
 			},

@@ -17,11 +17,13 @@
     <Compile Include="src/Parser/expressionParser.fs" />
     <Compile Include="src/Parser/moduleParser.fs" />
     <Compile Include="src/Parser/parser.fs" />
+    <Compile Include="src/Parser/ASTToDecl.fs" />
 
     <!-- NETLIST -->
     <Compile Include="src/Netlist/netlist.fs" />
 
     <!-- VISUALISER -->
+    <Compile Include="src/Visualiser/assets/styles.fs" />
     <Compile Include="src/Visualiser/maps.fs" />
     <Compile Include="src/Visualiser/util.fs" />
     <Compile Include="src/Visualiser/node/types/moduleinstance.fs" />

@@ -15,7 +15,7 @@ export const readLinesFromFile = (filePath: string): Array<string> => {
 			.filter(Boolean)
 		:
 		[];
-}
+};
 
 export const deleteFileIfExists = (filePath: string) => {
 	if (fs.existsSync(filePath)) {
@@ -31,15 +31,15 @@ export const getFileExtension = (fileName: string): string => {
 
 export const stripFileExtension = (fileName: string): string => {
 	return fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
-}
+};
 
 // check whether a .vproj file exists in the current file system
 export const getNumberOfProjectFiles = (workspacePath: string) => {
 	return fs.readdirSync(workspacePath).filter((file) => getFileExtension(file) === 'vproj').length;
-}
+};
 
 export const getProjectName = (workspacePath: string) => {
-	const numberOfProjectFiles = getNumberOfProjectFiles(workspacePath)
+	const numberOfProjectFiles = getNumberOfProjectFiles(workspacePath);
 	if (numberOfProjectFiles === 1) {
 		return fs.readdirSync(workspacePath).filter((file) => getFileExtension(file) === 'vproj')[0].slice(0, -6);
 	}
@@ -61,7 +61,7 @@ export const getWorkspacePath = () => {
         vscode.window.showErrorMessage(`Verishot only supports 1 project folder.`);
 	}
 	return undefined;
-}
+};
 
 export const checkFilePath = (filePath: string | undefined, suppress: boolean): boolean => {
 	if (!filePath) {

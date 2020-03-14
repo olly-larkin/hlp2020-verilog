@@ -4,10 +4,10 @@ open System
 open System.IO
 open Verishot.Util
 open Verishot.Parser
+open Verishot.CoreTypes
+open Verishot.ASTToDecl
 open Verishot.Netlist
 open Verishot.Visualise
-
-let dirSlash = Path.DirectorySeparatorChar |> Char.ToString
 
 let exitCodes: Map<string, int> = 
     Map [
@@ -16,34 +16,50 @@ let exitCodes: Map<string, int> =
 
         // LINT
         ("LintError", 10)
+
+        // VISUALISE
+        ("VisualisationError", 20)
     ]
 
-let getWorkspacePathFromVprojPath (vprojPath: string): string = 
-    vprojPath.[0 .. vprojPath.LastIndexOf dirSlash - 1]
+let getModuleFilePath workspacePath moduleFileName =
+    workspacePath + dirSlash + moduleFileName
+
+let getModuleFilePaths vProjFilePath =
+    vProjFilePath
+    |> readFileToStringList
+    |> List.map (getModuleFilePath (getFolderPath vProjFilePath))
 
 let lintHelper filePath =
     filePath
     |> readFileToString
     |> Seq.toList
     |> ParseSource
-   
-let lint filePath intellisense =
+
+let intellisense codeLines =
+    codeLines
+    |> String.concat "\n"
+    |> Seq.toList
+    |> ParseSource
+    |> function
+        | Ok _ -> 
+            exitCodes.["Success"]
+        | Error (errStr, loc) ->
+            printf "%d#####%d#####%s" loc.line loc.character errStr
+            exitCodes.["LintError"]
+
+let lint filePath =
     filePath
     |> lintHelper
     |> function
         | Ok _ ->
-            match intellisense with 
-            | true -> ()
-            | false -> printf "Verishot Lint: No Errors"
+            printf "Verishot Lint: No Errors"
             exitCodes.["Success"]
         | Error (errStr, loc) -> 
-            match intellisense with 
-            | true -> printf "%d#####%d#####%s" loc.line loc.character errStr
-            | false -> printf "Lint Error: %s at Line %d, Char %d" errStr loc.line loc.character
+            printf "Lint Error: %s at Line %d, Char %d" errStr loc.line loc.character
             exitCodes.["LintError"]
 
 let checkModulesExist allModules workspacePath = 
-    let getModuleFilePathPair moduleFileName = moduleFileName, File.Exists <| workspacePath + dirSlash + moduleFileName
+    let getModuleFilePathPair moduleFileName = moduleFileName, File.Exists <| getModuleFilePath workspacePath moduleFileName
 
     let logNotFound (modName, exists) = 
         match exists with
@@ -80,37 +96,38 @@ let checkModulesLint allModules workspacePath =
 
 let vProjSanityCheck vProjFilePath =
     let allModules = readFileToStringList vProjFilePath
-    let workspacePath = getWorkspacePathFromVprojPath vProjFilePath
+    let workspacePath = getFolderPath vProjFilePath
 
-    if not (checkModulesExist allModules workspacePath) then 
-        failwithf "Module(s) not found"
-    
-    if not (checkModulesLint allModules workspacePath) then
-        failwithf "Module(s) failing lint test"
+    checkModulesExist allModules workspacePath && checkModulesLint allModules workspacePath
 
-    true
-   
+(* Only call this function after linting *)
+let getAST moduleFilePath =
+    moduleFilePath
+    |> readFileToString
+    |> Seq.toList
+    |> ParseSource
+    |> function
+        | Ok ast -> ast 
+        | _ -> failwith "Should not happen"  // linted before, should never happen
 
 
 
-// let getAST filePath =
-//     filePath 
-//     |> readFileToString
-//     |> Seq.toList
-//     |> ParseSource
-//     |> function 
-//         | Ok ast -> ast 
-//         | _ -> failwith "Fatal Error" // should not happen as we've linted
+let visualise vProjFilePath =
+    let asts =
+        vProjFilePath
+        |> getModuleFilePaths
+        |> List.map getAST
 
-// let visualise filePath workspacePath = 
-//     let success = exitCodes.["Success"]
-//     let lintErr = exitCodes.["LintError"]
-//     match lint filePath with
-//     | success ->        
-//         filePath
-//         |> getAST 
-//         |> failwith "TODO"
-//     | lintErr -> exitCodes.["LintError"]
+    let decls = 
+        asts 
+        |> List.map (ASTToDecl)
+
+    let netlists = 
+        asts
+        |> List.map (moduleNetlist decls)
+
+    visualiseNetlists netlists decls 
+    exitCodes.["Success"]
 
     
 [<EntryPoint>]
@@ -128,15 +145,18 @@ let main argv =
             printf "verishot <flag> <infile> [<workspacefolder]
     flag: --lint, --simulate, --visualise"
             exitCodes.["Success"]
-        | "--lint" | "--intellisense" when argv.Length = 2 ->
+        | "--lint" when argv.Length = 2 ->
             let filePath = argv.[1]
-            lint filePath (argv.[0] = "--intellisense")
+            lint filePath
+        | "--intellisense" -> 
+            let rawCode = argv.[1..]
+            intellisense rawCode
         | "--simulate" when argv.Length = 2 -> 
             let vprojPath = argv.[1]
             if vProjSanityCheck vprojPath then failwith "TODO1" else failwith "TODO2"
         | "--visualise" when argv.Length = 2 -> 
             let vprojPath = argv.[1]
-            if vProjSanityCheck vprojPath then failwith "TODO1" else failwith "TODO2"
+            if vProjSanityCheck vprojPath then visualise vprojPath else exitCodes.["VisualisationError"]
         | _ -> 
             printf "Invalid command! run `verishot --help` for a guide."
             exitCodes.["InvalidCmd"]
