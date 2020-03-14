@@ -149,8 +149,8 @@ let main argv =
             let filePath = argv.[1]
             lint filePath
         | "--intellisense" -> 
-            let rawCode = argv.[1..]
-            intellisense rawCode
+            let codeLines = argv.[1..]
+            intellisense codeLines
         | "--simulate" when argv.Length = 2 -> 
             let vprojPath = argv.[1]
             if vProjSanityCheck vprojPath then failwith "TODO1" else failwith "TODO2"
