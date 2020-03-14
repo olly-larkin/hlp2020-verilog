@@ -28,7 +28,7 @@ let simulatorTests =
                   getNetlistOutput netlistIn Map.empty None
                       (Map [ ("in", 1UL) ])
 
-              Expect.equal actual.["out"] 1UL
+              Expect.equal actual.["out"] 1UL "Is equal"
           }
 
           test "Input to Output range" {
@@ -46,7 +46,7 @@ let simulatorTests =
                   getNetlistOutput netlistIn Map.empty None
                       (Map [ ("in", 4UL) ])
 
-              Expect.equal actual.["out"] 4UL
+              Expect.equal actual.["out"] 4UL "Is Equal"
           }
 
           test "Input to Output shift left" {
@@ -64,7 +64,7 @@ let simulatorTests =
                   getNetlistOutput netlistIn Map.empty None
                       (Map [ ("in", 4UL) ])
 
-              Expect.equal actual.["out"] 8UL
+              Expect.equal actual.["out"] 8UL "Is Equal"
           }
 
           test "Input to Output shift right" {
@@ -82,7 +82,7 @@ let simulatorTests =
                   getNetlistOutput netlistIn Map.empty None
                       (Map [ ("in", 8UL) ])
 
-              Expect.equal actual.["out"] 4UL
+              Expect.equal actual.["out"] 4UL "Is Equal"
           }
 
           test "2 Inputs to Output" {
@@ -104,5 +104,5 @@ let simulatorTests =
                   getNetlistOutput netlistIn Map.empty None
                       (Map [ ("in1", 0x5UL); ("in2", 0x3UL) ])
 
-              Expect.equal actual.["out"] 0x35UL
+              Expect.equal actual.["out"] 0x35UL "Is Equal"
           } ]
