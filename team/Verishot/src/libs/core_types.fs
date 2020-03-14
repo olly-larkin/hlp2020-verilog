@@ -8,6 +8,13 @@ type ModuleIdentifier =
     | BOpIdentifier of VerilogAST.BinaryOp
     | UOpIdentifier of VerilogAST.UnaryOp
 
+    override this.ToString() =
+        match this with
+        | StringIdentifier(ident) -> ident
+        | BOpIdentifier(ident) -> sprintf "%A" ident
+        | UOpIdentifier(ident) -> sprintf "%A" ident
+
+
 type Range =
     | Single
     | Range of (int * int)
@@ -17,7 +24,7 @@ type Direction =
     | Output
 
 type ModuleDecl =
-    { name: Identifier
+    { name: ModuleIdentifier
       ports: (Direction * Identifier * Range) list }
 
 module Netlist =

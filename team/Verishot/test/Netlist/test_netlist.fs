@@ -26,7 +26,7 @@ let fullModuleTests =
         [ testList "Full module tests"
               [ test "Extracts single module" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [] } ]
 
                     let moduleAST =
@@ -77,7 +77,7 @@ let fullModuleTests =
 
                 test "Connect submodule to output" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Output, "bOut", Single) ] } ]
 
                     let moduleAST =
@@ -107,7 +107,7 @@ let fullModuleTests =
 
                 test "Connect input to submodule" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Input, "bIn", Single) ] } ]
 
                     let moduleAST =
@@ -136,7 +136,7 @@ let fullModuleTests =
 
                 test "Connect expression to submodule" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Input, "bIn", Single) ] } ]
 
                     let moduleAST =
@@ -349,7 +349,7 @@ let fullModuleTests =
 
                 test "Connect sized constant to module input" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Input, "bIn", Range(2, 0)) ] } ]
 
                     let moduleAST =
@@ -381,7 +381,7 @@ let fullModuleTests =
 
                 test "Connect 1-bit sized constant to module input" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Input, "bIn", Single) ] } ]
 
                     let moduleAST =
@@ -465,9 +465,9 @@ let fullModuleTests =
 
                 test "Wire output to 2 instances" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Output, "bOut", Single) ] }
-                          { name = "C"
+                          { name = StringIdentifier "C"
                             ports = [ (Input, "cIn", Single) ] } ]
 
                     let moduleAST =
@@ -515,9 +515,9 @@ let fullModuleTests =
 
                 test "Wire 2 modules together with bus" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Output, "bOut", Range(5, 0)) ] }
-                          { name = "C"
+                          { name = StringIdentifier "C"
                             ports = [ (Input, "cIn", Range(5, 0)) ] } ]
 
                     let moduleAST =
@@ -554,9 +554,9 @@ let fullModuleTests =
 
                 test "Wire 2 modules together with bus (different ranges)" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Output, "bOut", Range(20, 15)) ] }
-                          { name = "C"
+                          { name = StringIdentifier "C"
                             ports = [ (Input, "cIn", Range(5, 0)) ] } ]
 
                     let moduleAST =
@@ -617,7 +617,7 @@ let fullModuleTests =
 
                 test "Connect part of input to submodule" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Input, "bIn", Range(3, 0)) ] } ]
 
                     let moduleAST =
@@ -694,7 +694,7 @@ let fullModuleTests =
 
                 test "LH's fail" {
                     let decls =
-                        [ { name = "test"
+                        [ { name = StringIdentifier "test"
                             ports = [ (Output, "testout", Single)
                                       (Input, "testin1", Single)
                                       (Input, "testin2", Single) ] } ]
