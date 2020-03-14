@@ -144,4 +144,33 @@ let simulatorTests =
                             ("in2", 3UL) ])
 
               Expect.equal actual.["out"] 8UL "Is Equal"
+          }
+
+          test "DFlipFlop" {
+              let netlistIn =
+                  { moduleName = "m"
+                    nodes =
+                        [ InputPin "modin"
+                          ModuleInstance
+                              ({ moduleName = StringIdentifier "DFF"
+                                 instanceName = "flipflip"
+                                 connections =
+                                     Map
+                                         [ "in",
+                                           [ { srcRange = Range(63, 0)
+                                               targetRange = Range(63, 0)
+                                               source = PinEndpoint "modin" } ]]})
+                          OutputPin
+                              ("modout",
+                               [ { source =
+                                       InstanceEndpoint("flipflip", "out")
+                                   srcRange = Range(63, 0)
+                                   targetRange = Range(63, 0) } ]) ] }
+
+              let actual =
+                  getNetlistOutput netlistIn megafunctions None
+                      (Map
+                          [ ("modin", 5UL)])
+
+              Expect.equal actual.["out"] 0UL "Gives initial value"
           } ]
