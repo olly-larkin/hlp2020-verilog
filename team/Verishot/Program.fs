@@ -35,8 +35,9 @@ let lintHelper filePath =
     |> Seq.toList
     |> ParseSource
 
-let intellisense codeLines =
-    codeLines
+let intellisense filePath =
+    filePath
+    |> readFileToStringList
     |> String.concat "\n"
     |> Seq.toList
     |> ParseSource
@@ -44,7 +45,7 @@ let intellisense codeLines =
         | Ok _ -> 
             exitCodes.["Success"]
         | Error (errStr, loc) ->
-            printf "%d#####%d#####%s" loc.line loc.character errStr
+            printf "%d ----- %d ----- %s" loc.line loc.character errStr
             exitCodes.["LintError"]
 
 let lint filePath =
@@ -162,9 +163,9 @@ let main argv =
         | "--lint" when argv.Length = 2 ->
             let filePath = argv.[1]
             lint filePath
-        | "--intellisense" -> 
-            let codeLines = argv.[1..]
-            intellisense codeLines
+        | "--intellisense" when argv.Length = 2 -> 
+            let filePath = argv.[1]
+            intellisense filePath
         | "--simulate" when argv.Length = 2 -> 
             let vprojPath = argv.[1]
             if vProjSanityCheck vprojPath then failwith "TODO1" else failwith "TODO2"

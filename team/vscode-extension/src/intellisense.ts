@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
-import * as cp from 'child_process';
 import { escapeshellcmd } from 'php-escape-shell';
+import { writeFile } from 'fs';
 import * as os from 'os';
+import { spawn } from 'child_process';
 
 // INTELLISENSE
 let timeout: NodeJS.Timer | undefined = undefined;
@@ -16,25 +17,40 @@ const triggerIntellisense = (doc: vscode.TextDocument, diagCol: vscode.Diagnosti
 
 const execIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCollection) => {
 	diagCol.clear();
-	const code = doc.getText().split("\n").map(line => "\"" + line + "\"").join(" ");
-
-	const escapedCmd = escapeshellcmd(`verishot --intellisense ${code}`, os.platform() === `win32`, true);
-	cp.exec(escapedCmd, (err: any, stdout: any, stderr: any) => {
-		if (stdout && stdout.length) {
-			let splitted = stdout.split("#####");
-			if (splitted.length === 3) {
-				let line: number = parseInt(splitted[0]) - 1; // 1-indexed
-				let char: number = parseInt(splitted[1]);
-				let errMsg: string = splitted[2];
-				const diagnostics: vscode.Diagnostic[] =
-					[{
-						severity: vscode.DiagnosticSeverity.Error,
-						range: new vscode.Range(line, 0, line, char),
-						message: errMsg,
-					}];
-				diagCol.set(doc.uri, diagnostics);
-			}
+	writeFile('intellisenseTmp.txt', doc.getText(), (err) => {
+		if (err) {
+			vscode.window.showErrorMessage(err.message);
 		}
+		const args = [`--intellisense`, `intellisenseTmp.txt`];
+
+		const s = spawn(`verishot`, args);
+
+		s.stdout.on('data', (data) => {
+			const errorTexts: string[][] =
+				data
+					.toString()
+					.split(`\n`)
+					.map((line: string) => line.split(" ----- "));
+
+			errorTexts.forEach((err: string[]) => {
+				if (err.length === 3) {
+					const line: number = parseInt(err[0]) - 1; // 1-indexed
+					const char: number = parseInt(err[1]);
+					const errMsg: string = err[2];
+					const diagnostics: vscode.Diagnostic[] =
+						[{
+							severity: vscode.DiagnosticSeverity.Error,
+							range: new vscode.Range(line, 0, line, char),
+							message: errMsg,
+						}];
+					diagCol.set(doc.uri, diagnostics);
+				}
+			})
+		});
+
+		s.stderr.on('data', (data) => {
+			console.error(`Intellisense Error: ${data.toString().trim()}`);
+		});
 	});
 };
 
