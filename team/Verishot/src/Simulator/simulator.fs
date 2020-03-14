@@ -1,7 +1,7 @@
 module rec Verishot.Simulator.Simulate
 
 open Verishot.CoreTypes
-open Verishot.Megafunctions.Registry
+open Verishot.Megafunctions.Types
 open Verishot.Simulator.Types
 open Verishot.Util
 

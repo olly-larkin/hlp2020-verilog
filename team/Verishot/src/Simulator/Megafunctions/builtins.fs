@@ -3,6 +3,7 @@ module Verishot.Megafunctions.Builtins
 open Verishot.CoreTypes
 open Verishot.CoreTypes.VerilogAST
 open Verishot.Simulator.Types
+open Verishot.Megafunctions.Types
 
 let addFunction =
     Combinational
