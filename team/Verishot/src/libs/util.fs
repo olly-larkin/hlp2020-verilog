@@ -98,6 +98,8 @@ module List =
 
         (trueElems, falseElems)
 
+    let toMap = Map.ofList
+
 
 module Map =
     /// Join 2 maps, preferring values from the first map on conflict

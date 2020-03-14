@@ -1,6 +1,6 @@
 module Verishot.Megafunctions
 
-open Verishot.CoreTypes.Simulator
+open Verishot.Simulator.Types
 
 type StateVar =
     | EmptyState

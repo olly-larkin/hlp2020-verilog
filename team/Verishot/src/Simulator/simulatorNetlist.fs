@@ -73,7 +73,7 @@ module Internal =
                             { srcRange = connection.srcRange
                               targetRange = connection.targetRange
                               source =
-                                  Simulator.ConstantEndpoint(c.width, c.value) }
+                                  Simulator.ConstantEndpoint(uint64 c.value) }
                     else
                         None)
             | Netlist.OutputPin(_) -> [])
@@ -127,7 +127,7 @@ module Internal =
                                Simulator.Connection.targetRange =
                                    connection.targetRange
                                Simulator.Connection.source =
-                                   Simulator.ConstantEndpoint(c.width, c.value) })
+                                   Simulator.ConstantEndpoint(uint64 c.value) })
                     | _ -> None)
             | Netlist.OutputPin(_) -> [])
         |> Map.ofListAll

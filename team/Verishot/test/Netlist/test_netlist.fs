@@ -690,7 +690,73 @@ let fullModuleTests =
 
 
                     expectNetlist decls moduleAST expectedNetlist
-                }]
+                }
+
+                test "LH's fail" {
+                    let decls =
+                        [ { name = "test"
+                            ports = [ (Output, "testout", Single)
+                                      (Input, "testin1", Single)
+                                      (Input, "testin2", Single) ] } ]
+
+                    let moduleAST =
+                        { name = "testproj"
+                          ports = ["out1"; "out2"; "a"; "b"]
+                          items =
+                                  [ItemPort (Input,Single,"a"); ItemPort (Input,Single,"b")
+                                   ItemPort (Output,Single,"out1"); ItemPort (Output,Single,"out2")
+                                   ItemInstantiation
+                                      ("test","re",
+                                      [ExprIdentifier "out2"; ExprIdentifier "a"; ExprIdentifier "b"])
+                                   ItemAssign
+                                      ("out1",ExprBinary (ExprIdentifier "a",BOpPlus,ExprIdentifier "b"))] }
+
+                    let expectedNetlist =
+                        { moduleName = "testproj"
+                          nodes =
+                              [ InputPin
+                                  ("a",
+                                   [ { srcRange = Single
+                                       targetRange = Single
+                                       target = InstanceTarget("re", "testin1") }
+                                     { srcRange = Single
+                                       targetRange = Single
+                                       target = InstanceTarget("BOpPlus-0", "left") }])
+                                InputPin
+                                  ("b",
+                                   [ { srcRange = Single
+                                       targetRange = Single
+                                       target = InstanceTarget("re", "testin2") }
+                                     { srcRange = Single
+                                       targetRange = Single
+                                       target = InstanceTarget("BOpPlus-0", "right") }])
+                                OutputPin("out1")
+                                OutputPin("out2")
+                                ModuleInstance
+                                    ({ moduleName = StringIdentifier "test"
+                                       instanceName = "re"
+                                       connections =
+                                           Map
+                                               [ "testout",
+                                                 [ { srcRange = Single
+                                                     targetRange = Single
+                                                     target = PinTarget "out2" } ] ] })
+                                ModuleInstance
+                                    ({ moduleName = BOpIdentifier BOpPlus
+                                       instanceName = "BOpPlus-0"
+                                       connections =
+                                           Map
+                                               [ "output",
+                                                 [ { srcRange = Single
+                                                     targetRange = Single
+                                                     target = PinTarget "out1" } ] ] })
+
+                                 ] }
+
+
+                    expectNetlist decls moduleAST expectedNetlist
+                }
+                ]
 
           testList "Unification of connections"
               [ testProperty "Has no effect if there are no named endpoints"

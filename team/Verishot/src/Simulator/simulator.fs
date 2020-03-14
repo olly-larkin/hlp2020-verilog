@@ -1,74 +1,84 @@
-module Verishot.Simulator.Simulate
+module rec Verishot.Simulator.Simulate
 
 open Verishot.CoreTypes
-open Verishot.CoreTypes.Netlist
-open Verishot.CoreTypes.Simulator
 open Verishot.Megafunctions
+open Verishot.Simulator.Types
+open Verishot.Util
 
 type SimulationResult =
-    { internals: WireValMap
-      outputs: WireValMap
+    { outputs: WireValMap
       state: StateVar InstanceState }
 
 type AccType =
     { nextState: StateVar State
       wireVals: WireValMap }
 
-let simulate (instance: StateVar Instance) (lastState: StateVar InstanceState)
-    (inputs: WireValMap): SimulationResult =
-    match instance with
-    | Megafunction mf ->
-        let outputs, nextState =
-            match lastState with
-            | VerilogState _ -> failwith "VerilogState passed to FSharp module"
-            | MegafunctionState s -> mf.simulate s inputs
+let evaluate (netlist: Netlist)
+    (otherModules: Map<ModuleIdentifier, StateVar SimulationObject>)
+    (lastState: StateVar State option) (inputs: WireValMap) (node: Node): EndpointValMap =
+    match node with
+    | InputPin(name) ->
+        let inputVal: WireVal =
+            inputs
+            |> Map.tryFind name
+            |> Option.defaultWith
+                (fun () -> failwithf "Missing value for input pin %s" name)
 
-        { internals = inputs
-          outputs = outputs
-          state = MegafunctionState nextState }
+        Map [ (PinEndpoint name, inputVal) ]
+    | OutputPin(name, connections) ->
+        connections
+        |> List.map (fun conn ->
+            match conn.source with
+            | ConstantEndpoint value ->
+                shiftAndMask conn.srcRange conn.targetRange value
+            | _ ->
+                netlist.nodes
+                |> List.tryFind (matchesEndpoint conn.source)
+                |> Option.defaultWith
+                    (fun () ->
+                        failwithf "Could not to find endpoint %A" conn.source)
+                |> evaluate netlist otherModules lastState inputs
+                |> Map.tryFind conn.source
+                |> Option.defaultWith
+                    (fun () ->
+                        failwithf "Could not to find port %A" conn.source)
+                |> (fun value ->
+                    shiftAndMask conn.srcRange conn.targetRange value))
+        |> List.fold (|||) 0UL
+        |> (fun v -> Map [ (PinEndpoint name, v) ])
 
-    | NetlistInstance net ->
-        let initAcc: AccType =
-            { nextState = (Map.empty: StateVar State)
-              wireVals = Map.empty<Identifier, WireVal> }
+let getNetlistOutput (netlist: Netlist)
+    (otherModules: Map<ModuleIdentifier, StateVar SimulationObject>)
+    (lastState: StateVar State option) (inputs: WireValMap): WireValMap =
 
-        let rec evaluate (acc: AccType) node: AccType =
-            match node with
-            | InputPin(name, _conns) ->
-                let pinValue =
-                    inputs
-                    |> Map.tryFind name
-                    |> Option.defaultWith
-                        (fun () -> failwithf "Pin %s is unconnected" name)
+    netlist.nodes
+    |> List.choose (function
+        | OutputPin(name, _) as node ->
+            let pinValue =
+                evaluate netlist otherModules lastState inputs node
+                |> Map.tryFind (PinEndpoint name)
+                |> Option.defaultWith
+                    (fun () ->
+                        failwithf "Failed getting output on pin %s" name)
 
-                { acc with wireVals = acc.wireVals |> Map.add name pinValue }
-            | OutputPin name ->
-                let dependencies () =
-                    net.nodes
-                    |> List.filter (function
-                        | InputPin(_, connections) ->
-                            connections
-                            |> List.exists (fun c -> c.target = PinTarget name)
-                        | Constant constant ->
-                            constant.connections
-                            |> List.exists (fun c -> c.target = PinTarget name)
-                        | ModuleInstance instance ->
-                            instance.connections
-                            |> Map.toList
-                            |> List.collect snd
-                            |> List.exists (fun c -> c.target = PinTarget name)
-                        | OutputPin _ -> false)
+            Some(name, pinValue)
+        | _ -> None)
+    |> List.toMap
 
 
-                if Map.containsKey name acc.wireVals
-                then acc
-                else failwith "missing"
+let matchesEndpoint (endpoint: Endpoint) (node: Node): bool =
+    match (endpoint, node) with
+    | PinEndpoint(name'), InputPin(name) -> name = name'
+    | PinEndpoint(name'), OutputPin(name, _) -> name = name'
+    | InstanceEndpoint(name, _), ModuleInstance(instance) ->
+        instance.instanceName = name
+    | _ -> false
 
-            | ModuleInstance(instance) -> acc
-            | Constant _ -> acc
 
-        let result = (initAcc, net.nodes) ||> List.fold evaluate
-
-        { internals = result.wireVals
-          outputs = Map.empty
-          state = VerilogState result.nextState }
+let shiftAndMask srcRange targetRange value =
+    match (srcRange, targetRange) with
+    | Range(srcHigh, srcLow), Range(targetHigh, targetLow) ->
+        let mask = ((pown 2UL (srcHigh - srcLow + 1)) - 1UL) <<< srcLow
+        ((value &&& mask) >>> srcLow) <<< targetLow
+    | Single, Single -> value
+    | _ -> failwith "Mismatched ranges"
