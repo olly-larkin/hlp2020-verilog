@@ -101,7 +101,6 @@ let matchesEndpoint (endpoint: Endpoint) (node: Node): bool =
 let shiftAndMask srcRange targetRange value =
     match (srcRange, targetRange) with
     | Range(srcHigh, srcLow), Range(targetHigh, targetLow) ->
-        let mask = ((pown 2UL (srcHigh - srcLow + 1)) - 1UL) <<< srcLow
-        ((value &&& mask) >>> srcLow) <<< targetLow
+        ((value <<< (63 - srcHigh)) >>> (63 - srcHigh + srcLow)) <<< targetLow
     | Single, Single -> value
     | _ -> failwith "Mismatched ranges"
