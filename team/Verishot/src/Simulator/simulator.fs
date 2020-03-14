@@ -16,18 +16,9 @@ type AccType =
 let evaluate (netlist: Netlist)
     (otherModules: Map<ModuleIdentifier, StateVar SimulationObject>)
     (lastState: StateVar State option) (inputs: WireValMap) (node: Node): EndpointValMap =
-    match node with
-    | InputPin(name) ->
-        let inputVal: WireVal =
-            inputs
-            |> Map.tryFind name
-            |> Option.defaultWith
-                (fun () -> failwithf "Missing value for input pin %s" name)
 
-        Map [ (PinEndpoint name, inputVal) ]
-    | OutputPin(name, connections) ->
-        connections
-        |> List.map (fun conn ->
+    let getPortValue =
+        List.map (fun conn ->
             match conn.source with
             | ConstantEndpoint value ->
                 shiftAndMask conn.srcRange conn.targetRange value
@@ -44,8 +35,40 @@ let evaluate (netlist: Netlist)
                         failwithf "Could not to find port %A" conn.source)
                 |> (fun value ->
                     shiftAndMask conn.srcRange conn.targetRange value))
-        |> List.fold (|||) 0UL
+        >> List.fold (|||) 0UL
+
+    match node with
+    | InputPin(name) ->
+        let inputVal: WireVal =
+            inputs
+            |> Map.tryFind name
+            |> Option.defaultWith
+                (fun () -> failwithf "Missing value for input pin %s" name)
+
+        Map [ (PinEndpoint name, inputVal) ]
+    | OutputPin(name, connections) ->
+        connections
+        |> getPortValue
         |> (fun v -> Map [ (PinEndpoint name, v) ])
+    | ModuleInstance instance ->
+        let inputValues(): WireValMap =
+            instance.connections |> Map.mapValues getPortValue
+
+        otherModules
+        |> Map.tryFind instance.moduleName
+        |> Option.defaultWith
+            (fun () ->
+                failwithf "Module %s does not exist" instance.instanceName)
+        |> function
+        | Megafunction(Combinational mf) ->
+            mf.simulate (inputValues())
+            |> Map.mapKeys
+                (fun portName ->
+                    InstanceEndpoint(instance.instanceName, portName))
+        | _ ->
+            failwith
+                "Not yet implemented (modules other than stateless megafunctions)"
+
 
 let getNetlistOutput (netlist: Netlist)
     (otherModules: Map<ModuleIdentifier, StateVar SimulationObject>)
