@@ -1,4 +1,4 @@
-module Verishot.Simulator
+module Verishot.Simulator.Simulate
 
 open Verishot.CoreTypes
 open Verishot.CoreTypes.Netlist
@@ -32,7 +32,7 @@ let simulate (instance: StateVar Instance) (lastState: StateVar InstanceState)
             { nextState = (Map.empty: StateVar State)
               wireVals = Map.empty<Identifier, WireVal> }
 
-        let rec recFold (acc: AccType) node: AccType =
+        let rec evaluate (acc: AccType) node: AccType =
             match node with
             | InputPin(name, _conns) ->
                 let pinValue =
@@ -42,11 +42,32 @@ let simulate (instance: StateVar Instance) (lastState: StateVar InstanceState)
                         (fun () -> failwithf "Pin %s is unconnected" name)
 
                 { acc with wireVals = acc.wireVals |> Map.add name pinValue }
-            | OutputPin name -> acc
+            | OutputPin name ->
+                let dependencies () =
+                    net.nodes
+                    |> List.filter (function
+                        | InputPin(_, connections) ->
+                            connections
+                            |> List.exists (fun c -> c.target = PinTarget name)
+                        | Constant constant ->
+                            constant.connections
+                            |> List.exists (fun c -> c.target = PinTarget name)
+                        | ModuleInstance instance ->
+                            instance.connections
+                            |> Map.toList
+                            |> List.collect snd
+                            |> List.exists (fun c -> c.target = PinTarget name)
+                        | OutputPin _ -> false)
+
+
+                if Map.containsKey name acc.wireVals
+                then acc
+                else failwith "missing"
+
             | ModuleInstance(instance) -> acc
             | Constant _ -> acc
 
-        let result = (initAcc, net.nodes) ||> List.fold recFold
+        let result = (initAcc, net.nodes) ||> List.fold evaluate
 
         { internals = result.wireVals
           outputs = Map.empty

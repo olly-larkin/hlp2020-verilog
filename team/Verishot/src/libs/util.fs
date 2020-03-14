@@ -117,5 +117,18 @@ module Map =
         let newVal = f (Map.tryFind key map)
         map |> Map.add key newVal
 
+    let collect (f: 'K -> 'V -> 'U list) (map: Map<'K, 'V>): 'U list =
+        map
+        |> Map.toList
+        |> List.collect (fun (k, v) -> f k v)
+
+    let ofListAll (lst: ('K * 'V) list): Map<'K, 'V list> =
+        (Map.empty, lst)
+        ||> List.fold (fun map (key, item) ->
+                map
+                |> update key (function
+                       | Some items -> item :: items
+                       | None -> [ item ]))
+
 module Tuple =
     let bimap f g (a, b) = (f a, g b)
