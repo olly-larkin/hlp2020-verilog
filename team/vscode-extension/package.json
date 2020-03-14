@@ -1,6 +1,6 @@
 {
-	"name": "hello-world",
-	"displayName": "Hello World",
+	"name": "verishot",
+	"displayName": "Verishot",
 	"description": "",
 	"version": "0.0.1",
 	"engines": {
@@ -96,6 +96,7 @@
 	},
 	"dependencies": {
 		"child_process": "^1.0.2",
-		"fs": "0.0.1-security"
+		"fs": "0.0.1-security",
+		"php-escape-shell": "^1.0.0"
 	}
 }

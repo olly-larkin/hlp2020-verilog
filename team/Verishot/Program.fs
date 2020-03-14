@@ -113,6 +113,11 @@ let getAST moduleFilePath =
 
 
 let visualise vProjFilePath =
+    let workspacePath = getFolderPath vProjFilePath
+    let visOutputPath = sprintf "%s%s%s" workspacePath dirSlash "visualisation"
+
+    deleteFolder visOutputPath
+
     let asts =
         vProjFilePath
         |> getModuleFilePaths
@@ -126,7 +131,16 @@ let visualise vProjFilePath =
         asts
         |> List.map (moduleNetlist decls)
 
-    visualiseNetlists netlists decls 
+    createPathFolder visOutputPath
+
+    let getOutputFilePath id = sprintf "%s%s%s%s" visOutputPath dirSlash id ".svg"
+
+    (netlists, decls)
+    ||> visualiseNetlists
+    |> List.map (fun (id, svgOutput) -> writeStringToFile (getOutputFilePath id) svgOutput)
+    |> ignore
+
+    printf "Visualisation succeeded. View output in `visualisation`."
     exitCodes.["Success"]
 
     
@@ -156,7 +170,9 @@ let main argv =
             if vProjSanityCheck vprojPath then failwith "TODO1" else failwith "TODO2"
         | "--visualise" when argv.Length = 2 -> 
             let vprojPath = argv.[1]
-            if vProjSanityCheck vprojPath then visualise vprojPath else exitCodes.["VisualisationError"]
+            if vProjSanityCheck vprojPath
+                then visualise vprojPath 
+                else exitCodes.["VisualisationError"]
         | _ -> 
             printf "Invalid command! run `verishot --help` for a guide."
             exitCodes.["InvalidCmd"]

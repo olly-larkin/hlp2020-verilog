@@ -91,10 +91,6 @@ let visualiseNetlists (netlists: Netlist list) (decls: ModuleDecl list) =
 
     let toSvg = fun netlist -> netlist.moduleName, visualiseNetlist netlist declMap
     let toString = fun (modName, svg) -> modName, output svg styles script true
-    deleteFolder "visualisation"
-    createPathFolder "visualisation" 
-    let toFile = fun (modName, svgString) -> writeStringToFile (sprintf "./visualisation/%s.svg" modName) svgString
-
+    
     netlists 
-    |> List.map (toSvg >> toString >> toFile)
-    |> ignore
+    |> List.map (toSvg >> toString)

@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import * as cp from 'child_process';
+import { escapeshellcmd } from 'php-escape-shell';
+import * as os from 'os';
 
 // INTELLISENSE
 let timeout: NodeJS.Timer | undefined = undefined;
@@ -15,7 +17,9 @@ const triggerIntellisense = (doc: vscode.TextDocument, diagCol: vscode.Diagnosti
 const execIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCollection) => {
 	diagCol.clear();
 	const code = doc.getText().split("\n").map(line => "\"" + line + "\"").join(" ");
-	cp.exec(`verishot --intellisense ${code}`, (err: any, stdout: any, stderr: any) => {
+
+	const escapedCmd = escapeshellcmd(`verishot --intellisense ${code}`, os.platform() === `win32`, true);
+	cp.exec(escapedCmd, (err: any, stdout: any, stderr: any) => {
 		if (stdout && stdout.length) {
 			let splitted = stdout.split("#####");
 			if (splitted.length === 3) {
