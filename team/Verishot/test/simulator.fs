@@ -3,8 +3,10 @@ module rec Verishot.Test.Simulator
 open Expecto
 
 open Verishot.CoreTypes
+open Verishot.CoreTypes.VerilogAST
 open Verishot.Simulator.Simulate
 open Verishot.Simulator.Types
+open Verishot.Megafunctions.Registry
 
 let expectSameElements actual expected =
     Expect.containsAll actual expected "Should have all expected nodes"
@@ -105,4 +107,39 @@ let simulatorTests =
                       (Map [ ("in1", 0x5UL); ("in2", 0x3UL) ])
 
               Expect.equal actual.["out"] 0x35UL "Is Equal"
+          }
+
+          test "Add 2 Inputs" {
+              let netlistIn =
+                  { moduleName = "m"
+                    nodes =
+                        [ InputPin "in1"
+                          InputPin "in2"
+                          ModuleInstance
+                              ({ moduleName = BOpIdentifier BOpPlus
+                                 instanceName = "BOpPlus-0"
+                                 connections =
+                                     Map
+                                         [ "left",
+                                           [ { srcRange = Range(63, 0)
+                                               targetRange = Range(63, 0)
+                                               source = PinEndpoint "in1" } ]
+                                           "right",
+                                           [ { srcRange = Range(63, 0)
+                                               targetRange = Range(63, 0)
+                                               source = PinEndpoint "in2" } ]] })
+                          OutputPin
+                              ("out",
+                               [ { source =
+                                       InstanceEndpoint("BOpPlus-0", "output")
+                                   srcRange = Range(63, 0)
+                                   targetRange = Range(63, 0) } ]) ] }
+
+              let actual =
+                  getNetlistOutput netlistIn megafunctions None
+                      (Map
+                          [ ("in1", 5UL)
+                            ("in2", 3UL) ])
+
+              Expect.equal actual.["out"] 8UL "Is Equal"
           } ]

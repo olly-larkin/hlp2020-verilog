@@ -41,6 +41,7 @@
     <!-- SIMULATOR -->
     <Compile Include="src/Simulator/types.fs" />
     <Compile Include="src/Simulator/simulatorNetlist.fs" />
+    <Compile Include="src/Simulator/Megafunctions/builtins.fs" />
     <Compile Include="src/Simulator/megafunctions.fs" />
     <Compile Include="src/Simulator/simulator.fs" />
 
