@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getExistingModuleNamesFromVProj, getNumberOfProjectFiles, dirSlash, getProjectName, readLinesFromFile, stripFileExtension, getWorkspacePath, deleteFileIfExists } from './utility';
+import { getExistingModuleNamesFromVProj, getNumberOfProjectFiles, dirSlash, getProjectName, readLinesFromFile, getWorkspacePath, deleteFileIfExists } from './utility';
 import { getInput, getPick } from './input';
 import * as fs from 'fs';
 
@@ -59,7 +59,7 @@ const deleteModule = (moduleName: string, workspacePath: string, projectName: st
         // update vproj
         const vprojFilePath = `${workspacePath}${dirSlash}${projectName}.vproj`;
         const vprojLines = readLinesFromFile(vprojFilePath);
-        const newvprojLines = vprojLines.filter((line) => line !== `${moduleName}.v`);
+        const newvprojLines = vprojLines.filter((line: string) => line !== `${moduleName}.v`);
         const vprojContent = newvprojLines.join('\n');
         fs.writeFileSync(vprojFilePath, vprojContent);
 
@@ -104,7 +104,7 @@ export const deleteModuleHandler = () => {
     const projectName = getProjectName(workspacePath);
     if (!projectName) { return; }
     const allModulesWithTopLevelModule = getExistingModuleNamesFromVProj(workspacePath, projectName);
-    const allModules = allModulesWithTopLevelModule.filter((moduleName) => moduleName !== `${projectName}`);
+    const allModules = allModulesWithTopLevelModule.filter((moduleName: string) => moduleName !== `${projectName}`);
     getPick(allModules, `Select module to delete`).then((moduleName) => {
         if (moduleName) {
             deleteModule(moduleName, workspacePath, projectName);

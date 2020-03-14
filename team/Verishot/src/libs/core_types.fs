@@ -231,6 +231,10 @@ module VerilogAST =
           ports: Identifier list
           items: ModuleItem list }
 
+        //   type ModuleDecl =
+        //     { name: Identifier
+        //       ports: (Direction * Identifier * Range) list }
+        
 module Simulator =
     type WireVal = uint64
     type WireValMap = Map<Identifier, WireVal>

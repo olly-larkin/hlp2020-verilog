@@ -19,6 +19,7 @@
     <Compile Include="./Visualiser/node/types/moduleinstance_test.fs" />
     <Compile Include="./Waveform/waveform_testing.fs" />
     <Compile Include="./simulator.fs" />
+    <Compile Include="ProgramTest.fs" />
     <Compile Include="main.fs" />
   </ItemGroup>
 
