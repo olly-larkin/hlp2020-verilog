@@ -1,0 +1,84 @@
+﻿<!doctype html>
+<html>
+
+<head>
+    <title>Verishot</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/photon.css">
+    <link rel="stylesheet" href="css/vistally.css">
+    <link rel="stylesheet" href="css/vex.css" />
+    <link rel="stylesheet" href="css/vex-theme-default.css" />
+    <link rel="stylesheet" href="css/custom-style.css" />
+    <!--<link rel="stylesheet" href="css/material-icons.css">-->
+</head>
+
+<body id="vis-body" class="invisible">
+    <div class="window custom-font">
+        <!-- .toolbar-header sits at the top of your app -->
+        <header id="vis-header" class="toolbar toolbar-header">
+            <div class="toolbar-actions">
+                <div class="btn-group">
+                    <button id="explore" class="btn btn-default">
+                        <span class="icon icon-folder"></span>
+                    </button>
+                    <!-- open btn -->
+                    <button id="save" class="btn btn-default">
+                        <span class="icon icon-floppy"></span>
+                    </button>
+                    <!-- save btn -->
+                </div>
+                <!-- btn-group -->
+
+                <button id="run" class="btn btn-fixed btn-default button-run btn-topstyle">
+                    <span class="icon icon-play"></span>
+                    Simulate
+                </button>
+                <!-- run btn -->
+
+                <button id="visualise" class="btn btn-fixed btn-default btn-topstyle">
+                    <span class="icon icon-eye"></span>
+                    Visualise
+                </button>
+            </div>
+        </header>
+        <!-- Header -->
+
+        <div class="window-content">
+            <div class="pane-group">
+                <div class="pane" id="file-view-pane">
+                    <div id="tabs-files" class="tab-group">
+                        <div id="new-file-tab" class="tab-item tab-item-fixed">
+                            <span class="icon icon-plus"></span>
+                        </div>
+                    </div>
+                    <div id="darken-overlay" class="invisible"></div>
+                </div>
+            </div>
+            <!-- pane-group -->
+        </div>
+        <!-- Header -->
+
+    </div>
+    <!-- window -->
+    <script>
+        // Monaco uses a custom amd loader that over-rides node's require.
+        // Keep a reference to node's require so we can restore it after executing the amd loader file.
+        var nodeRequire = global.require;
+        global.require('electron-settings');
+    </script>
+    <script>console.log('hello from index.html');</script>
+    <script src="js/renderer.js"></script>
+    <script>console.log('renderer.js has been successfully loaded!');</script>
+    <script src="js/tippy.all.min.js"></script>
+    <script src="js/vex.combined.min.js"></script>
+    <script>vex.defaultOptions.className = 'vex-theme-default'</script>
+    <script src="js/svg.min.js"></script>
+    <script src="js/vs/loader.js"></script>
+    <script>console.log('loader done...');</script>
+    <script src="js/monaco-init.js"></script>
+
+
+</body>
+
+</html>

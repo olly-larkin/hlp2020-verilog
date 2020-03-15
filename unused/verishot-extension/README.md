@@ -1,0 +1,1 @@
+# Verishot Extension
