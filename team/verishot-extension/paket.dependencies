@@ -11,3 +11,5 @@ nuget Fable.Core ~> 2.0.3
 nuget Fable.Import.VSCode  
 nuget Fable.Parsimmon
 nuget Fable.Import.Browser
+nuget Fable.Import.Node
+nuget Fable.Promise

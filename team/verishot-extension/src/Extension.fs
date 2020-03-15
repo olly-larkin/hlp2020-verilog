@@ -4,10 +4,6 @@ open VerishotExtension.Util
 open VerishotExtension.Verishot
 
 open Fable.Import
-open Fable.Import.JS
-open Fable.Import.Browser
-open Fable.Import.vscode
-open Fable.Core.JsInterop
 
 
 let activate (context: vscode.ExtensionContext) =  
@@ -28,4 +24,6 @@ let activate (context: vscode.ExtensionContext) =
     vscode.commands.registerCommand("extension.visualise", fun _ ->
         execVerishot Visualise)
     |> context.subscriptions.Add
+
+    readLinesFromFile "123"
 
