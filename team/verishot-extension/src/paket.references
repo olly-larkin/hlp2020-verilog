@@ -1,0 +1,11 @@
+Fable.Import.VSCode   
+Fable.Parsimmon 
+Fable.Import.Browser
+Fable.Import.Node.Fs
+Fable.Import.Node.ChildProcess
+Fable.Import.Node.OS
+Fable.Import.Node.Path
+
+File:Bindings.fs Jest  
+File:Exports.fs Jest  
+File:Matchers.fs Jest  
