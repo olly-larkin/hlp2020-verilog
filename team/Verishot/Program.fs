@@ -88,7 +88,7 @@ let checkModulesLint allModules workspacePath =
         match passed with 
         | true -> true
         | false -> 
-            printf "ERROR: Lint error in module `%s`: %s\n" modName lintErr 
+            printf "Error in module `%s`: %s\n" modName lintErr 
             false
 
     allModules
