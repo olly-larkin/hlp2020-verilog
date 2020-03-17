@@ -1,17 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
-
   <ItemGroup>
-    <!-- LIBRARIES -->
     <Compile Include="src/libs/core_types.fs" />
     <Compile Include="src/libs/util.fs" />
+    <Compile Include="src/libs/FileUtil.fs" />
     <Compile Include="src/libs/svg.fs" />
-
-    <!-- PARSER -->
+    
     <Compile Include="src/Parser/parserUtils.fs" />
     <Compile Include="src/Parser/tokenParser.fs" />
     <Compile Include="src/Parser/expressionParser.fs" />
@@ -19,10 +16,8 @@
     <Compile Include="src/Parser/parser.fs" />
     <Compile Include="src/Parser/ASTToDecl.fs" />
 
-    <!-- NETLIST -->
     <Compile Include="src/Netlist/netlist.fs" />
 
-    <!-- VISUALISER -->
     <Compile Include="src/Visualiser/assets/styles.fs" />
     <Compile Include="src/Visualiser/maps.fs" />
     <Compile Include="src/Visualiser/util.fs" />
@@ -34,15 +29,14 @@
     <Compile Include="src/Visualiser/connection/types/pin.fs" />
     <Compile Include="src/Visualiser/visualise.fs" />
 
-    <!-- WAVEFORM -->
     <Compile Include="src/Waveform/wave_types.fs" />
     <Compile Include="src/Waveform/waveform.fs" />
 
-    <!-- SIMULATOR -->
     <Compile Include="src/Simulator/megafunctions.fs" />
     <Compile Include="src/Simulator/simulator.fs" />
-
+    
+    <Compile Include="src/libs/FrontEnd.fs" />
+    <Compile Include="src/libs/Project.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
-
 </Project>

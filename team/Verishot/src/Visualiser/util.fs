@@ -7,6 +7,7 @@ open Verishot.CoreTypes.Netlist
 open Verishot.CoreTypes.VerilogAST
 open Verishot.SVG
 open Verishot.VisualiseMaps
+open Verishot.FileUtil
 
 type PortProp =
     { index: int

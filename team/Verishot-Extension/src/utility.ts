@@ -1,27 +1,13 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as os from 'os';
+import * as cp from 'child_process';
 
 export enum VerishotMode {
 	lint,
 	simulate,
 	visualise,
 }
-
-export const readLinesFromFile = (filePath: string): Array<string> => {
-	return fs.existsSync(filePath) ?
-		fs.readFileSync(filePath, 'utf-8')
-			.split('\n')
-			.filter(Boolean)
-		:
-		[];
-};
-
-export const deleteFileIfExists = (filePath: string) => {
-	if (fs.existsSync(filePath)) {
-		fs.unlinkSync(filePath);
-	}
-};
 
 export const dirSlash = os.platform() === 'win32' ? '\\' : '/';
 
@@ -82,13 +68,31 @@ export const getTerminal = (terminalName: string) => {
 	return vscode.window.createTerminal(terminalName);
 };
 
-export const getExistingModuleFileNamesFromVProj = (workspacePath: string, projectName: string) => {
-    const vprojFilePath = `${workspacePath}${dirSlash}${projectName}.vproj`;
-    const vprojLines = readLinesFromFile(vprojFilePath);
-    return vprojLines;
+export const spawnCmdWithFeedback = (binName: string, args: string[]) => {
+	const s = cp.spawnSync(binName, args);
+	const stderrText = s.stderr.toString().trim();
+	const stdoutText = s.stdout.toString().trim();
+	if (stderrText) {
+		vscode.window.showErrorMessage(stderrText);
+	}
+	else {
+		const outfunc = s.status === 0 ? vscode.window.showInformationMessage : vscode.window.showErrorMessage;
+		outfunc(stdoutText);
+	}
 };
 
-// no extensions 
-export const getExistingModuleNamesFromVProj = (workspacePath: string, projectName: string) => {
-	return getExistingModuleFileNamesFromVProj(workspacePath, projectName).map((line) => stripFileExtension(line));
+export const getExistingModules = (workspacePath: string, projectName: string): string[] | undefined => {
+	const s = cp.spawnSync(`verishot`, [workspacePath, projectName]);
+	const stderrText = s.stderr.toString().trim();
+	const stdoutText = s.stdout.toString().trim();
+	if (stderrText) {
+		vscode.window.showErrorMessage(stderrText);
+		vscode.window.showErrorMessage(`Something went wrong`);
+		return undefined;
+	}
+	else {
+		return stdoutText
+			.split(`\n`)
+			.map((line: string) => { return stripFileExtension(line.trim()); });
+	}
 };

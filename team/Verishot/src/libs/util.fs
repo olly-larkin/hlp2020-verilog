@@ -6,32 +6,6 @@ open Verishot.CoreTypes
 
 let print x = printfn "%A" x
 
-let dirSlash = Path.DirectorySeparatorChar |> Char.ToString
-
-let readFileToStringList (filename: string) =
-    match File.Exists filename with 
-    | true ->
-        File.ReadAllLines filename
-        |> Array.toList
-    | false -> 
-        failwithf "File `%s` not found." filename
-
-let readFileToString (filename: string) =
-    filename
-    |> readFileToStringList 
-    |> String.concat "\n"
-
-let createPathFolder (pathString: string) =
-    Directory.CreateDirectory pathString |> ignore
-
-let deleteFolder path =
-    if Directory.Exists path then Directory.Delete(path, true) |> ignore
-
-let writeStringToFile (filename: string) (content: string) =
-    File.WriteAllText (filename, content)
-
-let getFolderPath (filePath: string): string = 
-    filePath.[0 .. filePath.LastIndexOf dirSlash - 1]
 
 /// Get the number of bits a Range represents
 let rangeWidth range =
