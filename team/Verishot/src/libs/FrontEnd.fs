@@ -16,6 +16,7 @@ let exitCodes: Map<string, int> =
         ("NewProjectError", 2)
         ("NewModuleError", 3)
         ("DeleteModuleError", 4)
+        ("SanityCheckError", 5)
 
         // LINT
         ("LintError", 10)
@@ -25,6 +26,7 @@ let exitCodes: Map<string, int> =
 
         // SIMULATION
         ("SimulationError", 30)
+
     ]
     
 

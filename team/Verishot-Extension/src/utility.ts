@@ -1,15 +1,13 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import * as os from 'os';
 import * as cp from 'child_process';
+import * as path from 'path';
 
 export enum VerishotMode {
 	lint,
 	simulate,
 	visualise,
 }
-
-export const dirSlash = os.platform() === 'win32' ? '\\' : '/';
 
 export const getFileExtension = (fileName: string): string => {
 	return fileName.substring(fileName.lastIndexOf('.') + 1, fileName.length) || fileName;
@@ -44,7 +42,7 @@ export const getWorkspacePath = () => {
 		return folders[0].uri.fsPath;
 	}
 	else {
-        vscode.window.showErrorMessage(`Verishot only supports 1 project folder.`);
+		vscode.window.showErrorMessage(`Verishot only supports 1 project folder.`);
 	}
 	return undefined;
 };
@@ -68,7 +66,8 @@ export const getTerminal = (terminalName: string) => {
 	return vscode.window.createTerminal(terminalName);
 };
 
-export const spawnCmdWithFeedback = (binName: string, args: string[]) => {
+/* succFunc: function to run when succeed */
+export const spawnCmdWithFeedback = (binName: string, args: string[], succFunc: any = undefined) => {
 	const s = cp.spawnSync(binName, args);
 	const stderrText = s.stderr.toString().trim();
 	const stdoutText = s.stdout.toString().trim();
@@ -76,13 +75,22 @@ export const spawnCmdWithFeedback = (binName: string, args: string[]) => {
 		vscode.window.showErrorMessage(stderrText);
 	}
 	else {
-		const outfunc = s.status === 0 ? vscode.window.showInformationMessage : vscode.window.showErrorMessage;
-		outfunc(stdoutText);
+		const success = s.status === 0;
+		if (success) {
+			vscode.window.showInformationMessage(stdoutText);
+			if (succFunc) {
+				succFunc();
+			}
+		}
+		else {
+			vscode.window.showErrorMessage(stdoutText);
+		}
 	}
 };
 
 export const getExistingModules = (workspacePath: string, projectName: string): string[] | undefined => {
-	const s = cp.spawnSync(`verishot`, [workspacePath, projectName]);
+	const vprojFilePath = path.join(workspacePath, `${projectName}.vproj`);
+	const s = cp.spawnSync(`verishot`, [`--list-modules`, vprojFilePath]);
 	const stderrText = s.stderr.toString().trim();
 	const stdoutText = s.stdout.toString().trim();
 	if (stderrText) {

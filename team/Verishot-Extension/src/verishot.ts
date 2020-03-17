@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { checkFilePath, VerishotMode, getWorkspacePath, getProjectName, dirSlash, spawnCmdWithFeedback } from './utility';
+import { checkFilePath, VerishotMode, getWorkspacePath, getProjectName, spawnCmdWithFeedback } from './utility';
+import * as path from 'path';
 
 const spawnCmdWithMsg = (msg: string, args: string[]) => {
 	vscode.window.setStatusBarMessage(msg,
@@ -25,7 +26,7 @@ export const execVerishot = (verishotMode: number, kwargs: Object = {}) => {
 	else if (verishotMode === VerishotMode.simulate) {
 		const projectName = getProjectName(workspacePath);
 		if (!projectName) { return; }
-		const vprojFilePath = `${workspacePath}${dirSlash}${projectName}.vproj`;
+		const vprojFilePath = path.join(workspacePath, `${projectName}.vproj`);
 		const statusMsg = `Simulating...`;
 		const args: string[] = [`--simulate`, vprojFilePath];
 		spawnCmdWithMsg(statusMsg, args);
@@ -33,7 +34,7 @@ export const execVerishot = (verishotMode: number, kwargs: Object = {}) => {
 	else if (verishotMode === VerishotMode.visualise) {
 		const projectName = getProjectName(workspacePath);
 		if (!projectName) { return; }
-		const vprojFilePath = `${workspacePath}${dirSlash}${projectName}.vproj`;
+		const vprojFilePath = path.join(workspacePath, `${projectName}.vproj`);
 		const statusMsg = `Visualising...`;
 		const args: string[] = [`--visualise`, vprojFilePath];
 		spawnCmdWithMsg(statusMsg, args);

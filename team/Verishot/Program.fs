@@ -1,7 +1,5 @@
 ﻿// Learn more about F# at http://fsharp.org
 
-open System
-open System.IO
 open Verishot.FrontEnd
 open Verishot.Project
 
@@ -26,22 +24,19 @@ let main argv =
             let projectName = argv.[2]
             createNewProject workspacePath projectName
 
-        | "--new-module" when argv.Length = 4 -> 
-            let workspacePath = argv.[1]
-            let projectName = argv.[2]
-            let moduleName = argv.[3]
-            createNewModule workspacePath projectName moduleName
+        | "--new-module" when argv.Length = 3 -> 
+            let vProjFilePath = argv.[1]
+            let moduleName = argv.[2]
+            createNewModule vProjFilePath moduleName
 
-        | "--delete-module" when argv.Length = 4->
-            let workspacePath = argv.[1]
-            let projectName = argv.[2]
-            let moduleName = argv.[3]
-            deleteModule workspacePath projectName moduleName
+        | "--delete-module" when argv.Length = 3 ->
+            let vProjFilePath = argv.[1]
+            let moduleName = argv.[2]
+            deleteModule vProjFilePath moduleName
 
-        | "--list-modules" when argv.Length = 3 ->
-            let workspacePath = argv.[1]
-            let projectName = argv.[2]
-            listModules workspacePath projectName
+        | "--list-modules" when argv.Length = 2 ->
+            let vProjFilePath = argv.[1]
+            listModules vProjFilePath
 
         | "--lint" when argv.Length = 2 ->
             let filePath = argv.[1]
@@ -52,16 +47,16 @@ let main argv =
             intellisense filePath
 
         | "--simulate" when argv.Length = 2 -> 
-            let vprojPath = argv.[1]
-            if vProjSanityCheck vprojPath 
+            let vProjFilePath = argv.[1]
+            if vProjSanityCheck vProjFilePath 
                 then failwith "TODO1" 
-                else exitCodes.["SimulationError"]
+                else exitCodes.["SanityCheckError"]
 
         | "--visualise" when argv.Length = 2 -> 
-            let vprojPath = argv.[1]
-            if vProjSanityCheck vprojPath
-                then visualise vprojPath 
-                else exitCodes.["VisualisationError"]
+            let vProjFilePath = argv.[1]
+            if vProjSanityCheck vProjFilePath
+                then visualise vProjFilePath 
+                else exitCodes.["SanityCheckError"]
 
         | _ -> 
             printf "Invalid command! run `verishot --help` for a guide."
