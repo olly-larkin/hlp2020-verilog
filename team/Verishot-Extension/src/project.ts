@@ -1,4 +1,4 @@
-import { getProjectName, getWorkspacePath, spawnCmdWithFeedback, getExistingModules } from './utility';
+import { getProjectName, getWorkspacePath, spawnCmdWithFeedback, getExistingModules, exitCodes } from './utility';
 import { getInput, getPick } from './input';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -12,7 +12,8 @@ export const newProjectHandler = () => {
             if (projectName) {
                 const moduleFilePath = path.join(workspacePath, `${projectName}.v`);
                 const succFunc = () => { vscode.workspace.openTextDocument(moduleFilePath).then(doc => vscode.window.showTextDocument(doc)); };
-                spawnCmdWithFeedback(`verishot`, [`--new-project`, workspacePath, projectName], succFunc);
+                const funcMap = new Map<number, any>([[exitCodes.get("Success") || -1, succFunc]]);
+                spawnCmdWithFeedback(`verishot`, [`--new-project`, workspacePath, projectName], funcMap);
             }
         });
 };
@@ -29,7 +30,8 @@ export const newModuleHandler = () => {
             if (moduleName && projectName) {
                 const moduleFilePath = path.join(workspacePath, `${moduleName}.v`);
                 const succFunc = () => { vscode.workspace.openTextDocument(moduleFilePath).then(doc => vscode.window.showTextDocument(doc)); };
-                spawnCmdWithFeedback(`verishot`, [`--new-module`, vprojFilePath, moduleName], succFunc);
+                const funcMap = new Map<number, any>([[exitCodes.get("Success") || -1, succFunc]]);
+                spawnCmdWithFeedback(`verishot`, [`--new-module`, vprojFilePath, moduleName], funcMap);
             }
         });
 };

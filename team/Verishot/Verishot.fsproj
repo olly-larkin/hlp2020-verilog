@@ -35,8 +35,10 @@
     <Compile Include="src/Simulator/megafunctions.fs" />
     <Compile Include="src/Simulator/simulator.fs" />
     
-    <Compile Include="src/libs/FrontEnd.fs" />
-    <Compile Include="src/libs/Project.fs" />
+    <Compile Include="src/FrontEnd/FrontEndParser.fs" />
+    <Compile Include="src/FrontEnd/FrontEnd.fs" />
+    <Compile Include="src/FrontEnd/Project.fs" />
+    
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>

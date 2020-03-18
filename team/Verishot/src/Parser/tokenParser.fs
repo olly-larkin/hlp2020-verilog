@@ -137,7 +137,7 @@ module Symbol =
     let QuestionMark = TokTools.stringParse "?"
     let Colon = TokTools.stringParse ":"
     let Comma = TokTools.stringParse ","
-    let Semmicolon = TokTools.stringParse ";"
+    let Semicolon = TokTools.stringParse ";"
     let AssignEqual = TokTools.stringParse "="
 
 module Number =

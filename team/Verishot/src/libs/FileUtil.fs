@@ -18,7 +18,7 @@ let readFileToString (filename: string) =
     |> readFileToStringList 
     |> String.concat "\n"
 
-(* clears empty lines and commented (\/\/) lines *)
+/// clears empty lines and commented (//) lines
 let readVFile (filename: string): string list = 
     filename
     |> readFileToStringList

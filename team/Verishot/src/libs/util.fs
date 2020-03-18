@@ -6,6 +6,8 @@ open Verishot.CoreTypes
 
 let print x = printfn "%A" x
 
+/// concats two string with a new line
+let (+@) strA strB = sprintf "%s\n%s" strA strB 
 
 /// Get the number of bits a Range represents
 let rangeWidth range =

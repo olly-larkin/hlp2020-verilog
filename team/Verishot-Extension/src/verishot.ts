@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
-import { checkFilePath, VerishotMode, getWorkspacePath, getProjectName, spawnCmdWithFeedback } from './utility';
+import { checkFilePath, VerishotMode, getWorkspacePath, getProjectName, spawnCmdWithFeedback, exitCodes } from './utility';
 import * as path from 'path';
 
-const spawnCmdWithMsg = (msg: string, args: string[]) => {
+const spawnCmdWithMsg = (msg: string, args: string[], funcMap: Map<number, any> = new Map<number, any>()) => {
 	vscode.window.setStatusBarMessage(msg,
 		new Promise((resolve, reject) => {
-			spawnCmdWithFeedback(`verishot`, args);
+			spawnCmdWithFeedback(`verishot`, args, funcMap);
 			resolve();
 		})
 	);
@@ -29,7 +29,14 @@ export const execVerishot = (verishotMode: number, kwargs: Object = {}) => {
 		const vprojFilePath = path.join(workspacePath, `${projectName}.vproj`);
 		const statusMsg = `Simulating...`;
 		const args: string[] = [`--simulate`, vprojFilePath];
-		spawnCmdWithMsg(statusMsg, args);
+
+		// deal with bad .vin
+		// open .vin if bad
+		const vInFilePath = path.join(workspacePath, `${projectName}.vin`);
+		const vInFailFunc = () => { vscode.workspace.openTextDocument(vInFilePath).then(doc => vscode.window.showTextDocument(doc)); };
+		const funcMap = new Map<number, any>([[exitCodes.get("vInError") || -1, vInFailFunc]]);
+
+		spawnCmdWithMsg(statusMsg, args, funcMap);
 	}
 	else if (verishotMode === VerishotMode.visualise) {
 		const projectName = getProjectName(workspacePath);

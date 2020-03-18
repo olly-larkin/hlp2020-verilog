@@ -9,6 +9,25 @@ export enum VerishotMode {
 	visualise,
 }
 
+export const exitCodes: Map<string, number> = new Map([
+	["Success", 0],
+	["InvalidCmd", 1],
+	["NewProjectError", 2],
+	["NewModuleError", 3],
+	["DeleteModuleError", 4],
+	["SanityCheckError", 5],
+
+	// LINT
+	["LintError", 10],
+
+	// VISUALISE
+	["VisualisationError", 20],
+
+	// SIMULATION
+	["SimulationError", 30],
+	["vInError", 31],
+])
+
 export const getFileExtension = (fileName: string): string => {
 	return fileName.substring(fileName.lastIndexOf('.') + 1, fileName.length) || fileName;
 };
@@ -67,7 +86,7 @@ export const getTerminal = (terminalName: string) => {
 };
 
 /* succFunc: function to run when succeed */
-export const spawnCmdWithFeedback = (binName: string, args: string[], succFunc: any = undefined) => {
+export const spawnCmdWithFeedback = (binName: string, args: string[], funcMap: Map<number, any> = new Map<number, any>()) => {
 	const s = cp.spawnSync(binName, args);
 	const stderrText = s.stderr.toString().trim();
 	const stdoutText = s.stdout.toString().trim();
@@ -76,14 +95,11 @@ export const spawnCmdWithFeedback = (binName: string, args: string[], succFunc: 
 	}
 	else {
 		const success = s.status === 0;
-		if (success) {
-			vscode.window.showInformationMessage(stdoutText);
-			if (succFunc) {
-				succFunc();
-			}
-		}
-		else {
-			vscode.window.showErrorMessage(stdoutText);
+		const outFunc = success ? vscode.window.showInformationMessage : vscode.window.showErrorMessage;
+		outFunc(stdoutText);
+		let retStatus = s.status || NaN; 
+		if (funcMap.has(retStatus)) {
+			funcMap.get(retStatus)();
 		}
 	}
 };
