@@ -49,7 +49,7 @@ let main argv =
         | "--simulate" when argv.Length = 2 -> 
             let vProjFilePath = argv.[1]
             if vProjSanityCheck vProjFilePath 
-                then failwith "TODO1" 
+                then simulate vProjFilePath
                 else exitCodes.["SanityCheckError"]
 
         | "--visualise" when argv.Length = 2 -> 

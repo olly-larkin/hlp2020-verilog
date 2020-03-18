@@ -11,7 +11,7 @@ let readFileToStringList (filename: string) =
         File.ReadAllLines filename
         |> Array.toList
     | false -> 
-        failwithf "File `%s` not found." filename
+        [] // don't fail, just return empty
 
 let readFileToString (filename: string) =
     filename
@@ -37,9 +37,6 @@ let deleteFile (filepath: string) =
 
 let writeStringToFile (filename: string) (content: string) =
     File.WriteAllText (filename, content)
-
-let getFolderPath (filePath: string): string = 
-    filePath.[0 .. filePath.LastIndexOf Path.DirectorySeparatorChar - 1]
 
 let getFilenamesInFolderPath (searchPattern) (folderPath: string) = 
     Directory.GetFiles (folderPath, searchPattern) 
