@@ -117,7 +117,7 @@ let checkModulesLint allModules workspacePath =
             | Ok _ -> 
                 passed, stdout
             | Error (errStr, loc) ->
-                let stdout2 = sprintf "Lint Error for module `%s`: %s at Line %d=Char %d\n" modFileName errStr loc.line loc.character
+                let stdout2 = sprintf "Lint Error for module `%s`: %s at Line %d=Char %d" modFileName errStr loc.line loc.character
                 let stdout' = stdout +@ stdout2
                 false, stdout'
 
@@ -282,6 +282,13 @@ let simulate vProjFilePath =
     match checkVInFile vProjFilePath topLevelInputPorts with 
     | Ok stdout -> 
         // do the necessary processing and then pass it to Simulate API
+        (*
+            let simulateCycles (cycles: uint64) (netlist: Netlist)
+            (otherModules: Map<ModuleIdentifier, StateVar SimulationObject>)
+            (initialState: StateVar State) (inputs: WireValMap): WireValMap =
+        *)
+
+
         let netlists, decls = getNetlistsAndDecls vProjFilePath
 
         let stdout' = stdout +@ "Simulation succeeded. View output in `simulation`."
