@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
-import { checkFilePath, VerishotMode, getWorkspacePath, getProjectName, spawnCmdWithFeedback, exitCodes } from './utility';
+import { checkFilePath, VerishotMode, getWorkspacePath, getProjectName, spawnCmdWithFeedback, exitCodes, showErrorMessageSeparated, binName } from './utility';
 import * as path from 'path';
 
 const spawnCmdWithMsg = (msg: string, args: string[], funcMap: Map<number, any> = new Map<number, any>()) => {
 	vscode.window.setStatusBarMessage(msg,
 		new Promise((resolve, reject) => {
-			spawnCmdWithFeedback(`verishot`, args, funcMap);
+			spawnCmdWithFeedback(binName, args, funcMap);
 			resolve();
 		})
 	);
@@ -34,7 +34,7 @@ export const execVerishot = (verishotMode: number, kwargs: Object = {}) => {
 		// open .vin if bad
 		const vInFilePath = path.join(workspacePath, `${projectName}.vin`);
 		const vInFailFunc = () => { vscode.workspace.openTextDocument(vInFilePath).then(doc => vscode.window.showTextDocument(doc)); };
-		const funcMap = new Map<number, any>([[exitCodes.get("vInError") || -1, vInFailFunc]]);
+		const funcMap = new Map<number, any>([[exitCodes.vInError, vInFailFunc]]);
 
 		spawnCmdWithMsg(statusMsg, args, funcMap);
 	}
@@ -47,7 +47,7 @@ export const execVerishot = (verishotMode: number, kwargs: Object = {}) => {
 		spawnCmdWithMsg(statusMsg, args);
 	}
 	else {
-		vscode.window.showErrorMessage(`Something went wrong...`);
+		showErrorMessageSeparated(`Something went wrong...`);
 	}
 };
 

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { writeFile } from 'fs';
 import { spawn } from 'child_process';
+import { showErrorMessageSeparated, binName } from './utility';
 
 // INTELLISENSE
 let timeout: NodeJS.Timer | undefined = undefined;
@@ -17,11 +18,11 @@ const execIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCo
 	diagCol.clear();
 	writeFile('intellisenseTmp.txt', doc.getText(), (err) => {
 		if (err) {
-			vscode.window.showErrorMessage(err.message);
+			showErrorMessageSeparated(err.message);
 		}
 		const args = [`--intellisense`, `intellisenseTmp.txt`];
 
-		const s = spawn(`verishot`, args);
+		const s = spawn(binName, args);
 
 		s.stdout.on('data', (data) => {
 			const errorTexts: string[][] =

@@ -1,4 +1,4 @@
-import { getProjectName, getWorkspacePath, spawnCmdWithFeedback, getExistingModules, exitCodes } from './utility';
+import { getProjectName, getWorkspacePath, spawnCmdWithFeedback, getExistingModules, exitCodes, binName } from './utility';
 import { getInput, getPick } from './input';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -12,8 +12,8 @@ export const newProjectHandler = () => {
             if (projectName) {
                 const moduleFilePath = path.join(workspacePath, `${projectName}.v`);
                 const succFunc = () => { vscode.workspace.openTextDocument(moduleFilePath).then(doc => vscode.window.showTextDocument(doc)); };
-                const funcMap = new Map<number, any>([[exitCodes.get("Success") || -1, succFunc]]);
-                spawnCmdWithFeedback(`verishot`, [`--new-project`, workspacePath, projectName], funcMap);
+                const funcMap = new Map<number, any>([[exitCodes.Success, succFunc]]);
+                spawnCmdWithFeedback(binName, [`--new-project`, workspacePath, projectName], funcMap);
             }
         });
 };
@@ -30,8 +30,8 @@ export const newModuleHandler = () => {
             if (moduleName && projectName) {
                 const moduleFilePath = path.join(workspacePath, `${moduleName}.v`);
                 const succFunc = () => { vscode.workspace.openTextDocument(moduleFilePath).then(doc => vscode.window.showTextDocument(doc)); };
-                const funcMap = new Map<number, any>([[exitCodes.get("Success") || -1, succFunc]]);
-                spawnCmdWithFeedback(`verishot`, [`--new-module`, vprojFilePath, moduleName], funcMap);
+                const funcMap = new Map<number, any>([[exitCodes.Success, succFunc]]);
+                spawnCmdWithFeedback(binName, [`--new-module`, vprojFilePath, moduleName], funcMap);
             }
         });
 };
@@ -45,7 +45,7 @@ export const deleteModuleHandler = () => {
     const existingModules = getExistingModules(workspacePath, projectName);
     getPick(existingModules, `Select module to delete`).then((moduleName) => {
         if (moduleName) {
-            spawnCmdWithFeedback(`verishot`, [`--delete-module`, vprojFilePath, moduleName]);
+            spawnCmdWithFeedback(binName, [`--delete-module`, vprojFilePath, moduleName]);
         }
     });
 };
