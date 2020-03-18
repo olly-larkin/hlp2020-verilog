@@ -86,7 +86,7 @@ let lint filePath =
             Ok stdout
         | Error (errStr, loc) -> 
             let exitCode = exitCodes.LintError
-            let stdout = sprintf "Lint Error: %s at Line %d=Char %d" errStr loc.line loc.character
+            let stdout = sprintf "Lint Error: %s at Line %d, Char %d" errStr loc.line loc.character
             Error (exitCode, stdout)
 
 let checkModulesExist allModules workspacePath = 
@@ -204,7 +204,6 @@ let parseAndMap (vars: string list): Map<Identifier * Range, int64> =
     |> List.choose id
     |> Map.ofList
 
-/// will return false if required inputs in inputPorts are not specified
 let matchMapWithInputPorts (varMap: Map<Identifier * Range, int64>) (inputPorts: (Identifier * Range) list) = 
     // add in __CYCLES__
     let inputPortsWithCycles = ("__CYCLES__", Single) :: inputPorts
@@ -248,8 +247,10 @@ let checkVInFile vProjFilePath (inputPorts: (Identifier * Range) list) =
     match matchMapWithInputPorts varMap inputPorts with 
     | Ok stdout -> Ok stdout
     | Error (exitCode, stdout) ->
+        // create the .vin file
         createVInFile vInFilePath inputPorts
-        let stdout2 = sprintf "Please respecify your inputs in `%s.vin`." projectName 
+
+        let stdout2 = sprintf "Please specify your inputs in `%s.vin`." projectName 
         let stdout' = stdout +@ stdout2
         Error (exitCode, stdout')
 

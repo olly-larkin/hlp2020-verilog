@@ -21,6 +21,7 @@ export const execVerishot = (verishotMode: number, kwargs: Object = {}) => {
 		if (!checkFilePath(filePath, false)) { return; }
 		const statusMsg = `Linting...`;
 		const args: string[] = [`--lint`, filePath];
+		
 		spawnCmdWithMsg(statusMsg, args);
 	}
 	else if (verishotMode === VerishotMode.simulate) {

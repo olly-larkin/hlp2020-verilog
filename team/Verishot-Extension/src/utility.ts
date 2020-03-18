@@ -111,7 +111,7 @@ export const spawnCmdWithFeedback = (binName: string, args: string[], funcMap: M
 		const success = s.status === 0;
 		const outFunc = success ? showInformationMessageSeparated : showErrorMessageSeparated;
 		outFunc(stdoutText);
-		let retStatus = s.status || NaN; 
+		let retStatus = s.status === null ? NaN : s.status;
 		if (funcMap.has(retStatus)) {
 			funcMap.get(retStatus)();
 		}

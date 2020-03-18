@@ -1,21 +1,25 @@
-﻿// Learn more about F# at http://fsharp.org
+﻿module Verishot.Main
 
 open Verishot.FrontEnd
 open Verishot.Project
 
+let intro = "Verishot Verilog Visualiser and Simulator v0.0.1
+(C) 2020 Imperial College London; lhl2617, ng2517, mp5617, oll16
+-----------------------
+`verishot --help` for usage guide"
+
+let usageGuide = "help todo"
+
+let invalidCmd = "Invalid command. Run `verishot --help` for a usage guide."
+
 let argProcessor argv: CmdResult =
     match Array.length argv with 
     | 0 -> 
-        let stdout = "Verishot Verilog Visualiser and Simulator v0.0.1
-(C) 2020 Imperial College London; lhl2617, ng2517, mp5617, oll16
------------------------
-`verishot --help` for usage guide" 
-        Ok stdout
+        Ok intro
     | _ ->
         match argv.[0] with 
         | "--help" ->
-            let stdout = "Help todo"
-            Ok stdout
+            Ok usageGuide
 
         | "--new-project" when argv.Length = 3 ->
             let workspacePath = argv.[1]
@@ -53,8 +57,7 @@ let argProcessor argv: CmdResult =
             visualise vProjFilePath 
 
         | _ -> 
-            let stdout = "Invalid command! run `verishot --help` for a guide."
-            Error (exitCodes.InvalidCmd, stdout)
+            Error (exitCodes.InvalidCmd, invalidCmd)
 
 
 [<EntryPoint>]
