@@ -1,12 +1,13 @@
 module rec Verishot.Test.Simulator
 
 open Expecto
+open FsCheck
 
 open Verishot.CoreTypes
 open Verishot.CoreTypes.VerilogAST
+open Verishot.Megafunctions.Registry
 open Verishot.Simulator.Simulate
 open Verishot.Simulator.Types
-open Verishot.Megafunctions.Registry
 
 let expectSameElements actual expected =
     Expect.containsAll actual expected "Should have all expected nodes"
@@ -27,7 +28,7 @@ let simulatorTests =
                                    targetRange = Single } ]) ] }
 
               let actual =
-                  getNetlistOutput netlistIn Map.empty None
+                  getNetlistOutput netlistIn Map.empty Map.empty
                       (Map [ ("in", 1UL) ])
 
               Expect.equal actual.["out"] 1UL "Is equal"
@@ -45,7 +46,7 @@ let simulatorTests =
                                    targetRange = Range(5, 0) } ]) ] }
 
               let actual =
-                  getNetlistOutput netlistIn Map.empty None
+                  getNetlistOutput netlistIn Map.empty Map.empty
                       (Map [ ("in", 4UL) ])
 
               Expect.equal actual.["out"] 4UL "Is Equal"
@@ -63,7 +64,7 @@ let simulatorTests =
                                    targetRange = Range(6, 1) } ]) ] }
 
               let actual =
-                  getNetlistOutput netlistIn Map.empty None
+                  getNetlistOutput netlistIn Map.empty Map.empty
                       (Map [ ("in", 4UL) ])
 
               Expect.equal actual.["out"] 8UL "Is Equal"
@@ -81,7 +82,7 @@ let simulatorTests =
                                    targetRange = Range(5, 0) } ]) ] }
 
               let actual =
-                  getNetlistOutput netlistIn Map.empty None
+                  getNetlistOutput netlistIn Map.empty Map.empty
                       (Map [ ("in", 8UL) ])
 
               Expect.equal actual.["out"] 4UL "Is Equal"
@@ -103,7 +104,7 @@ let simulatorTests =
                                    targetRange = Range(7, 4) } ]) ] }
 
               let actual =
-                  getNetlistOutput netlistIn Map.empty None
+                  getNetlistOutput netlistIn Map.empty Map.empty
                       (Map
                           [ ("in1", 0x5UL)
                             ("in2", 0x3UL) ])
@@ -129,7 +130,7 @@ let simulatorTests =
                                            "right",
                                            [ { srcRange = Range(63, 0)
                                                targetRange = Range(63, 0)
-                                               source = PinEndpoint "in2" } ]] })
+                                               source = PinEndpoint "in2" } ] ] })
                           OutputPin
                               ("out",
                                [ { source =
@@ -138,7 +139,7 @@ let simulatorTests =
                                    targetRange = Range(63, 0) } ]) ] }
 
               let actual =
-                  getNetlistOutput netlistIn megafunctions None
+                  getNetlistOutput netlistIn megafunctions Map.empty
                       (Map
                           [ ("in1", 5UL)
                             ("in2", 3UL) ])
@@ -146,7 +147,7 @@ let simulatorTests =
               Expect.equal actual.["out"] 8UL "Is Equal"
           }
 
-          test "DFlipFlop" {
+          test "DFlipFlop 2 cycles" {
               let netlistIn =
                   { moduleName = "m"
                     nodes =
@@ -159,18 +160,41 @@ let simulatorTests =
                                          [ "in",
                                            [ { srcRange = Range(63, 0)
                                                targetRange = Range(63, 0)
-                                               source = PinEndpoint "modin" } ]]})
+                                               source = PinEndpoint "modin" } ] ] })
                           OutputPin
                               ("modout",
-                               [ { source =
-                                       InstanceEndpoint("flipflip", "out")
+                               [ { source = InstanceEndpoint("flipflip", "out")
                                    srcRange = Range(63, 0)
                                    targetRange = Range(63, 0) } ]) ] }
 
               let actual =
-                  getNetlistOutput netlistIn megafunctions None
-                      (Map
-                          [ ("modin", 5UL)])
+                  simulateCycles 2UL netlistIn megafunctions Map.empty
+                      (Map [ ("modin", 5UL) ])
 
-              Expect.equal actual.["out"] 0UL "Gives initial value"
-          } ]
+              Expect.equal actual.["modout"] 5UL "Gives initial value"
+          }
+
+          testProperty "Counter no reset" <| fun (PositiveInt(cycles)) ->
+              let netlistIn =
+                  { moduleName = "m"
+                    nodes =
+                        [ ModuleInstance
+                            ({ moduleName = StringIdentifier "Counter64"
+                               instanceName = "counter"
+                               connections =
+                                   Map
+                                       [ "reset",
+                                         [ { srcRange = Single
+                                             targetRange = Single
+                                             source = ConstantEndpoint 0UL } ] ] })
+                          OutputPin
+                              ("modout",
+                               [ { source = InstanceEndpoint("counter", "out")
+                                   srcRange = Range(63, 0)
+                                   targetRange = Range(63, 0) } ]) ] }
+
+              let actual =
+                  simulateCycles (uint64 cycles) netlistIn megafunctions Map.empty
+                      Map.empty
+
+              actual.["modout"] = uint64 (cycles - 1) ]
