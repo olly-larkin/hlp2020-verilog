@@ -227,7 +227,7 @@ let createVInFile vInFilePath (inputPorts: (Identifier * Range) list) =
     let vInFileHeader = "// ===== Verishot Simulation File =====
 // Specify the number of clock cycles to simulate below:
 
-__CYCLES__=100;
+__CYCLES__=;
 
 // Specify each input on a new line
 "
