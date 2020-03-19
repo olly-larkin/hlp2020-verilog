@@ -20,7 +20,7 @@ let parseAndMapTests =
                     ("bar", Range (4, 4)), int64 1
                 ]
         "invalid",
-            ["foo=1"; "bar"; "car"; "=3"; "life=4'h42"],
+            ["fuu=;"; "foo=1"; "bar"; "car"; "=3"; "life=4'h42"; "some[1:4]=12;"],
                 Map []
     ]
 
