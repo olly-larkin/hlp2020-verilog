@@ -245,7 +245,7 @@ let checkVInFile vProjFilePath (inputPorts: (Identifier * Range) list) =
     let varMap = vInFilePath |> readVFile |> parseAndMap
 
     match matchMapWithInputPorts varMap inputPorts with 
-    | Ok stdout -> Ok stdout
+    | Ok _ -> Ok varMap
     | Error (exitCode, stdout) ->
         // create the .vin file
         createVInFile vInFilePath inputPorts
@@ -281,17 +281,21 @@ let simulate vProjFilePath =
     let topLevelInputPorts = getTopLevelInputPorts vProjFilePath
 
     match checkVInFile vProjFilePath topLevelInputPorts with 
-    | Ok stdout -> 
+    | Ok varMap -> 
         // do the necessary processing and then pass it to Simulate API
         (*
             let simulateCycles (cycles: uint64) (netlist: Netlist)
             (otherModules: Map<ModuleIdentifier, StateVar SimulationObject>)
             (initialState: StateVar State) (inputs: WireValMap): WireValMap =
         *)
-
-
         let netlists, decls = getNetlistsAndDecls vProjFilePath
+        let cycles = varMap.[("__CYCLES__", Single)]
+        let topLevelNetlist = netlists.Head
+        let otherModules = netlists.Tail |> List.map (fun x -> x.moduleName, x) |> Map.ofList // TODO:- change into NetlistInstance
+        let initialState = Map.empty 
+        let inputs = varMap |> Map.toList |> List.map (fun ((id, _), value) -> (id, value)) |> Map
 
-        let stdout' = stdout +@ "Simulation succeeded. View output in `simulation`."
+        let stdout' = "Simulation succeeded. View output in `simulation`."
         Ok stdout'
     | Error x -> Error x
+
