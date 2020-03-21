@@ -120,9 +120,9 @@ let getNumberOfInputsFromVNodeTests =
 
     let inputPort = (Input, "inp", Single)
     let outputPort = (Output, "output", Single)
-    let sampleDecl = { name="fooo"; ports=[] }
-    let sampleDecl1Input = { name="fooo"; ports=[inputPort; outputPort; outputPort; outputPort] }
-    let sampleDecl3Input = { name="fooo"; ports=[inputPort; inputPort; inputPort; outputPort; outputPort] }
+    let sampleDecl = { name= StringIdentifier "fooo"; ports=[] }
+    let sampleDecl1Input = { name= StringIdentifier "fooo"; ports=[inputPort; outputPort; outputPort; outputPort] }
+    let sampleDecl3Input = { name= StringIdentifier "fooo"; ports=[inputPort; inputPort; inputPort; outputPort; outputPort] }
     let defaultVNode = { node=node2 ; decl=None; svg=Group([], [], Some "bar1"); idx=1; coord=(0.,0.); props=defaultModuleInstanceProps }
     
     let declWithNoInput = { defaultVNode with decl=Some sampleDecl } 
@@ -247,8 +247,8 @@ let getNodeFromNodeMapTestsE =
 
 let getDeclFromDeclMapTests =
     let n = Map.empty
-    let md1 = { name="foo1"; ports=[] }
-    let md2 = { name="foo2"; ports=[] }
+    let md1 = { name= StringIdentifier "foo1"; ports=[] }
+    let md2 = { name= StringIdentifier "foo2"; ports=[] }
     let mdmap1 = Map [("bar1", md1)]
     let mdmap2 = Map [("bar1", md1); ("bar2", md2)]
     [
@@ -261,8 +261,8 @@ let getDeclFromDeclMapTests =
     ]
 let getDeclFromDeclMapTestsE =
     let n = Map.empty
-    let md1 = { name="foo1"; ports=[] }
-    let md2 = { name="foo2"; ports=[] }
+    let md1 = { name= StringIdentifier "foo1"; ports=[] }
+    let md2 = { name= StringIdentifier "foo2"; ports=[] }
     let mdmap1 = Map [("bar1", md1)]
     let mdmap2 = Map [("bar1", md1); ("bar2", md2)]
     [
@@ -272,8 +272,8 @@ let getDeclFromDeclMapTestsE =
     ]
 
 let getPortFromModuleDeclTests =
-    let decl1 = { name="foo1"; ports=[(Input, "p1", Single)] }
-    let decl2 = { name="foo2"; ports=[(Input, "p1", Single); (Output, "p2", Range(1, 5))] }
+    let decl1 = { name= StringIdentifier "foo1"; ports=[(Input, "p1", Single)] }
+    let decl2 = { name= StringIdentifier "foo2"; ports=[(Input, "p1", Single); (Output, "p2", Range(1, 5))] }
     [
         "found from 1",
             (decl1, "p1"),
@@ -283,7 +283,7 @@ let getPortFromModuleDeclTests =
                 (Output, "p2", Range(1, 5))
     ]
 let getPortFromModuleDeclTestsE =
-    let decl2 = { name="foo2"; ports=[(Input, "p1", Single); (Input, "p2", Single)] }
+    let decl2 = { name= StringIdentifier "foo2"; ports=[(Input, "p1", Single); (Input, "p2", Single)] }
     [
         "not found",
             (decl2, "p3"),

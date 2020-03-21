@@ -11,4 +11,4 @@ let ASTToDecl (inp: Module): ModuleDecl =
             | ItemPort (a, b, c) -> Some (a, c, b)
             | _ -> None)
 
-    { name=inp.name; ports=ports }
+    { name=StringIdentifier inp.name; ports=ports }

@@ -8,6 +8,13 @@ type ModuleIdentifier =
     | BOpIdentifier of VerilogAST.BinaryOp
     | UOpIdentifier of VerilogAST.UnaryOp
 
+    override this.ToString() =
+        match this with
+        | StringIdentifier(ident) -> ident
+        | BOpIdentifier(ident) -> sprintf "%A" ident
+        | UOpIdentifier(ident) -> sprintf "%A" ident
+
+
 type Range =
     | Single
     | Range of (int * int)
@@ -17,7 +24,7 @@ type Direction =
     | Output
 
 type ModuleDecl =
-    { name: Identifier
+    { name: ModuleIdentifier
       ports: (Direction * Identifier * Range) list }
 
 module Netlist =
@@ -230,26 +237,3 @@ module VerilogAST =
         { name: string
           ports: Identifier list
           items: ModuleItem list }
-
-        //   type ModuleDecl =
-        //     { name: Identifier
-        //       ports: (Direction * Identifier * Range) list }
-        
-module Simulator =
-    type WireVal = uint64
-    type WireValMap = Map<Identifier, WireVal>
-
-    type 's Megafunction =
-        { declaration: ModuleDecl
-          initialState: 's
-          simulate: 's -> WireValMap -> (WireValMap * 's) }
-
-    type 's State = Map<string, 's InstanceState * WireValMap>
-
-    type 's InstanceState =
-        | VerilogState of 's State
-        | MegafunctionState of 's
-
-    type 's Instance =
-        | NetlistInstance of Netlist.Netlist
-        | Megafunction of 's Megafunction
