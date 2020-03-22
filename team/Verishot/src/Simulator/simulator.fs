@@ -19,7 +19,7 @@ let simulateCycles (cycles: uint64) (netlist: Netlist)
     (otherModules: Map<ModuleIdentifier, StateVar SimulationObject>)
     (initialState: StateVar State) (inputs: WireValMap): WireValMap list =
 
-    (([Map.empty], initialState), [ 1UL .. cycles ])
+    (([], initialState), [ 1UL .. cycles ])
     ||> List.fold
             (fun (outputs, state) _cycle ->
                 let output', state' = simulate netlist otherModules state inputs
