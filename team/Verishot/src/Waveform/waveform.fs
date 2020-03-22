@@ -3,7 +3,7 @@ module Verishot.Waveform
 open Verishot.SVG
 open Verishot.Simulator.Types
 open WaveTypes
-
+open Verishot.VisualiseStyles
 
    
 let addXY (inp:Coord) (x:float) (y:float) = 
@@ -208,7 +208,6 @@ let GenClock (waveformList:SVGElement) =
         ((Polyline([0.0, 3.0], styleprops, None)), [1..noOfCylces]) ||> List.fold clkCycle 
     translateSVG (0.0,snd(snd(viewerDimensions))) (Group([textBox "clk"; translateSVG (9.0,0.0) (wrappedWave clkWaveform)],[], None))
 
-
 ///Main function of the module. Take in the simulator output and returns an SVG element with all waveforms formatted and ready to be printed.
 let SimOutputToWaveform (inp:SimulatorPort list) =
     let portToWaveform (prt:SimulatorPort) =
@@ -218,3 +217,10 @@ let SimOutputToWaveform (inp:SimulatorPort list) =
     let waveformList = List.map portToWaveform inp
     let groupedWaveforms = Group(fst(List.mapFold setPortPosition 0.0 waveformList),[], None)
     Group([groupedWaveforms ; GenClock groupedWaveforms], [], None)
+    
+/// TOP Level main func, take simulator output, returns string of outputSVG
+let waveformMain (inp: SimulatorPort list) = 
+    let svg = inp |> SimOutputToWaveform
+    let styles = Some <| loadStyles unitPx
+    let script = None
+    output svg styles script true
