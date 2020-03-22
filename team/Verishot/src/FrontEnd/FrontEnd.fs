@@ -373,8 +373,7 @@ let simulate vProjFilePath =
         let workspacePath = Directory.GetParent(vProjFilePath).FullName
         let waveOutputPath = workspacePath +/ "simulation" +/ "output.svg"
 
-        deleteFolder waveOutputPath
-        createPathFolder waveOutputPath
+        deleteFile waveOutputPath
 
         writeStringToFile waveOutputPath waveOut
 
