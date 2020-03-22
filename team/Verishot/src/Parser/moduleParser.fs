@@ -44,10 +44,11 @@ and ModuleItemParser inp =
 
 and RangeParser inp =
     inp 
-    |> (Symbol.LeftSquareBra >=> Number.Value >=> Symbol.Colon >=> Number.Value >=> Symbol.RightSquareBra)
+    |> (Symbol.LeftSquareBra >=> Number.Value ?=> (Symbol.Colon >=> Number.Value) >=> Symbol.RightSquareBra)
     |> function
-        | Ok (((((_,a),_),b),_), rest, opErr) when a >= b -> Ok (Range (a, b), rest, opErr)
-        | Ok (((((_,a),_),b),_), _, _) -> Error (sprintf "The first element (%A) of the range is smaller than the second element (%A)." a b, inp)
+        | Ok ((((_,a),None),_), rest, opErr) -> Ok (Range (a, a), rest, opErr)
+        | Ok ((((_,a),Some (_, b)),_), rest, opErr) when a >= b -> Ok (Range (a, b), rest, opErr)
+        | Ok ((((_,a),Some (_, b)),_), _, _) -> Error (sprintf "The first element (%A) of the range is smaller than the second element (%A)." a b, inp)
         | Error err -> Error err
 
 and PortDeclarationParser inp =

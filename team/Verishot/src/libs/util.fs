@@ -76,6 +76,16 @@ module List =
 
     let toMap = Map.ofList
 
+    let rec skipWhile2 predicate =
+        function
+        | hd1 :: hd2 :: tl when predicate hd1 hd2 -> skipWhile2 predicate (hd2::tl)
+        | lst -> lst
+       
+    let rec safeSkip count =
+        function
+        | _ :: tl when count > 0 -> tl |> safeSkip (count - 1)
+        | lst -> lst
+
 
 module Map =
     /// Join 2 maps, preferring values from the first map on conflict

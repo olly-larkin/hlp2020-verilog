@@ -452,6 +452,33 @@ let moduleDefinitionTestsList =
     ] |> List.collect id)
 
 [<Tests>]
+let commentTests =
+    testList "comment tests" ([
+        ([  
+            
+            "single line comment",
+                "//comment
+                wire test" |> List.ofSeq |> WireDeclarationParser,
+                    Ok (ItemWireDecl (Single, "test"), [])
+            
+            "multi line comment on single line",
+                List.ofSeq "/* comment */ wire[4:3] test2" |> WireDeclarationParser,
+                    Ok (ItemWireDecl (Range (4, 3), "test2"), [])
+            
+            "multi line comment on multi line",
+                "/* comment 
+                multi
+                line
+                test*/ wire[4:3] test2" |> List.ofSeq |> WireDeclarationParser,
+                    Ok (ItemWireDecl (Range (4, 3), "test2"), [])
+
+            ] |> List.map parserEqualTestAsync)
+
+        // ************** FAILURES *********************
+        
+    ] |> List.collect id)
+
+[<Tests>]
 let somePropertyTests =
     let minMax min max var =
         let minFun a b = if a <= b then a else b
@@ -470,4 +497,5 @@ let runExpressionTests() =
     runTests defaultConfig keywordTestsList |> ignore
     runTests defaultConfig expressionTestsList |> ignore
     runTests defaultConfig moduleDefinitionTestsList |> ignore
+    runTests defaultConfig commentTests |> ignore
     runTests defaultConfig somePropertyTests |> ignore

@@ -3,12 +3,21 @@ module Verishot.Token
 open System.Text.RegularExpressions
 open Verishot.CoreTypes.VerilogAST
 open Verishot.ParserUtils
+open Verishot.Util
 
 module TokTools =
     /// Remove leading whitespace
     let removeWhitespace =
         let whiteSpaceLst = [' ';'\t';'\n';'\v';'\f';'\r']
         List.skipWhile (fun elem -> List.contains elem whiteSpaceLst)
+
+    /// Remove all characters that are part of a comment
+    let removeComments = 
+        removeWhitespace
+        >> function
+        | hd1 :: hd2 :: tl when hd1 = '/' && hd2 = '/' -> tl |> List.skipWhile ((<>) '\n') |> List.safeSkip 1
+        | hd1 :: hd2 :: tl when hd1 = '/' && hd2 = '*' -> tl |> List.skipWhile2 (fun h1 h2 -> (h1 <> '*') && (h2 <> '/')) |> List.safeSkip 2
+        | lst -> lst
 
     /// Match exact string passed in
     let stringParse pattern : Parser<string> =
@@ -19,13 +28,13 @@ module TokTools =
                 | hd1::tl1, hd2::tl2 when hd1 = hd2 -> takeWhile tl1 tl2
                 | [], remaining -> Ok (pattern, remaining, None)
                 | _ -> Error (sprintf "Could not match. Expected \'%s\'." pattern, cLst)
-            cLst |> removeWhitespace |> takeWhile pat
+            cLst |> removeComments |> removeWhitespace |> takeWhile pat
 
     /// Match regex expression passed in
     let regParse pattern : Parser<string> =
         let reg = Regex("^" + pattern)  // make once use many times
         fun cLst ->
-            let cLst = cLst |> removeWhitespace
+            let cLst = cLst |> removeComments |> removeWhitespace
             let regMatch =
                 cLst
                 |> List.toArray
