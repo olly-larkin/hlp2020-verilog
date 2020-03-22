@@ -80,7 +80,7 @@ module Internal =
                     // which port each expression connects to
                     let ports =
                         allModules
-                        |> List.tryFind (fun decl -> decl.name = moduleName)
+                        |> List.tryFind (fun decl -> decl.name = StringIdentifier moduleName)
                         |> Option.defaultWith
                             (fun () ->
                                 failwithf "Module %s does not exist" moduleName)

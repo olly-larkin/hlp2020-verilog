@@ -74,6 +74,8 @@ module List =
 
         (trueElems, falseElems)
 
+    let toMap = Map.ofList
+
 
 module Map =
     /// Join 2 maps, preferring values from the first map on conflict
@@ -87,11 +89,27 @@ module Map =
     let mapValues (f: 'a -> 'b) (map: Map<'k, 'a>) =
         map |> Map.map (fun _ v -> f v)
 
+    let mapKeys (f: 'k -> 'l) (map: Map<'k, 'v>): Map<'l, 'v> =
+        (Map.empty, map) ||> Map.fold (fun acc k v -> acc |> Map.add (f k) v)
+
     // Update the value for a key in a Map. If the key does not exist
     // it gets created with the value `f None`
     let update (key: 'k) (f: 'v option -> 'v) (map: Map<'k, 'v>): Map<'k, 'v> =
         let newVal = f (Map.tryFind key map)
         map |> Map.add key newVal
+
+    let collect (f: 'K -> 'V -> 'U list) (map: Map<'K, 'V>): 'U list =
+        map
+        |> Map.toList
+        |> List.collect (fun (k, v) -> f k v)
+
+    let ofListAll (lst: ('K * 'V) list): Map<'K, 'V list> =
+        (Map.empty, lst)
+        ||> List.fold (fun map (key, item) ->
+                map
+                |> update key (function
+                       | Some items -> item :: items
+                       | None -> [ item ]))
 
 module Tuple =
     let bimap f g (a, b) = (f a, g b)

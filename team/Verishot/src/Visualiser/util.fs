@@ -134,7 +134,7 @@ module Functions =
     let getPortFromModuleDecl (decl: ModuleDecl) (portId: Identifier) =
         match List.tryFind ((fun (_, x, _) -> x) >> (=) portId) decl.ports with
         | Some x -> x
-        | _ -> failwithf "ERROR: Port '%s' not found on module '%s'" portId decl.name
+        | _ -> failwithf "ERROR: Port '%s' not found on module '%A'" portId decl.name
 
     let getPortPropFromPortProps (portProps: Map<Identifier, PortProp>) (id: Identifier) =
         match Map.containsKey id portProps with

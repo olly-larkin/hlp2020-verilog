@@ -89,7 +89,7 @@ let visualiseNetlists (netlists: Netlist list) (decls: ModuleDecl list) =
     let styles = Some <| loadStyles unitPx
     let script = None
 
-    let toSvg = fun netlist -> netlist.moduleName, visualiseNetlist netlist declMap
+    let toSvg = fun netlist -> netlist.moduleName, visualiseNetlist netlist (Map.mapKeys (fun k -> k.ToString()) declMap)
     let toString = fun (modName, svg) -> modName, output svg styles script true
     
     netlists 

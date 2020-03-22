@@ -26,7 +26,7 @@ let fullModuleTests =
         [ testList "Full module tests"
               [ test "Extracts single module" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [] } ]
 
                     let moduleAST =
@@ -77,7 +77,7 @@ let fullModuleTests =
 
                 test "Connect submodule to output" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Output, "bOut", Single) ] } ]
 
                     let moduleAST =
@@ -107,7 +107,7 @@ let fullModuleTests =
 
                 test "Connect input to submodule" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Input, "bIn", Single) ] } ]
 
                     let moduleAST =
@@ -136,7 +136,7 @@ let fullModuleTests =
 
                 test "Connect expression to submodule" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Input, "bIn", Single) ] } ]
 
                     let moduleAST =
@@ -349,7 +349,7 @@ let fullModuleTests =
 
                 test "Connect sized constant to module input" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Input, "bIn", Range(2, 0)) ] } ]
 
                     let moduleAST =
@@ -381,7 +381,7 @@ let fullModuleTests =
 
                 test "Connect 1-bit sized constant to module input" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Input, "bIn", Single) ] } ]
 
                     let moduleAST =
@@ -465,9 +465,9 @@ let fullModuleTests =
 
                 test "Wire output to 2 instances" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Output, "bOut", Single) ] }
-                          { name = "C"
+                          { name = StringIdentifier "C"
                             ports = [ (Input, "cIn", Single) ] } ]
 
                     let moduleAST =
@@ -515,9 +515,9 @@ let fullModuleTests =
 
                 test "Wire 2 modules together with bus" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Output, "bOut", Range(5, 0)) ] }
-                          { name = "C"
+                          { name = StringIdentifier "C"
                             ports = [ (Input, "cIn", Range(5, 0)) ] } ]
 
                     let moduleAST =
@@ -554,9 +554,9 @@ let fullModuleTests =
 
                 test "Wire 2 modules together with bus (different ranges)" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Output, "bOut", Range(20, 15)) ] }
-                          { name = "C"
+                          { name = StringIdentifier "C"
                             ports = [ (Input, "cIn", Range(5, 0)) ] } ]
 
                     let moduleAST =
@@ -617,7 +617,7 @@ let fullModuleTests =
 
                 test "Connect part of input to submodule" {
                     let decls =
-                        [ { name = "B"
+                        [ { name = StringIdentifier "B"
                             ports = [ (Input, "bIn", Range(3, 0)) ] } ]
 
                     let moduleAST =
@@ -690,7 +690,73 @@ let fullModuleTests =
 
 
                     expectNetlist decls moduleAST expectedNetlist
-                }]
+                }
+
+                test "LH's fail" {
+                    let decls =
+                        [ { name = StringIdentifier "test"
+                            ports = [ (Output, "testout", Single)
+                                      (Input, "testin1", Single)
+                                      (Input, "testin2", Single) ] } ]
+
+                    let moduleAST =
+                        { name = "testproj"
+                          ports = ["out1"; "out2"; "a"; "b"]
+                          items =
+                                  [ItemPort (Input,Single,"a"); ItemPort (Input,Single,"b")
+                                   ItemPort (Output,Single,"out1"); ItemPort (Output,Single,"out2")
+                                   ItemInstantiation
+                                      ("test","re",
+                                      [ExprIdentifier "out2"; ExprIdentifier "a"; ExprIdentifier "b"])
+                                   ItemAssign
+                                      ("out1",ExprBinary (ExprIdentifier "a",BOpPlus,ExprIdentifier "b"))] }
+
+                    let expectedNetlist =
+                        { moduleName = "testproj"
+                          nodes =
+                              [ InputPin
+                                  ("a",
+                                   [ { srcRange = Single
+                                       targetRange = Single
+                                       target = InstanceTarget("re", "testin1") }
+                                     { srcRange = Single
+                                       targetRange = Single
+                                       target = InstanceTarget("BOpPlus-0", "left") }])
+                                InputPin
+                                  ("b",
+                                   [ { srcRange = Single
+                                       targetRange = Single
+                                       target = InstanceTarget("re", "testin2") }
+                                     { srcRange = Single
+                                       targetRange = Single
+                                       target = InstanceTarget("BOpPlus-0", "right") }])
+                                OutputPin("out1")
+                                OutputPin("out2")
+                                ModuleInstance
+                                    ({ moduleName = StringIdentifier "test"
+                                       instanceName = "re"
+                                       connections =
+                                           Map
+                                               [ "testout",
+                                                 [ { srcRange = Single
+                                                     targetRange = Single
+                                                     target = PinTarget "out2" } ] ] })
+                                ModuleInstance
+                                    ({ moduleName = BOpIdentifier BOpPlus
+                                       instanceName = "BOpPlus-0"
+                                       connections =
+                                           Map
+                                               [ "output",
+                                                 [ { srcRange = Single
+                                                     targetRange = Single
+                                                     target = PinTarget "out1" } ] ] })
+
+                                 ] }
+
+
+                    expectNetlist decls moduleAST expectedNetlist
+                }
+                ]
 
           testList "Unification of connections"
               [ testProperty "Has no effect if there are no named endpoints"
