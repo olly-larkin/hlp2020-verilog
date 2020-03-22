@@ -15,7 +15,7 @@ let expectSameElements actual expected =
 
 [<Tests>]
 let simulatorTests =
-    ftestList "Simulator"
+    testList "Simulator"
         [ test "Input to Output single" {
               let netlistIn =
                   { moduleName = "m"
