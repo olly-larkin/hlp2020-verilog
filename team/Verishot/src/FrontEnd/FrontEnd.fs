@@ -21,6 +21,8 @@ open Verishot.Simulator.Netlist
 open Verishot.Simulator.Simulate
 open Verishot.Simulator.Types
 open Verishot.Megafunctions.Types
+open Verishot.Megafunctions.Registry
+open WaveTypes
 
 type ExitCode = int
 type StdOut = string
@@ -48,8 +50,6 @@ let exitCodes =
         vInError                =31
     |}
 
-  
-    
 
 let getExistingModuleNamesFromVProj vProjFilePath =
     vProjFilePath
@@ -197,8 +197,8 @@ let visualise vProjFilePath =
 
 
 /// parse the vars and put them into a map
-let parseAndMap (vars: string list): Map<Identifier * Range, uint64> = 
-    let unwrap (x: ParserResult<(string * Range) * uint64>) = 
+let parseAndMap (vars: string list): Map<Identifier * Range, WireVal> = 
+    let unwrap (x: ParserResult<(string * Range) * WireVal>) = 
         match x with
         | Ok (((id, rng), value), _, _) -> Some ((id, rng), value)
         | Error _ -> None // treat invalid as not found
@@ -208,7 +208,7 @@ let parseAndMap (vars: string list): Map<Identifier * Range, uint64> =
     |> List.choose id
     |> Map.ofList
 
-let matchMapWithInputPorts (varMap: Map<Identifier * Range, uint64>) (inputPorts: (Identifier * Range) list) = 
+let matchMapWithInputPorts (varMap: Map<Identifier * Range, WireVal>) (inputPorts: (Identifier * Range) list) = 
     // add in __CYCLES__
     let inputPortsWithCycles = ("__CYCLES__", Single) :: inputPorts
     
@@ -260,22 +260,65 @@ let checkVInFile vProjFilePath (inputPorts: (Identifier * Range) list) =
         let stdout' = stdout +@ stdout2
         Error (exitCode, stdout')
 
-
-let getTopLevelInputPorts vProjFilePath =
+let getTopLevelPorts vProjFilePath = 
     let workspacePath = Directory.GetParent(vProjFilePath).FullName
+
     let topLevelModuleFilePath = 
         vProjFilePath
         |> getExistingModuleNamesFromVProj
         |> List.head
         |> fun x -> workspacePath +/ x + ".v"
+
     let topLevelModuleDecl =
         topLevelModuleFilePath
         |> getAST
         |> ASTToDecl
-    topLevelModuleDecl.ports
-    |> List.filter (fun (x, _, _)-> x = Input) 
-    |> List.map (fun (_, x, y) -> x, y)
 
+    let filterPorts dir = 
+        topLevelModuleDecl.ports
+        |> List.filter (fun (x, _, _)-> x = dir) 
+        |> List.map (fun (_, x, y) -> x, y)
+
+    filterPorts Input, filterPorts Output
+
+let private simulateHelper vProjFilePath (varMap: Map<Identifier * Range,WireVal>) = 
+    let netlists, _ = getNetlistsAndDecls vProjFilePath
+    let simNetlists = netlists |> List.map (convertNetlist)
+    let cycles = varMap.[("__CYCLES__", Single)]
+    let topLevelNetlist = simNetlists.Head
+    let otherModules: Map<ModuleIdentifier, StateVar SimulationObject> = 
+        simNetlists.Tail 
+        |> List.map (fun x -> StringIdentifier x.moduleName, (NetlistInstance x)) 
+        |> Map.ofList
+    let otherModulesAndMegafunctions = Map.joinLeft megafunctions otherModules
+    let initialState = Map.empty
+    let inputs = varMap |> Map.toList |> List.map (fun ((id, _), value) -> (id, value)) |> Map
+    
+    simulateCycles cycles topLevelNetlist otherModulesAndMegafunctions initialState inputs
+    |> List.rev // reversed as the final res is output at the front by simulateCycles
+
+/// make sure allIds are either in inputMap or outputMap;
+/// this should always return true, otherwise it throws and exits
+let private wireValToSimPort (wireValMaps: WireValMap list) (inputPorts: list<Identifier * Range>) (outputPorts: list<Identifier * Range>): SimulatorPort list =
+    let inputMap = inputPorts |> Map.ofList // change it to map, better lookup complexity
+    let outputMap = inputPorts |> Map.ofList
+
+    // in a wireValMap list, each elem in a list is a clock cycle
+    // we now mutate the structure to be a map containing the identifier of the port
+    // and a list of WireVals
+    let inputSimPorts =
+        inputPorts
+        |> List.map (fun (id, rng) -> 
+            let wireValLst = wireValMaps |> List.map (fun m -> m.[id])
+            {
+                
+            }
+            failwith "t")
+
+    
+
+
+    failwith "TODO"
 
 let simulate vProjFilePath =
     // first we need to parse the top level module 
@@ -284,9 +327,9 @@ let simulate vProjFilePath =
     // which specifies the number of clock cycles 
     // and the input values
     
-    let topLevelInputPorts = getTopLevelInputPorts vProjFilePath
+    let inputPorts, outputPorts = getTopLevelPorts vProjFilePath
 
-    match checkVInFile vProjFilePath topLevelInputPorts with 
+    match checkVInFile vProjFilePath inputPorts with 
     | Ok varMap -> 
         // do the necessary processing and then pass it to Simulate API
         (*
@@ -294,14 +337,10 @@ let simulate vProjFilePath =
             (otherModules: Map<ModuleIdentifier, StateVar SimulationObject>)
             (initialState: StateVar State) (inputs: WireValMap): WireValMap =
         *)
-        let netlists, decls = getNetlistsAndDecls vProjFilePath
-        let simNetlists = netlists |> List.map (convertNetlist)
-        let cycles = varMap.[("__CYCLES__", Single)]
-        let topLevelNetlist = simNetlists.Head
-        let otherModules: Map<ModuleIdentifier, StateVar SimulationObject> = simNetlists.Tail |> List.map (fun x -> ModuleIdentifier x.moduleName, (NetlistInstance x)) |> Map.ofList
-        let inputs = varMap |> Map.toList |> List.map (fun ((id, _), value) -> (id, value)) |> Map
-        simulateCycles cycles topLevelNetlist otherModules initialState inputs
 
+        let wireValMaps = simulateHelper vProjFilePath varMap
+
+        let simPorts = wireValToSimPort wireValMaps inputPorts outputPorts
 
         let stdout' = "Simulation succeeded. View output in `simulation`."
         Ok stdout'
