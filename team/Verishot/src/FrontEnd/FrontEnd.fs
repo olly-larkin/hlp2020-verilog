@@ -242,7 +242,7 @@ let createVInFile vInFilePath (inputPorts: (Identifier * Range) list) =
 
 __CYCLES__=;
 
-// Specify each input on a new line
+// Specify each input on a new line (you may use Verilog style numeric constants)
 "
 
     let inputContent =
@@ -326,14 +326,13 @@ let private simulateHelper
 
 let private wireValToSimPort
     (wireValMaps: WireValMap list)
-    (inputPorts: list<Identifier * Range>)
     (outputPorts: list<Identifier * Range>)
     : SimulatorPort list
     =
 
     // in a wireValMap list, each elem in a list is a clock cycle
     // we now mutate the structure to be a map containing the identifier of the port
-    // and a list of WireValsa
+    // and a list of WireVals
     // we make sure inputs are first before output for final readability
     let mapToSimPorts ports =
         ports
@@ -351,7 +350,7 @@ let private wireValToSimPort
                       range = a - b + 1
                       output = wireValLst })
 
-    mapToSimPorts inputPorts @ mapToSimPorts outputPorts
+    mapToSimPorts outputPorts
 
 let simulate vProjFilePath =
     // first we need to parse the top level module
@@ -367,13 +366,14 @@ let simulate vProjFilePath =
         // do the necessary processing and then pass it to Simulate API
 
         let wireValMaps = simulateHelper vProjFilePath varMap
-        let simPorts = wireValToSimPort wireValMaps inputPorts outputPorts
+        let simPorts = wireValToSimPort wireValMaps outputPorts
         let waveOut = simPorts |> waveformMain
 
         let workspacePath = Directory.GetParent(vProjFilePath).FullName
         let waveOutputPath = workspacePath +/ "simulation" +/ "output.svg"
 
         deleteFile waveOutputPath
+        createPathFolder (workspacePath +/ "simulation")
 
         writeStringToFile waveOutputPath waveOut
 

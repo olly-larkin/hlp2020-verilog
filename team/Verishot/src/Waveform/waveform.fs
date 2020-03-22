@@ -221,6 +221,6 @@ let SimOutputToWaveform (inp:SimulatorPort list) =
 /// TOP Level main func, take simulator output, returns string of outputSVG
 let waveformMain (inp: SimulatorPort list) = 
     let svg = inp |> SimOutputToWaveform
-    let styles = Some <| loadStyles unitPx
+    let styles = None
     let script = None
     output svg styles script true
