@@ -40,13 +40,13 @@ let createNewModule vProjFilePath moduleName =
             let moduleFilepath = workspacePath +/ moduleName + ".v"
             writeStringToFile moduleFilepath moduleTemplateContent
 
-            let stdout = sprintf "Successfully created module `%s`" moduleName
+            let stdout = sprintf "Successfully created module `%s`. " moduleName
             Ok stdout
         | _ -> 
-            let stdout = "Module name already exists"
+            let stdout = "Module name already exists. "
             Error (exitCode, stdout)
     | _ -> 
-        let stdout = "Enter a valid module name"
+        let stdout = "Enter a valid module name. "
         Error (exitCode, stdout)
 
 let deleteModule vProjFilePath moduleName = 
@@ -67,10 +67,10 @@ let deleteModule vProjFilePath moduleName =
         let vFilePath = workspacePath +/ moduleName + ".v"
         deleteFile vFilePath
 
-        let stdout = sprintf "Successfully deleted module `%s`" moduleName
+        let stdout = sprintf "Successfully deleted module `%s`. " moduleName
         Ok stdout
     | _ -> 
-        let stdout = sprintf "Module `%s` does not exist" moduleName
+        let stdout = sprintf "Module `%s` does not exist. " moduleName
         Error (exitCode, stdout)
 
 
@@ -91,15 +91,15 @@ let createNewProject workspacePath projectName =
 
             match createNewModule vProjFilePath projectName with
             | Ok stdout ->
-                let stdout2 = sprintf "Successfully created project `%s`" projectName
+                let stdout2 = sprintf "Successfully created project `%s`. " projectName
                 let stdout' = stdout +@ stdout2
                 Ok stdout'
             | Error x -> Error x           
         | _ ->
-            let stdout = sprintf "Enter a valid project name"
+            let stdout = sprintf "Enter a valid project name. "
             Error (exitCode, stdout)
     | _ -> 
-        let stdout = sprintf "This workspace already contains an existing project"
+        let stdout = sprintf "This workspace already contains an existing project. "
         Error (exitCode, stdout)
 
 let listModules vProjFilePath = 
