@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
-import { escapeshellcmd } from 'php-escape-shell';
 import { writeFile } from 'fs';
-import * as os from 'os';
 import { spawn } from 'child_process';
+import { showErrorMessageSeparated, binName } from './utility';
 
 // INTELLISENSE
 let timeout: NodeJS.Timer | undefined = undefined;
@@ -19,11 +18,11 @@ const execIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCo
 	diagCol.clear();
 	writeFile('intellisenseTmp.txt', doc.getText(), (err) => {
 		if (err) {
-			vscode.window.showErrorMessage(err.message);
+			showErrorMessageSeparated(err.message);
 		}
 		const args = [`--intellisense`, `intellisenseTmp.txt`];
 
-		const s = spawn(`verishot`, args);
+		const s = spawn(binName, args);
 
 		s.stdout.on('data', (data) => {
 			const errorTexts: string[][] =
@@ -45,7 +44,7 @@ const execIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCo
 						}];
 					diagCol.set(doc.uri, diagnostics);
 				}
-			})
+			});
 		});
 
 		s.stderr.on('data', (data) => {
@@ -55,21 +54,23 @@ const execIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCo
 };
 
 export const subscribeIntellisense = (context: vscode.ExtensionContext, diagCol: vscode.DiagnosticCollection) => {
-	if (vscode.window.activeTextEditor) {
+	const vlanguageId = `verilog`;
+	if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.languageId === vlanguageId) {
 		triggerIntellisense(vscode.window.activeTextEditor.document, diagCol);
 	}
 
 	context.subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor(editor => {
-			if (editor) {
+			if (editor && editor.document.languageId === vlanguageId) {
 				triggerIntellisense(editor.document, diagCol);
 			}
 		})
 	);
 
 	context.subscriptions.push(
-		vscode.workspace.onDidChangeTextDocument(e => triggerIntellisense(e.document, diagCol))
-	);
+		vscode.workspace.onDidChangeTextDocument(e => {
+			if (e.document.languageId === vlanguageId) { triggerIntellisense(e.document, diagCol); }
+		}));
 
 	context.subscriptions.push(
 		vscode.workspace.onDidCloseTextDocument(doc => diagCol.delete(doc.uri))

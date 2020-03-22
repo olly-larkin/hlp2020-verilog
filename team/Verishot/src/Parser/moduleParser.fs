@@ -9,7 +9,7 @@ open Verishot.Token
 /// Top level parser for modules
 /// Parses the top level (module definition)
 let rec ParseModuleDefinition inp =
-    inp |> (Keyword.Module >=> Identifier >=> ListOfPortsParser >=> Symbol.Semmicolon ?=> ModuleItemListParser >=> Keyword.Endmodule <&> fun (((((_,a),b),_),c),_) -> 
+    inp |> (Keyword.Module >=> Identifier >=> ListOfPortsParser >=> Symbol.Semicolon ?=> ModuleItemListParser >=> Keyword.Endmodule <&> fun (((((_,a),b),_),c),_) -> 
         match c with
         | None -> { name = a; ports = b; items = [] }
         | Some c -> { name = a; ports = b; items = c })
@@ -40,7 +40,7 @@ and ModuleItemParser inp =
             AssignParser 
             WireDeclarationParser
             ItemInstantiationParser
-        ] >=> Symbol.Semmicolon <&> fun (a,_) -> a)
+        ] >=> Symbol.Semicolon <&> fun (a,_) -> a)
 
 and RangeParser inp =
     inp 

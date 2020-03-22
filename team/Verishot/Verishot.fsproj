@@ -1,16 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
-
   <ItemGroup>
     <!-- LIBRARIES -->
     <Compile Include="src/libs/core_types.fs" />
     <Compile Include="src/libs/util.fs" />
+    <Compile Include="src/libs/FileUtil.fs" />
     <Compile Include="src/libs/svg.fs" />
-
+    
     <!-- PARSER -->
     <Compile Include="src/Parser/parserUtils.fs" />
     <Compile Include="src/Parser/tokenParser.fs" />
@@ -34,10 +33,6 @@
     <Compile Include="src/Visualiser/connection/types/pin.fs" />
     <Compile Include="src/Visualiser/visualise.fs" />
 
-    <!-- WAVEFORM -->
-    <Compile Include="src/Waveform/wave_types.fs" />
-    <Compile Include="src/Waveform/waveform.fs" />
-
     <!-- SIMULATOR -->
     <Compile Include="src/Simulator/types.fs" />
     <Compile Include="src/Simulator/simulatorNetlist.fs" />
@@ -45,8 +40,16 @@
     <Compile Include="src/Simulator/Megafunctions/builtins.fs" />
     <Compile Include="src/Simulator/Megafunctions/registry.fs" />
     <Compile Include="src/Simulator/simulator.fs" />
+    
+    <!-- WAVEFORM -->
+    <Compile Include="src/Waveform/wave_types.fs" />
+    <Compile Include="src/Waveform/waveform.fs" />
 
+    <!-- FRONT END -->
+    <Compile Include="src/FrontEnd/FrontEndParser.fs" />
+    <Compile Include="src/FrontEnd/FrontEnd.fs" />
+    <Compile Include="src/FrontEnd/Project.fs" />
+    
     <Compile Include="Program.fs" />
   </ItemGroup>
-
 </Project>

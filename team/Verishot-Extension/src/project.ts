@@ -1,76 +1,7 @@
-import * as vscode from 'vscode';
-import { getExistingModuleNamesFromVProj, getNumberOfProjectFiles, dirSlash, getProjectName, readLinesFromFile, getWorkspacePath, deleteFileIfExists } from './utility';
+import { getProjectName, getWorkspacePath, spawnCmdWithFeedback, getExistingModules, exitCodes, binName } from './utility';
 import { getInput, getPick } from './input';
-import * as fs from 'fs';
-
-
-
-// workspacePath has no / at the end
-const createNewProject = (projectName: string, workspacePath: string) => {
-    if (!getNumberOfProjectFiles(workspacePath)) {
-        createNewModule(projectName, workspacePath, projectName);
-    }
-    else {
-        vscode.window.showErrorMessage(`This workspace already contains an existing project.`);
-    }
-};
-
-const getModuleTemplate = (moduleName: string) => {
-    return `module ${moduleName}(\n);\nendmodule`;
-};
-
-const createNewModule = (moduleName: string, workspacePath: string, projectName: string) => {
-    const numberOfProjectFiles = getNumberOfProjectFiles(workspacePath);
-    if (numberOfProjectFiles > 1) {
-        vscode.window.showErrorMessage("More than one project file exists.");
-    }
-    else if (getExistingModuleNamesFromVProj(workspacePath, projectName).includes(`${moduleName}`)) {
-        vscode.window.showErrorMessage(`Module already exists. Please use the \`Verishot: Delete module\` command to delete it.`);
-    }
-    else {
-        const moduleFileName = `${moduleName}.v`;
-
-        try {
-            // add to .vproj
-            const vprojFilePath = `${workspacePath}${dirSlash}${projectName}.vproj`;
-            const vprojLines = readLinesFromFile(vprojFilePath);
-            const lastLine = vprojLines.pop();
-            vprojLines.push(moduleFileName);
-            if (lastLine) { vprojLines.push(lastLine); }
-            const vprojContent = vprojLines.join('\n');
-            fs.writeFileSync(vprojFilePath, vprojContent);
-
-            // create the new module
-            const moduleTemplateContent = getModuleTemplate(moduleName);
-            const moduleFilePath = `${workspacePath}${dirSlash}${moduleName}.v`;
-            fs.writeFileSync(moduleFilePath, moduleTemplateContent);
-            
-            vscode.workspace.openTextDocument(moduleFilePath).then(doc => vscode.window.showTextDocument(doc));
-            console.log("opening!");
-        }
-        catch (err) {
-            vscode.window.showErrorMessage(err.message);
-        }
-    }
-};
-
-const deleteModule = (moduleName: string, workspacePath: string, projectName: string) => {
-    try {    
-        // update vproj
-        const vprojFilePath = `${workspacePath}${dirSlash}${projectName}.vproj`;
-        const vprojLines = readLinesFromFile(vprojFilePath);
-        const newvprojLines = vprojLines.filter((line: string) => line !== `${moduleName}.v`);
-        const vprojContent = newvprojLines.join('\n');
-        fs.writeFileSync(vprojFilePath, vprojContent);
-
-        // delete the file
-        const moduleFilePath = `${workspacePath}${dirSlash}${moduleName}.v`;
-        deleteFileIfExists(moduleFilePath);
-    }
-    catch (err) {
-        vscode.window.showErrorMessage(err.message);
-    }
-};
+import * as path from 'path';
+import * as vscode from 'vscode';
 
 export const newProjectHandler = () => {
     const workspacePath = getWorkspacePath();
@@ -79,7 +10,10 @@ export const newProjectHandler = () => {
         (text: string) => { if (/[a-zA-Z][a-zA-Z0-9_]*/.test(text) && text.length) { return undefined; } return `Enter a valid project name`; })
         .then((projectName) => {
             if (projectName) {
-                createNewProject(projectName, workspacePath);
+                const moduleFilePath = path.join(workspacePath, `${projectName}.v`);
+                const succFunc = () => { vscode.workspace.openTextDocument(moduleFilePath).then(doc => vscode.window.showTextDocument(doc)); };
+                const funcMap = new Map<number, any>([[exitCodes.Success, succFunc]]);
+                spawnCmdWithFeedback(binName, [`--new-project`, workspacePath, projectName], funcMap);
             }
         });
 };
@@ -89,11 +23,15 @@ export const newModuleHandler = () => {
     if (!workspacePath) { return; }
     const projectName = getProjectName(workspacePath);
     if (!projectName) { return; }
+    const vprojFilePath = path.join(workspacePath, `${projectName}.vproj`);
     getInput(`Enter module name`,
         (text: string) => { if (/[a-zA-Z][a-zA-Z0-9_]*/.test(text)) { return undefined; } return `Enter a valid module name`; })
         .then((moduleName) => {
             if (moduleName && projectName) {
-                createNewModule(moduleName, workspacePath, projectName);
+                const moduleFilePath = path.join(workspacePath, `${moduleName}.v`);
+                const succFunc = () => { vscode.workspace.openTextDocument(moduleFilePath).then(doc => vscode.window.showTextDocument(doc)); };
+                const funcMap = new Map<number, any>([[exitCodes.Success, succFunc]]);
+                spawnCmdWithFeedback(binName, [`--new-module`, vprojFilePath, moduleName], funcMap);
             }
         });
 };
@@ -103,11 +41,11 @@ export const deleteModuleHandler = () => {
     if (!workspacePath) { return; }
     const projectName = getProjectName(workspacePath);
     if (!projectName) { return; }
-    const allModulesWithTopLevelModule = getExistingModuleNamesFromVProj(workspacePath, projectName);
-    const allModules = allModulesWithTopLevelModule.filter((moduleName: string) => moduleName !== `${projectName}`);
-    getPick(allModules, `Select module to delete`).then((moduleName) => {
+    const vprojFilePath = path.join(workspacePath, `${projectName}.vproj`);
+    const existingModules = getExistingModules(workspacePath, projectName);
+    getPick(existingModules, `Select module to delete`).then((moduleName) => {
         if (moduleName) {
-            deleteModule(moduleName, workspacePath, projectName);
+            spawnCmdWithFeedback(binName, [`--delete-module`, vprojFilePath, moduleName]);
         }
     });
 };
