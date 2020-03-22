@@ -13,14 +13,17 @@ type AccType =
     { nextState: StateVar State
       wireVals: WireValMap }
 
+// This will return the results in the "wrong order" but this means that the final result is at the head of the list
+// Nice for testing
 let simulateCycles (cycles: uint64) (netlist: Netlist)
     (otherModules: Map<ModuleIdentifier, StateVar SimulationObject>)
-    (initialState: StateVar State) (inputs: WireValMap): WireValMap =
+    (initialState: StateVar State) (inputs: WireValMap): WireValMap list =
 
-    ((Map.empty, initialState), [ 1UL .. cycles ])
+    (([Map.empty], initialState), [ 1UL .. cycles ])
     ||> List.fold
-            (fun (_outputs, state) _cycle ->
-                simulate netlist otherModules state inputs)
+            (fun (outputs, state) _cycle ->
+                let output', state' = simulate netlist otherModules state inputs
+                output' :: outputs, state')
     |> fst
 
 let simulate (netlist: Netlist)

@@ -171,7 +171,7 @@ let simulatorTests =
                   simulateCycles 2UL netlistIn megafunctions Map.empty
                       (Map [ ("modin", 5UL) ])
 
-              Expect.equal actual.["modout"] 5UL "Gives initial value"
+              Expect.equal actual.Head.["modout"] 5UL "Gives initial value"
           }
 
           testProperty "Counter no reset" <| fun (PositiveInt(cycles)) ->
@@ -197,4 +197,4 @@ let simulatorTests =
                   simulateCycles (uint64 cycles) netlistIn megafunctions Map.empty
                       Map.empty
 
-              actual.["modout"] = uint64 (cycles - 1) ]
+              actual.Head.["modout"] = uint64 (cycles - 1) ]
