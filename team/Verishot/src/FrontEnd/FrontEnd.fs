@@ -17,7 +17,10 @@ open Verishot.CoreTypes
 open Verishot.VisualiserUtil.Functions
 open Verishot.FrontEndParser
 open Verishot.ParserUtils
+open Verishot.Simulator.Netlist
 open Verishot.Simulator.Simulate
+open Verishot.Simulator.Types
+open Verishot.Megafunctions.Types
 
 type ExitCode = int
 type StdOut = string
@@ -292,10 +295,10 @@ let simulate vProjFilePath =
             (initialState: StateVar State) (inputs: WireValMap): WireValMap =
         *)
         let netlists, decls = getNetlistsAndDecls vProjFilePath
+        let simNetlists = netlists |> List.map (convertNetlist)
         let cycles = varMap.[("__CYCLES__", Single)]
-        let topLevelNetlist = netlists.Head
-        let otherModules = netlists.Tail |> List.map (fun x -> x.moduleName, x) |> Map.ofList // TODO:- change into NetlistInstance
-        let initialState = Map.empty 
+        let topLevelNetlist = simNetlists.Head
+        let otherModules: Map<ModuleIdentifier, StateVar SimulationObject> = simNetlists.Tail |> List.map (fun x -> ModuleIdentifier x.moduleName, (NetlistInstance x)) |> Map.ofList
         let inputs = varMap |> Map.toList |> List.map (fun ((id, _), value) -> (id, value)) |> Map
         simulateCycles cycles topLevelNetlist otherModules initialState inputs
 
