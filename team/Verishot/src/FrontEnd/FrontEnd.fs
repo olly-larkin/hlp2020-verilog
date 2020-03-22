@@ -17,6 +17,7 @@ open Verishot.CoreTypes
 open Verishot.VisualiserUtil.Functions
 open Verishot.FrontEndParser
 open Verishot.ParserUtils
+open Verishot.Simulator.Simulate
 
 type ExitCode = int
 type StdOut = string
@@ -193,8 +194,8 @@ let visualise vProjFilePath =
 
 
 /// parse the vars and put them into a map
-let parseAndMap (vars: string list): Map<Identifier * Range, int64> = 
-    let unwrap (x: ParserResult<(string * Range) * int64>) = 
+let parseAndMap (vars: string list): Map<Identifier * Range, uint64> = 
+    let unwrap (x: ParserResult<(string * Range) * uint64>) = 
         match x with
         | Ok (((id, rng), value), _, _) -> Some ((id, rng), value)
         | Error _ -> None // treat invalid as not found
@@ -204,7 +205,7 @@ let parseAndMap (vars: string list): Map<Identifier * Range, int64> =
     |> List.choose id
     |> Map.ofList
 
-let matchMapWithInputPorts (varMap: Map<Identifier * Range, int64>) (inputPorts: (Identifier * Range) list) = 
+let matchMapWithInputPorts (varMap: Map<Identifier * Range, uint64>) (inputPorts: (Identifier * Range) list) = 
     // add in __CYCLES__
     let inputPortsWithCycles = ("__CYCLES__", Single) :: inputPorts
     
@@ -250,6 +251,8 @@ let checkVInFile vProjFilePath (inputPorts: (Identifier * Range) list) =
         // create the .vin file
         createVInFile vInFilePath inputPorts
 
+        // TODO:- keep track of valid inputs so the user doesn't need to 
+        // re-input those that are valid
         let stdout2 = sprintf "Please specify your inputs in `%s.vin`." projectName 
         let stdout' = stdout +@ stdout2
         Error (exitCode, stdout')
@@ -294,6 +297,8 @@ let simulate vProjFilePath =
         let otherModules = netlists.Tail |> List.map (fun x -> x.moduleName, x) |> Map.ofList // TODO:- change into NetlistInstance
         let initialState = Map.empty 
         let inputs = varMap |> Map.toList |> List.map (fun ((id, _), value) -> (id, value)) |> Map
+        simulateCycles cycles topLevelNetlist otherModules initialState inputs
+
 
         let stdout' = "Simulation succeeded. View output in `simulation`."
         Ok stdout'

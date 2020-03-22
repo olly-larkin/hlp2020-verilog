@@ -30,6 +30,6 @@ let vInAssignmentParser (inp: char list) =
                 match b with 
                 | Some rng -> rng
                 | None -> Single
-            (identifier, range), (int64 value)
+            (identifier, range), (uint64 value)
         )
 
