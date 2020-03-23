@@ -255,7 +255,7 @@ let matchMapWithInputPorts
     | true, stdout -> Ok stdout
     | false, stdout -> Error(exitCodes.vInError, stdout)
 
-let createVInFile vInFilePath (inputPorts: (Identifier * Range) list) (varMap: VarMapType) =
+let getVinContent (inputPorts: (Identifier * Range) list) (varMap: VarMapType) =
     let getStr x =
         match varMap.ContainsKey(x) with
         | true -> Some varMap.[x].str
@@ -286,8 +286,7 @@ let createVInFile vInFilePath (inputPorts: (Identifier * Range) list) (varMap: V
             | _ -> sprintf "%s%s=;" id (getRangeStr rng))
         |> String.concat "\n"
 
-    let vInFileContent = vInFileHeader + inputContent
-    writeStringToFile vInFilePath vInFileContent
+    vInFileHeader + inputContent
 
 let checkVInFile vProjFilePath (inputPorts: (Identifier * Range) list) =
     let workspacePath = Directory.GetParent(vProjFilePath).FullName
@@ -303,7 +302,8 @@ let checkVInFile vProjFilePath (inputPorts: (Identifier * Range) list) =
     | Ok _ -> Ok varMap
     | Error(exitCode, stdout) ->
         // create the .vin file
-        createVInFile vInFilePath inputPorts varMap
+        getVinContent inputPorts varMap
+        |> writeStringToFile vInFilePath
 
         let stdout2 =
             sprintf "Please specify your inputs in `%s.vin`. " projectName
@@ -357,7 +357,7 @@ let private simulateHelper vProjFilePath (varMap: VarMapType) =
         initialState inputs |> List.rev
 // reversed as the final res is output at the front by simulateCycles
 
-let private wireValToSimPort
+let wireValToSimPort
     (wireValMaps: WireValMap list)
     (outputPorts: list<Identifier * Range>)
     : SimulatorPort list
