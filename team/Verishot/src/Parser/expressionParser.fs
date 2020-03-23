@@ -140,7 +140,7 @@ and LogicalAndParser inp =
 and LogicalOrParser inp =
     inp |> (LogicalAndParser ?=> (Symbol.LogicalOr >=> LogicalOrParser) <&> ExprTools.OpBinExprMap)
 
-/// Parses conditional expressiont
+/// Parses conditional expressions
 /// a ? b : c
 and ConditionalParser inp =
     inp |> (LogicalOrParser ?=> (Symbol.QuestionMark >=> ConditionalParser >=> Symbol.Colon >=> ConditionalParser) <&> (fun (a,b) ->

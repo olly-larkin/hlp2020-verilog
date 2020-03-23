@@ -1,9 +1,9 @@
 module Verishot.Waveform
 
-open Verishot.CoreTypes
 open Verishot.SVG
+open Verishot.Simulator.Types
 open WaveTypes
-
+open Verishot.VisualiseStyles
 
    
 let addXY (inp:Coord) (x:float) (y:float) = 
@@ -23,14 +23,14 @@ let wrappedWave waveform =
 let setPortPosition (offset:float) (port:SVGElement) = 
     (translateSVG (0.0, offset) port), offset + snd(snd(getDimensionElem port))
 
-let keyCheck (map: Map<int, int list>) (idx:int) = 
+let keyCheck (map: Map<int, WireVal list>) (idx:int) = 
     if map.ContainsKey idx then map.[idx] else []
 
-let addPinValToMap (map: Map<int, int list>) (pinVal:(int*int)) = 
+let addPinValToMap (map: Map<int, WireVal list>) (pinVal:(int*WireVal)) = 
     map.Add ((fst(pinVal)),((keyCheck map (fst(pinVal))) @ [snd(pinVal)]))
 
-let initWireState:WaveformState = {prevVal=0; svgVals = Polyline([0.0, 3.0], styleprops, None)}
-let initBusState:WaveformState = {prevVal=0; svgVals = Group([Polyline([0.0, 3.0], [], None)], styleprops, None)}
+let initWireState:WaveformState = {prevVal=0UL; svgVals = Polyline([0.0, 3.0], styleprops, None)}
+let initBusState:WaveformState = {prevVal=0UL; svgVals = Group([Polyline([0.0, 3.0], [], None)], styleprops, None)}
 
 let Low2Low state:WaveformState = 
     //print some SVG using state
@@ -42,7 +42,7 @@ let Low2Low state:WaveformState =
                             | _ -> failwith "Error constructing wave"
         {w with svgVals = newPolyline}
 
-    let change2Low (w:WaveformState) = {w with prevVal = 0}
+    let change2Low (w:WaveformState) = {w with prevVal = 0UL}
     state 
     |> change2Low 
     |> addLine
@@ -57,7 +57,7 @@ let Low2High state =
                             | _ -> failwith "Error constructing wave"
         {w with svgVals = newPolyline}
 
-    let change2High (w:WaveformState) = {w with prevVal = 1}
+    let change2High (w:WaveformState) = {w with prevVal = 1UL}
 
     state 
     |> change2High 
@@ -73,7 +73,7 @@ let High2Low state =
                             | _ -> failwith "Error constructing wave"
         {w with svgVals = newPolyline}
 
-    let change2Low (w:WaveformState) = {w with prevVal = 0}
+    let change2Low (w:WaveformState) = {w with prevVal = 0UL}
 
     state 
     |> change2Low 
@@ -87,7 +87,7 @@ let High2High state =
                             | _ -> failwith "Error constructing wave"
         {w with svgVals = newPolyline}
 
-    let change2High (w:WaveformState) = {w with prevVal = 1}
+    let change2High (w:WaveformState) = {w with prevVal = 1UL}
 
     state 
     |> change2High
@@ -126,42 +126,42 @@ let busChangeVal state newVal =
     |> addLine
 
 /// Chooses the correct state transition for the current wire waveform being generated
-let SingleWireCycle state (cycle:int) = 
+let SingleWireCycle state cycle = 
     match (state.prevVal, cycle) with
-    | 0,0 -> Low2Low state
-    | 0,1 -> Low2High state
-    | 1,0 -> High2Low state
-    | 1,1 -> High2High state
+    | 0UL,0UL -> Low2Low state
+    | 0UL,1UL -> Low2High state
+    | 1UL,0UL -> High2Low state
+    | 1UL,1UL -> High2High state
     | _ -> failwith "Input value not valid"
 
 /// Checks whether or not the bus value has changed from the previous cycle, and calls the corresponding function to generate the bus waveform
-let SingleBusCycle state (newVal:int) = 
+let SingleBusCycle state (newVal:WireVal) = 
     match state.prevVal = newVal with
     | true  -> busSameVal state newVal
     | false -> busChangeVal state newVal
 
 
-let GenPortWireWaveform (initialState:WaveformState) (portVals:int list) = 
+let GenPortWireWaveform (initialState:WaveformState) (portVals:WireVal list) = 
     (initialState, portVals) ||> List.fold SingleWireCycle
 
-let GenPortBusWaveform (initialState:WaveformState) (portVals:int list) = 
+let GenPortBusWaveform (initialState:WaveformState) (portVals:WireVal list) = 
     (initialState, portVals) ||> List.fold SingleBusCycle
 
 /// This function handles creating and formatting the waveforms for a bus. Vals is a list of values (can be either 0 or 1) the wire takes at each cycle.
-let GenWireWaveform (portName:string) (vals:int list) =
+let GenWireWaveform (portName:string) (vals) =
     let waveform = GenPortWireWaveform initWireState vals
     let wireBlock = Group([textBox portName; translateSVG (9.0,0.0) (wrappedWave waveform.svgVals)],[], None)
     wireBlock
 
 
 /// This function handles creating and formatting the waveforms for a bus. Vals is a list of values the bus takes at each cycle.
-let GenBusWaveform (portName:string) (portRange: int) (vals:int list) =
+let GenBusWaveform (portName:string) (portRange: int) (vals: WireVal list) =
     let pinName pinNo = portName + "[" + string pinNo + "]"
     let singlePortWaveform = GenPortWireWaveform initWireState
-    let decToBinary (dec:int) (idx:int) = (idx, dec%2), dec/2  //mapFolding function which returns a list of index, value tuples
-    let addCycleToMap (busWaveforms: Map<int, int list>) (decVal: (int*int) list) = 
+    let decToBinary (dec:WireVal) (idx:int) = (idx, dec%2UL), dec/2UL  //mapFolding function which returns a list of index, value tuples
+    let addCycleToMap (busWaveforms: Map<int, WireVal list>) (decVal: (int*WireVal) list) = 
         (busWaveforms, decVal) ||> List.fold addPinValToMap 
-    let decToPinVals (dec:int) =
+    let decToPinVals (dec:WireVal) =
         [0..(portRange-1)]
         |> List.mapFold decToBinary dec
         |> fst
@@ -170,14 +170,14 @@ let GenBusWaveform (portName:string) (portRange: int) (vals:int list) =
         |> List.map decToPinVals
         |> List.fold addCycleToMap Map.empty
         |> Map.toList
-    let createWaveBox (inp:(int * int list)) = 
+    let createWaveBox (inp:(int * WireVal list)) = 
         let svgList = 
             [(singlePortWaveform (snd(inp))).svgVals
                 |> wrappedWave
                 |> translateSVG (9.0,0.0)]
             |> (@) [textBox (pinName (fst(inp)))]
         Group(svgList,[], None)
-    let individualPortWaveform (offset:float) (inp:(int * int list)) = translateSVG (0.0,4.0 * offset) (createWaveBox inp) , (offset + 1.0)
+    let individualPortWaveform (offset:float) (inp:(int * WireVal list)) = translateSVG (0.0,4.0 * offset) (createWaveBox inp) , (offset + 1.0)
     let busBox  = 
         let svgList = 
             [(GenPortBusWaveform initBusState vals).svgVals
@@ -208,7 +208,6 @@ let GenClock (waveformList:SVGElement) =
         ((Polyline([0.0, 3.0], styleprops, None)), [1..noOfCylces]) ||> List.fold clkCycle 
     translateSVG (0.0,snd(snd(viewerDimensions))) (Group([textBox "clk"; translateSVG (9.0,0.0) (wrappedWave clkWaveform)],[], None))
 
-
 ///Main function of the module. Take in the simulator output and returns an SVG element with all waveforms formatted and ready to be printed.
 let SimOutputToWaveform (inp:SimulatorPort list) =
     let portToWaveform (prt:SimulatorPort) =
@@ -218,3 +217,10 @@ let SimOutputToWaveform (inp:SimulatorPort list) =
     let waveformList = List.map portToWaveform inp
     let groupedWaveforms = Group(fst(List.mapFold setPortPosition 0.0 waveformList),[], None)
     Group([groupedWaveforms ; GenClock groupedWaveforms], [], None)
+    
+/// TOP Level main func, take simulator output, returns string of outputSVG
+let waveformMain (inp: SimulatorPort list) = 
+    let svg = inp |> SimOutputToWaveform
+    let styles = None
+    let script = None
+    output svg styles script true
