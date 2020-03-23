@@ -1,65 +1,71 @@
-# hello-world README
+# Verishot VSCode Extension README
 
-This is the README for your extension "hello-world". After writing up a brief description, we recommend including the following sections.
+This VSCode extension is made to accompany the `Verishot` Verilog Simulator and Visualiser. 
+
+## Getting started
+
+### Installing
+* Alternative 1: Double click the `verishot-0.0.1.vsix` file.
+* Alternative 2: In this directory, run `code --install-extension verishot-0.0.1.vsix`.
+* Alternative 3: 
+    * Select Extensions (Ctrl + Shift + X)
+    * Open “More Action” menu(ellipsis on the top) and click “Install from VSIX…”
+    * Locate VSIX file and select
+    * Reload VSCode
+### Debugging
+* Make sure `node` is installed.
+* Run `npm install` to install required modules.
+* Press `F5` to launch an extension development host on VSCode.
+
+### Testing
+* Run `npm run test` to test. Tests are defined in `src/test`.
+* To fix `"Running extension tests from the command line is currently only supported if no other instance of Code is running."` VSCode error, run `npm run test` in a command line with all VSCode instances closed. See [here](https://code.visualstudio.com/api/working-with-extensions/testing-extension).
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### Verilog code support
+Full support for VSCode *intellisense*, *highlighting*, and *linting* for the Verilog subset defined in `Verishot`.
 
-For example if there is an image subfolder under your extension project workspace:
+### Project support
+Create and manage `Verishot` Verilog projects and modules.
 
-\!\[feature X\]\(images/feature-x.png\)
+### Streamlined commands
+Commands in command palette allow for *linting*, *simulation*, *visualisation* etc.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## Available Commands
+You may access these via the VSCode Command Palette 
+
+### Verishot: New Project
+Creates a new `Verishot` project.
+
+### Verishot: New Module
+Creates a new `Verishot` module in the current project.
+
+### Verishot: Delete Module
+Deletes an existing `Verishot` module in the current project.
+
+### Verishot: Lint
+Lints the current file.
+
+### Verishot: Visualise
+Outputs `.svg` visualisation for all modules defined in the project.
+
+### Verishot: Simulate
+Simulates the top-level module and outputs `.svg` waveform output. Inputs and cycles can be specified via a `.vin` file created by `Verishot`.
+
+### Verishot:
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: enable/disable this extension
-* `myExtension.thing`: set to `blah` to do something
+Please make sure `verishot` is installed. You can check by typing `verishot` in any command line.
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+N/A
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.1
 
-### 1.0.0
+Initial release
 
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
------------------------------------------------------------------------------------------------------------
-
-## Working with Markdown
-
-**Note:** You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+CMD+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux) or `Cmd+Space` (macOS) to see a list of Markdown snippets
-
-### For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**

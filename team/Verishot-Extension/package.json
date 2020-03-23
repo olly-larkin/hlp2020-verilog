@@ -3,6 +3,7 @@
 	"displayName": "Verishot",
 	"description": "",
 	"version": "0.0.1",
+	"publisher": "lhl2617",
 	"engines": {
 		"vscode": "^1.43.0"
 	},
