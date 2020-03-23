@@ -7,6 +7,8 @@ This application provides a CLI for `Verishot`. It is designed to be accompanied
 ## Getting Started
 
 ### Pre-built Windows 64-bit binary
+* A pre-built `win-x64` executable is located in `.\bin\release\netcoreapp3.1\win-x64\Verishot.exe`.
+* You should add the folder containing the built `Verishot.exe` to your `PATH` variables.
 
 ### Setup
 Requirements:
@@ -17,15 +19,19 @@ Requirements:
 
 #### Linux
 * Run `setup.sh` in this directory
-* Add the folder containing the built `Verishot` executable to your `PATH` variables (folder is usually `.\bin\release\netcoreapp3.1\linux-x64`)
+* Add the folder containing the built `Verishot` executable to your `PATH` variables (folder is usually `./bin/release/netcoreapp3.1/linux-x64`)
+
+### Mac OS X
+* Not tested
 
 
 ### Debugging
 * Run `dotnet run` in this directory.
-* See [here](https://intranet.ee.ic.ac.uk/t.clarke/hlp/install-notes.html) on how to set up a F# debugging ecosystem.
+* See [here](https://intranet.ee.ic.ac.uk/t.clarke/hlp/install-notes.html) on how to set up a F# ecosystem.
 
 ### Testing
 * Run `dotnet run` in the `./test` directory.
+* See [here](https://intranet.ee.ic.ac.uk/t.clarke/hlp/install-notes.html) on how to set up a F# ecosystem.
 
 ## Usage guide
 Run `verishot --help` for list of available commands.
