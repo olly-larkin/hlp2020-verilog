@@ -7,6 +7,21 @@ open Verishot.Simulator.Types
 
 let no state = failwithf "Received incorrect state: %A" state
 
+(*--  UNARY BUILT INS  --*)
+
+// let uOpPlusFunction =
+//     Combinational
+//         { declaration =
+//               { name = UOpIdentifier UOpPlus
+//                 ports =
+//                     [ Input, "inp", Range(63, 0)
+//                       Output, "output", Range(63, 0) ] }
+//           simulate =
+//               fun inputs ->
+//                   Map [ ("output", inputs.["inp"]) ] }
+
+(*--  BINARY BUILT INS  --*)
+
 let addFunction =
     Combinational
         { declaration =
@@ -18,6 +33,8 @@ let addFunction =
           simulate =
               fun inputs ->
                   Map [ ("output", inputs.["left"] + inputs.["right"]) ] }
+
+(*--  CUSTOM BUILT INS  --*)
 
 let dFlipFlop =
     Stateful
