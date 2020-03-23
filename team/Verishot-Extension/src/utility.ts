@@ -138,3 +138,11 @@ export const getExistingModules = (workspacePath: string, projectName: string): 
 			.map((line: string) => { return stripFileExtension(line.trim()); });
 	}
 };
+
+/// ensure directory exists before writing file
+export const ensureDirectoryExists = (filePath: string) => {
+	const dirName = path.dirname(filePath);
+	if (!fs.existsSync(dirName)) {
+		fs.mkdirSync(dirName, { recursive: true });
+	}
+};
