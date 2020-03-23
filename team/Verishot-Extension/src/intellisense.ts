@@ -1,26 +1,33 @@
 import * as vscode from 'vscode';
 import { writeFile } from 'fs';
 import { spawn } from 'child_process';
-import { showErrorMessageSeparated, binName } from './utility';
+import * as path from 'path';
+import { showErrorMessageSeparated, binName, ensureDirectoryExists } from './utility';
 
 // INTELLISENSE
 let timeout: NodeJS.Timer | undefined = undefined;
 
-const triggerIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCollection) => {
+const triggerIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCollection, context: vscode.ExtensionContext) => {
 	if (timeout) {
 		clearTimeout(timeout);
 		timeout = undefined;
 	}
-	timeout = setTimeout(() => execIntellisense(doc, diagCol), 1000);
+	timeout = setTimeout(() => execIntellisense(doc, diagCol, context), 1000);
 };
 
-const execIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCollection) => {
+const execIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCollection, context: vscode.ExtensionContext) => {
 	diagCol.clear();
-	writeFile('intellisenseTmp.txt', doc.getText(), (err) => {
+	const storagePath = context.storagePath ? context.storagePath : "tmp";
+	const tmpFilePath = path.join(storagePath, 'intellisenseTmp.txt');
+
+	/// ensure this dir exists
+	ensureDirectoryExists(tmpFilePath);
+
+	writeFile(tmpFilePath, doc.getText(), (err) => {
 		if (err) {
 			showErrorMessageSeparated(err.message);
 		}
-		const args = [`--intellisense`, `intellisenseTmp.txt`];
+		const args = [`--intellisense`, tmpFilePath];
 
 		const s = spawn(binName, args);
 
@@ -56,20 +63,20 @@ const execIntellisense = (doc: vscode.TextDocument, diagCol: vscode.DiagnosticCo
 export const subscribeIntellisense = (context: vscode.ExtensionContext, diagCol: vscode.DiagnosticCollection) => {
 	const vlanguageId = `verilog`;
 	if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.languageId === vlanguageId) {
-		triggerIntellisense(vscode.window.activeTextEditor.document, diagCol);
+		triggerIntellisense(vscode.window.activeTextEditor.document, diagCol, context);
 	}
 
 	context.subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor(editor => {
 			if (editor && editor.document.languageId === vlanguageId) {
-				triggerIntellisense(editor.document, diagCol);
+				triggerIntellisense(editor.document, diagCol, context);
 			}
 		})
 	);
 
 	context.subscriptions.push(
 		vscode.workspace.onDidChangeTextDocument(e => {
-			if (e.document.languageId === vlanguageId) { triggerIntellisense(e.document, diagCol); }
+			if (e.document.languageId === vlanguageId) { triggerIntellisense(e.document, diagCol, context); }
 		}));
 
 	context.subscriptions.push(

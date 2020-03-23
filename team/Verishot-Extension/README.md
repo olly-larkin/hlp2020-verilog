@@ -9,7 +9,7 @@ This VSCode extension is made to accompany the `Verishot` Verilog Simulator and 
 * Alternative 2: In this directory, run `code --install-extension verishot-0.0.1.vsix`.
 * Alternative 3: 
     * Select Extensions (Ctrl + Shift + X)
-    * Open “More Action” menu(ellipsis on the top) and click “Install from VSIX…”
+    * Open “More Actions” menu(ellipsis on the top) and click “Install from VSIX…”
     * Locate VSIX file and select
     * Reload VSCode
 ### Debugging
