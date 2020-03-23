@@ -5,7 +5,7 @@ This VSCode extension is made to accompany the `Verishot` Verilog Simulator and 
 ## Getting started
 
 ### Installing
-
+* In this directory, run `code --install-extension verishot-0.0.1.vsix`
 
 ### Debugging
 * Make sure `node` is installed.
