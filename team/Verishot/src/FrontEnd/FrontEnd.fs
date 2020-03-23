@@ -261,6 +261,9 @@ let createVInFile vInFilePath (inputPorts: (Identifier * Range) list) (varMap: V
         | true -> Some varMap.[x].str
         | _ -> None
 
+    let cycleStr =
+        match getStr ("__CYCLES__")
+
     let vInFileHeader = "// ===== Verishot Simulation File =====
 // Specify the number of clock cycles to simulate below:
 
