@@ -8,16 +8,16 @@ open Verishot.Test.Util
 let parseAndMapTests = 
     [
         "basic",
-            ["bar=2;"; "foo=1;"],
+            ["bar=2;"; "foo=1;  "],
                 Map [
-                    ("foo", Single), uint64 1
-                    ("bar", Single), uint64 2
+                    ("foo", Single), { wireVal=1UL; str="foo=1;  " }
+                    ("bar", Single), { wireVal=2UL; str="bar=2;" }
                 ]
         "ranged",
             ["foo[32:3]=7'hFF;";"bar[4]=1'b1;"],
                 Map [
-                    ("foo", Range (32, 3)), uint64 255
-                    ("bar", Range (4, 4)), uint64 1
+                    ("foo", Range (32, 3)), { wireVal=255UL; str="foo[32:3]=7'hFF;" }
+                    ("bar", Range (4, 4)), { wireVal=1UL; str="bar[4]=1'b1;" }
                 ]
         "invalid",
             ["fuu=;"; "foo=1"; "bar"; "car"; "=3"; "life=4'h42"; "some[1:4]=12;"],
@@ -35,13 +35,13 @@ let matchMapWithInputPortsTests =
     [
         "basic passing", 
             (Map [ 
-                ("__CYCLES__", Single), uint64 100
+                ("__CYCLES__", Single), { wireVal=100UL; str="DOES NOT MATTER" }
             ], []),
                 Ok ""
         "basic with one input",
             (Map [
-                ("__CYCLES__", Single), uint64 100
-                ("foo", Single), uint64 1
+                ("__CYCLES__", Single), { wireVal=100UL; str="DOES NOT MATTER" }
+                ("foo", Single), { wireVal=1UL; str="DOES NOT MATTER" }
             ], [
                 ("foo", Single)
             ]),
@@ -51,7 +51,7 @@ let matchMapWithInputPortsTests =
                 Error (exitCodes.vInError, "\nSimulator input `__CYCLES__` invalid or not found.")
         "inp forgotten", 
             (Map [ 
-                ("__CYCLES__", Single), uint64 100
+                ("__CYCLES__", Single), { wireVal=100UL; str="DOES NOT MATTER" }
             ], [
                 ("foo", Range(32, 2))
             ]),
