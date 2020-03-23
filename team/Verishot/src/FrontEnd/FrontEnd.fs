@@ -262,19 +262,28 @@ let createVInFile vInFilePath (inputPorts: (Identifier * Range) list) (varMap: V
         | _ -> None
 
     let cycleStr =
-        match getStr ("__CYCLES__")
+        match getStr ("__CYCLES__", Single) with 
+        | Some str -> str
+        | None -> "__CYCLES__=;"
 
-    let vInFileHeader = "// ===== Verishot Simulation File =====
+    // sprintf doesnt work for multilines
+    let vInFileHeaderA = "// ===== Verishot Simulation File =====
 // Specify the number of clock cycles to simulate below:
 
-__CYCLES__=;
+"
+    let vInFileHeaderB = "
 
 // Specify each input on a new line (you may use Verilog style numeric constants)
-"
+" 
+
+    let vInFileHeader = vInFileHeaderA + cycleStr + vInFileHeaderB
 
     let inputContent =
         inputPorts
-        |> List.map (fun (id, rng) -> sprintf "%s%s=;" id (getRangeStr rng))
+        |> List.map (fun (id, rng) -> 
+            match getStr (id, rng) with
+            | Some str -> str
+            | _ -> sprintf "%s%s=;" id (getRangeStr rng))
         |> String.concat "\n"
 
     let vInFileContent = vInFileHeader + inputContent
