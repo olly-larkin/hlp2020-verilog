@@ -10,7 +10,7 @@ let intro = "Verishot Verilog Visualiser and Simulator v0.0.1
 
 let usageGuide = "help todo"
 
-let invalidCmd = "Invalid command. Run `verishot --help` for a usage guide."
+let invalidCmd = "Invalid command. Run `verishot --help` for a usage guide. "
 
 let argProcessor argv: CmdResult =
     match Array.length argv with 

@@ -30,16 +30,20 @@ export enum exitCodes {
 	vInError = 31
 }
 
+// it is too spammy to split, so leave as joined for now.
 export const showInformationMessageSeparated = (outText: string) => {
-	outText
-		.split(`\n`)
-		.forEach((line: string) => vscode.window.showInformationMessage(line));
+	vscode.window.showInformationMessage(outText);
+	// outText
+		// .split(`\n`)
+		// .forEach((line: string) => vscode.window.showInformationMessage(line));
 };
 
+// it is too spammy to split, so leave as joined for now.
 export const showErrorMessageSeparated = (outText: string) => {
-	outText
-		.split(`\n`)
-		.forEach((line: string) => vscode.window.showErrorMessage(line));
+	vscode.window.showErrorMessage(outText);
+	// outText
+	// 	.split(`\n`)
+	// 	.forEach((line: string) => vscode.window.showErrorMessage(line));
 };
 
 export const getFileExtension = (fileName: string): string => {

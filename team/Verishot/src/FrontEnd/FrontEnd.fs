@@ -82,12 +82,12 @@ let lint filePath =
     |> lintHelper
     |> function
     | Ok _ ->
-        let stdout = "Verishot Lint: No Errors"
+        let stdout = "Verishot Lint: No Errors. "
         Ok stdout
     | Error(errStr, loc) ->
         let exitCode = exitCodes.LintError
         let stdout =
-            sprintf "Lint Error: %s at Line %d, Char %d" errStr loc.line
+            sprintf "Lint Error: %s at Line %d, Char %d. " errStr loc.line
                 loc.character
         Error(exitCode, stdout)
 
@@ -96,7 +96,7 @@ let checkModulesExist allModules workspacePath =
         match exists with
         | true -> passed, stdout
         | false ->
-            let stdout2 = sprintf "Module `%s` not found in folder" modName
+            let stdout2 = sprintf "Module `%s` not found in folder. " modName
             let stdout' = stdout +@ stdout2
             false, stdout'
 
@@ -119,7 +119,7 @@ let checkModulesLint allModules workspacePath =
         | Ok _ -> passed, stdout
         | Error(errStr, loc) ->
             let stdout2 =
-                sprintf "Lint Error for module `%s`: %s at Line %d=Char %d"
+                sprintf "Lint Error for module `%s`: %s at Line %d=Char %d. "
                     modFileName errStr loc.line loc.character
             let stdout' = stdout +@ stdout2
             false, stdout'
@@ -242,7 +242,7 @@ let createVInFile vInFilePath (inputPorts: (Identifier * Range) list) =
 
 __CYCLES__=;
 
-// Specify each input on a new line
+// Specify each input on a new line (you may use Verilog style numeric constants)
 "
 
     let inputContent =
@@ -272,7 +272,7 @@ let checkVInFile vProjFilePath (inputPorts: (Identifier * Range) list) =
         // TODO:- keep track of valid inputs so the user doesn't need to
         // re-input those that are valid
         let stdout2 =
-            sprintf "Please specify your inputs in `%s.vin`." projectName
+            sprintf "Please specify your inputs in `%s.vin`. " projectName
         let stdout' = stdout +@ stdout2
         Error(exitCode, stdout')
 
@@ -300,6 +300,7 @@ let getTopLevelPorts vProjFilePath =
 let private simulateHelper
     vProjFilePath
     (varMap: Map<Identifier * Range, WireVal>) =
+
     let netlists, _ = getNetlistsAndDecls vProjFilePath
     let simNetlists = netlists |> List.map (convertNetlist)
     let cycles = varMap.[("__CYCLES__", Single)]
@@ -314,25 +315,24 @@ let private simulateHelper
     let otherModulesAndMegafunctions = Map.joinLeft megafunctions otherModules
     let initialState = Map.empty
 
-
     let inputs =
         varMap
         |> Map.remove ("__CYCLES__", Single) // need to remove __CYCLES__
         |> Map.mapKeys (fun (id, _) -> id)
 
     simulateCycles cycles topLevelNetlist otherModulesAndMegafunctions
-        initialState inputs |> List.rev // reversed as the final res is output at the front by simulateCycles
+        initialState inputs |> List.rev
+// reversed as the final res is output at the front by simulateCycles
 
 let private wireValToSimPort
     (wireValMaps: WireValMap list)
-    (inputPorts: list<Identifier * Range>)
     (outputPorts: list<Identifier * Range>)
     : SimulatorPort list
     =
 
     // in a wireValMap list, each elem in a list is a clock cycle
     // we now mutate the structure to be a map containing the identifier of the port
-    // and a list of WireValsa
+    // and a list of WireVals
     // we make sure inputs are first before output for final readability
     let mapToSimPorts ports =
         ports
@@ -350,7 +350,7 @@ let private wireValToSimPort
                       range = a - b + 1
                       output = wireValLst })
 
-    mapToSimPorts inputPorts @ mapToSimPorts outputPorts
+    mapToSimPorts outputPorts
 
 let simulate vProjFilePath =
     // first we need to parse the top level module
@@ -366,17 +366,17 @@ let simulate vProjFilePath =
         // do the necessary processing and then pass it to Simulate API
 
         let wireValMaps = simulateHelper vProjFilePath varMap
-        let simPorts = wireValToSimPort wireValMaps inputPorts outputPorts
+        let simPorts = wireValToSimPort wireValMaps outputPorts
         let waveOut = simPorts |> waveformMain
-        
+
         let workspacePath = Directory.GetParent(vProjFilePath).FullName
         let waveOutputPath = workspacePath +/ "simulation" +/ "output.svg"
 
-        deleteFolder waveOutputPath
-        createPathFolder waveOutputPath
+        deleteFile waveOutputPath
+        createPathFolder (workspacePath +/ "simulation")
 
         writeStringToFile waveOutputPath waveOut
 
-        let stdout' = "Simulation succeeded. View output in `simulation`."
+        let stdout' = "Simulation succeeded. View output in `simulation`. "
         Ok stdout'
     | Error x -> Error x

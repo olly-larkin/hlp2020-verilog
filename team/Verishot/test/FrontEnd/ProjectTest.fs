@@ -21,7 +21,7 @@ let createNewModuleTests =
     [
         "no match regex", 
             ("foo", "!"),
-                Error (exitCodes.NewModuleError, "Enter a valid module name")
+                Error (exitCodes.NewModuleError, "Enter a valid module name. ")
     ]
 
 [<Tests>]
