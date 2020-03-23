@@ -47,7 +47,6 @@ release-preview.cmd
 paket-files
 issueList.md
 release/package-lock\.json
-*.vsix
 /release/bin_netcore/
 **/.ionide
 /vendor/.paket/Paket.Restore.targets
