@@ -6,7 +6,6 @@ project.lock.json
 nupkg/
 
 # Visual Studio Code
-.vscode
 
 # Rider
 .idea

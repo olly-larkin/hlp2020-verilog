@@ -33,6 +33,14 @@ type CmdError = ExitCode
 
 type CmdResult = Result<StdOut, ExitCode * StdOut>
 
+type VarMapValStr =
+    { wireVal: WireVal
+      str: string }
+
+/// Map of key: (InputPortID * range); value: (WireVal * (actual string line)).
+/// Actual string line is to aid outputting back again to a new infile
+type VarMapType = Map<Identifier * Range, VarMapValStr>
+
 /// exit codes for CLI interface
 let exitCodes =
     {| Success = 0
@@ -195,23 +203,34 @@ let visualise vProjFilePath =
     | Error x -> Error x
 
 
-/// parse the vars and put them into a map
-let parseAndMap (vars: string list): Map<Identifier * Range, WireVal> =
+/// parse the vars and put them into a map;
+/// Map<Identifier * Range, VarMapValStr>;
+/// VarMaoValStr has both the WireVal and the actual string input
+/// to help regenerating vIn
+let parseAndMap (vars: string list): VarMapType =
     let unwrap (x: ParserResult<(string * Range) * WireVal>) =
         match x with
         | Ok(((id, rng), value), _, _) -> Some((id, rng), value)
         | Error _ -> None // treat invalid as not found
 
     vars
-    |> List.map
-        (List.ofSeq
-         >> vInAssignmentParser
-         >> unwrap)
+    |> List.map (fun str ->
+        str
+        |> List.ofSeq
+        |> vInAssignmentParser
+        |> unwrap
+        |> function
+        | Some((id, rng), value) ->
+            Some
+                ((id, rng),
+                 { wireVal = value
+                   str = str })
+        | _ -> None)
     |> List.choose id
     |> Map.ofList
 
 let matchMapWithInputPorts
-    (varMap: Map<Identifier * Range, WireVal>)
+    (varMap: VarMapType)
     (inputPorts: (Identifier * Range) list)
     =
     // add in __CYCLES__
@@ -236,18 +255,35 @@ let matchMapWithInputPorts
     | true, stdout -> Ok stdout
     | false, stdout -> Error(exitCodes.vInError, stdout)
 
-let createVInFile vInFilePath (inputPorts: (Identifier * Range) list) =
-    let vInFileHeader = "// ===== Verishot Simulation File =====
+let createVInFile vInFilePath (inputPorts: (Identifier * Range) list) (varMap: VarMapType) =
+    let getStr x =
+        match varMap.ContainsKey(x) with
+        | true -> Some varMap.[x].str
+        | _ -> None
+
+    let cycleStr =
+        match getStr ("__CYCLES__", Single) with 
+        | Some str -> str
+        | None -> "__CYCLES__=;"
+
+    // sprintf doesnt work for multilines
+    let vInFileHeaderA = "// ===== Verishot Simulation File =====
 // Specify the number of clock cycles to simulate below:
 
-__CYCLES__=;
+"
+    let vInFileHeaderB = "
 
 // Specify each input on a new line (you may use Verilog style numeric constants)
-"
+" 
+
+    let vInFileHeader = vInFileHeaderA + cycleStr + vInFileHeaderB
 
     let inputContent =
         inputPorts
-        |> List.map (fun (id, rng) -> sprintf "%s%s=;" id (getRangeStr rng))
+        |> List.map (fun (id, rng) -> 
+            match getStr (id, rng) with
+            | Some str -> str
+            | _ -> sprintf "%s%s=;" id (getRangeStr rng))
         |> String.concat "\n"
 
     let vInFileContent = vInFileHeader + inputContent
@@ -267,10 +303,8 @@ let checkVInFile vProjFilePath (inputPorts: (Identifier * Range) list) =
     | Ok _ -> Ok varMap
     | Error(exitCode, stdout) ->
         // create the .vin file
-        createVInFile vInFilePath inputPorts
+        createVInFile vInFilePath inputPorts varMap
 
-        // TODO:- keep track of valid inputs so the user doesn't need to
-        // re-input those that are valid
         let stdout2 =
             sprintf "Please specify your inputs in `%s.vin`. " projectName
         let stdout' = stdout +@ stdout2
@@ -297,13 +331,11 @@ let getTopLevelPorts vProjFilePath =
 
     filterPorts Input, filterPorts Output
 
-let private simulateHelper
-    vProjFilePath
-    (varMap: Map<Identifier * Range, WireVal>) =
+let private simulateHelper vProjFilePath (varMap: VarMapType) =
 
     let netlists, _ = getNetlistsAndDecls vProjFilePath
     let simNetlists = netlists |> List.map (convertNetlist)
-    let cycles = varMap.[("__CYCLES__", Single)]
+    let cycles = varMap.[("__CYCLES__", Single)].wireVal
     let topLevelNetlist = simNetlists.Head
 
     let otherModules: Map<ModuleIdentifier, StateVar SimulationObject> =
@@ -319,6 +351,7 @@ let private simulateHelper
         varMap
         |> Map.remove ("__CYCLES__", Single) // need to remove __CYCLES__
         |> Map.mapKeys (fun (id, _) -> id)
+        |> Map.mapValues (fun x -> x.wireVal)
 
     simulateCycles cycles topLevelNetlist otherModulesAndMegafunctions
         initialState inputs |> List.rev
