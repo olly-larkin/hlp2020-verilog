@@ -25,6 +25,12 @@ let megafunctions: Map<ModuleIdentifier, StateVar SimulationObject> =
         uOpAndReduceFunction
 
         bOpPlusFunction
+        bOpMinusFunction
+        bOpStarFunction
+        bOpDivFunction
+        bOpModFunction
+        bOpEqualsFunction
+
         dFlipFlop
         counter64
 

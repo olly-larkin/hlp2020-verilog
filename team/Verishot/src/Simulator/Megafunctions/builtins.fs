@@ -80,7 +80,80 @@ let bOpPlusFunction =
               fun inputs ->
                   Map [ ("output", inputs.["left"] + inputs.["right"]) ] }
 
+let bOpMinusFunction =
+    Combinational
+        { declaration =
+              { name = BOpIdentifier BOpMinus
+                ports =
+                    [ Input, "left", Range(63, 0)
+                      Input, "right", Range(63, 0)
+                      Output, "output", Range(63, 0) ] }
+          simulate =
+              fun inputs ->
+                  Map [ ("output", inputs.["left"] - inputs.["right"]) ] }
+
+let bOpStarFunction =
+    Combinational
+        { declaration =
+              { name = BOpIdentifier BOpStar
+                ports =
+                    [ Input, "left", Range(63, 0)
+                      Input, "right", Range(63, 0)
+                      Output, "output", Range(63, 0) ] }
+          simulate =
+              fun inputs ->
+                  Map [ ("output", inputs.["left"] * inputs.["right"]) ] }
+
+let bOpDivFunction =
+    Combinational
+        { declaration =
+              { name = BOpIdentifier BOpDiv
+                ports =
+                    [ Input, "left", Range(63, 0)
+                      Input, "right", Range(63, 0)
+                      Output, "output", Range(63, 0) ] }
+          simulate =
+              fun inputs ->
+                  Map [ ("output", inputs.["left"] / inputs.["right"]) ] }
+
+let bOpModFunction =
+    Combinational
+        { declaration =
+              { name = BOpIdentifier BOpMod
+                ports =
+                    [ Input, "left", Range(63, 0)
+                      Input, "right", Range(63, 0)
+                      Output, "output", Range(63, 0) ] }
+          simulate =
+              fun inputs ->
+                  Map [ ("output", inputs.["left"] % inputs.["right"]) ] }
+
+let bOpEqualsFunction =
+    Combinational
+        { declaration =
+              { name = BOpIdentifier BOpEquals
+                ports =
+                    [ Input, "left", Range(63, 0)
+                      Input, "right", Range(63, 0)
+                      Output, "output", Range(0, 0) ] }
+          simulate =
+              fun inputs ->
+                  Map [ ("output", if inputs.["left"] = inputs.["right"] then 1UL else 0UL) ] }
+
+let bOpBangEqualsFunction =
+    Combinational
+        { declaration =
+              { name = BOpIdentifier BOpBangEquals
+                ports =
+                    [ Input, "left", Range(63, 0)
+                      Input, "right", Range(63, 0)
+                      Output, "output", Range(0, 0) ] }
+          simulate =
+              fun inputs ->
+                  Map [ ("output", if inputs.["left"] <> inputs.["right"] then 1UL else 0UL) ] }
+
 (*--  CUSTOM BUILT INS  --*)
+// TODO: no point adding these currently bc they won't work until netlist is changed
 
 let dFlipFlop =
     Stateful
