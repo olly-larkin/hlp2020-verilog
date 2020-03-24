@@ -54,7 +54,7 @@ let uOpBitwiseNegationFunction =
                   Map [ ("output", ~~~inputs.["input"]) ] }     
 
 // TODO: this one doesn't work (would be hard to make it to - would have to know incomming bus width)
-// TODO: Other reduction unary instructions (should we not include?)
+// TODO: Other reduction unary instructions (should we not include? - have since been removed from parser)
 let uOpAndReduceFunction =
     Combinational
         { declaration =
