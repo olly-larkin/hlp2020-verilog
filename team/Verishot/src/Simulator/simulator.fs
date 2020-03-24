@@ -182,7 +182,8 @@ let shiftAndMask srcRange targetRange value =
     | Range(srcHigh, srcLow), Range(targetHigh, targetLow) ->
         ((value <<< (63 - srcHigh)) >>> (63 - srcHigh + srcLow)) <<< targetLow
     | Single, Single -> value
-    | _ -> failwith "Mismatched ranges"
+    | Range(srcHigh, srcLow), Single -> (value <<< ((63 - srcHigh)) >>> (63 - srcHigh + srcLow)) &&& 1UL
+    | Single, Range(_, targetLow) -> (value &&& 1UL) <<< targetLow
 
 let getPortValue (netlist: Netlist) otherModules lastState inputs =
     List.map (fun conn ->

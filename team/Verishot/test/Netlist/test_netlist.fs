@@ -678,7 +678,7 @@ let fullModuleTests =
                                             targetRange = Range(2, 0)
                                             target = InstanceTarget("mux2-0", "false") } ] |}
                                 ModuleInstance
-                                    ({ moduleName = StringIdentifier "mux2"
+                                    ({ moduleName = StringIdentifier "Mux2"
                                        instanceName = "mux2-0"
                                        connections =
                                            Map

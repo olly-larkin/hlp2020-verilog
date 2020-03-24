@@ -160,7 +160,12 @@ let simulatorTests =
                                          [ "in",
                                            [ { srcRange = Range(63, 0)
                                                targetRange = Range(63, 0)
-                                               source = PinEndpoint "modin" } ] ] })
+                                               source = PinEndpoint "modin" } ] 
+                                               
+                                           "enable",
+                                           [ { srcRange = Single
+                                               targetRange = Single
+                                               source = ConstantEndpoint 1UL } ]] })
                           OutputPin
                               ("modout",
                                [ { source = InstanceEndpoint("flipflip", "out")
