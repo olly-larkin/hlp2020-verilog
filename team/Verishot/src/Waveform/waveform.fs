@@ -185,11 +185,12 @@ let GenBusWaveform (portName:string) (portRange: int) (vals: WireVal list) =
                 |> translateSVG (9.0,0.0)]
             |> (@) [textBox portName]
         Group(svgList,[], None)
-    let blockList =
-        List.mapFold individualPortWaveform 1.0 decToWaveformList
-        |> fst
-        |> (@) [busBox]
-    Group(blockList,[], None)
+    // let blockList =
+    //     List.mapFold individualPortWaveform 1.0 decToWaveformList
+    //     |> fst
+    //     |> (@) [busBox]
+    // Group(blockList,[], None)
+    busBox
 
 
 

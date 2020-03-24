@@ -367,7 +367,7 @@ module Internal =
             let muxNode =
                 (ModuleInstance
                     { instanceName = muxNodeName
-                      moduleName = StringIdentifier "mux2"
+                      moduleName = StringIdentifier "Mux2"
                       connections = Map.empty })
             let outputConnection =
                 { src = PortEndpoint(muxNodeName, "output")

@@ -30,8 +30,29 @@ let megafunctions: Map<ModuleIdentifier, StateVar SimulationObject> =
         bOpDivFunction
         bOpModFunction
         bOpEqualsFunction
+        bOpBangEqualsFunction
+        bOpLogicalAndFunction
+        bOpLogicalOrFunction
+        bOpExponentFunction
+        bOpLessThanFunction
+        bOpLessThanEqualFunction
+        bOpGreaterThanFunction
+        bOpGreaterThanEqualFunction
+        bOpBitwiseAndFunction
+        bOpBitwiseOrFunction
+        bOpBitwiseNAndFunction
+        bOpBitwiseNOrFunction
+        bOpXorFunction
+        bOpXNorFunction
+        bOpLogicRightShiftFunction
+        bOpLogicLeftShiftFunction
 
         dFlipFlop
         counter64
-
+        ram
+        mux2
+        mux4
+        mux8
+        shiftRegister8
+        
     ]
