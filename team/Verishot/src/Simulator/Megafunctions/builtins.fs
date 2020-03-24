@@ -153,7 +153,6 @@ let bOpBangEqualsFunction =
                   Map [ ("output", if inputs.["left"] <> inputs.["right"] then 1UL else 0UL) ] }
 
 (*--  CUSTOM BUILT INS  --*)
-// TODO: no point adding these currently bc they won't work until netlist is changed
 
 let dFlipFlop =
     Stateful
