@@ -2,11 +2,17 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { execVerishot } from './verishot';
-import { VerishotMode } from './utility';
+import { VerishotMode, verishotExists } from './utility';
 import { newModuleHandler, newProjectHandler, deleteModuleHandler } from './project';
 import { subscribeIntellisense } from './intellisense';
 
 export const activate = (context: vscode.ExtensionContext) => {
+	/// need to make sure `verishot` exists in PATH variable, otherwise throw an error and exit
+	if (!verishotExists()) {
+		vscode.window.showErrorMessage(`\`verishot\` is not found in your system. Please make sure it is installed and in your PATH variables.`);
+		return;
+	}
+
 	// --lint, --simulate, --visualise
 	const lint = vscode.commands.registerCommand('extension.lint', () => {
 		execVerishot(VerishotMode.lint);
