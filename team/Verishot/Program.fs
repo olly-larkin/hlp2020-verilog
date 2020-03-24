@@ -25,8 +25,8 @@ GENERAL
 -------
 PROJECT
 -------
-`verishot --new-project [PROJECT-NAME]`
-    Creates a new project and top-level module named [PROJECT-NAME] in the current directory
+`verishot --new-project [WORKSPACE-PATH] [PROJECT-NAME]`
+    Creates a new project and top-level module named [PROJECT-NAME] in the [WORKSPACE-PATH] directory
 
 `verishot --new-module [.vproj FILE-NAME] [MODULE-NAME]`
     Creates a new module named [MODULE-NAME]
@@ -56,7 +56,7 @@ SIMULATION AND VISUALISATION
 `verishot --visualise [.vproj FILE-NAME]`
     Visualises all modules by creating `.svg` files.
 
-    
+
 "
 
 let invalidCmd = "Invalid command. Run `verishot --help` for a usage guide. "
