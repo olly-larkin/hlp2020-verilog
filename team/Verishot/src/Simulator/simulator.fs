@@ -81,6 +81,18 @@ let evaluate (netlist: Netlist)
             |> Map.mapKeys
                 (fun portName ->
                     InstanceEndpoint(instance.instanceName, portName))
+        | NetlistInstance subNetlist ->
+            let lState =
+                lastState
+                |> Map.tryFind instance.instanceName
+                |> Option.map (function
+                    | MegafunctionState _ -> failwith "Unexpected megafunction state"
+                    | VerilogState s -> s)
+                |> Option.defaultValue Map.empty
+            getNetlistOutput subNetlist otherModules lState (inputValues())
+            |> Map.mapKeys
+                (fun portName ->
+                    InstanceEndpoint(instance.instanceName, portName))
 
 
 let getNetlistOutput (netlist: Netlist)
