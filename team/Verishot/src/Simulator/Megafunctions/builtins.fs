@@ -9,20 +9,66 @@ let no state = failwithf "Received incorrect state: %A" state
 
 (*--  UNARY BUILT INS  --*)
 
-// let uOpPlusFunction =
-//     Combinational
-//         { declaration =
-//               { name = UOpIdentifier UOpPlus
-//                 ports =
-//                     [ Input, "inp", Range(63, 0)
-//                       Output, "output", Range(63, 0) ] }
-//           simulate =
-//               fun inputs ->
-//                   Map [ ("output", inputs.["inp"]) ] }
+let uOpPlusFunction =
+    Combinational
+        { declaration =
+              { name = UOpIdentifier UOpPlus
+                ports =
+                    [ Input, "input", Range(63, 0)
+                      Output, "output", Range(63, 0) ] }
+          simulate =
+              fun inputs ->
+                  Map [ ("output", inputs.["input"]) ] }
+
+let uOpMinusFunction =
+    Combinational
+        { declaration =
+              { name = UOpIdentifier UOpMinus
+                ports =
+                    [ Input, "input", Range(63, 0)
+                      Output, "output", Range(63, 0) ] }
+          simulate =
+              fun inputs ->
+                  Map [ ("output", ~~~ inputs.["input"] + 1UL) ] }
+
+let uOpBangFunction =
+    Combinational
+        { declaration =
+              { name = UOpIdentifier UOpBang
+                ports =
+                    [ Input, "input", Range(63, 0)
+                      Output, "output", Range(0, 0) ] }
+          simulate =
+              fun inputs ->
+                  Map [ ("output", if inputs.["input"] = 0UL then 1UL else 0UL) ] }    
+
+let uOpBitwiseNegationFunction =
+    Combinational
+        { declaration =
+              { name = UOpIdentifier UOpBitwiseNegation
+                ports =
+                    [ Input, "input", Range(63, 0)
+                      Output, "output", Range(63, 0) ] }
+          simulate =
+              fun inputs ->
+                  Map [ ("output", ~~~inputs.["input"]) ] }     
+
+// TODO: this one doesn't work (would be hard to make it to - would have to know incomming bus width)
+// TODO: Other reduction unary instructions (should we not include?)
+let uOpAndReduceFunction =
+    Combinational
+        { declaration =
+              { name = UOpIdentifier UOpAndReduce
+                ports =
+                    [ Input, "input", Range(63, 0)
+                      Output, "output", Range(0, 0) ] }
+          simulate =
+              fun inputs ->
+                  Map [ ("output", if inputs.["input"] = 0UL - 1UL then 1UL else 0UL) ] }      
 
 (*--  BINARY BUILT INS  --*)
 
-let addFunction =
+let bOpPlusFunction =
     Combinational
         { declaration =
               { name = BOpIdentifier BOpPlus

@@ -16,4 +16,16 @@ let makeMegafunctions =
     >> List.toMap
 
 let megafunctions: Map<ModuleIdentifier, StateVar SimulationObject> =
-    makeMegafunctions [ addFunction; dFlipFlop; counter64 ]
+    makeMegafunctions [
+
+        uOpPlusFunction
+        uOpMinusFunction
+        uOpBangFunction
+        uOpBitwiseNegationFunction
+        uOpAndReduceFunction
+
+        bOpPlusFunction
+        dFlipFlop
+        counter64
+
+    ]
