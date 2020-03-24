@@ -392,24 +392,27 @@ let simulate vProjFilePath =
     // which specifies the number of clock cycles
     // and the input values
 
-    let inputPorts, outputPorts = getTopLevelPorts vProjFilePath
+    match vProjSanityCheck vProjFilePath with
+    | Ok stdout ->
+        let inputPorts, outputPorts = getTopLevelPorts vProjFilePath
 
-    match checkVInFile vProjFilePath inputPorts with
-    | Ok varMap ->
-        // do the necessary processing and then pass it to Simulate API
+        match checkVInFile vProjFilePath inputPorts with
+        | Ok varMap ->
+            // do the necessary processing and then pass it to Simulate API
 
-        let wireValMaps = simulateHelper vProjFilePath varMap
-        let simPorts = wireValToSimPort wireValMaps outputPorts
-        let waveOut = simPorts |> waveformMain
+            let wireValMaps = simulateHelper vProjFilePath varMap
+            let simPorts = wireValToSimPort wireValMaps outputPorts
+            let waveOut = simPorts |> waveformMain
 
-        let workspacePath = Directory.GetParent(vProjFilePath).FullName
-        let waveOutputPath = workspacePath +/ "simulation" +/ "output.svg"
+            let workspacePath = Directory.GetParent(vProjFilePath).FullName
+            let waveOutputPath = workspacePath +/ "simulation" +/ "output.svg"
 
-        deleteFile waveOutputPath
-        createPathFolder (workspacePath +/ "simulation")
+            deleteFile waveOutputPath
+            createPathFolder (workspacePath +/ "simulation")
 
-        writeStringToFile waveOutputPath waveOut
+            writeStringToFile waveOutputPath waveOut
 
-        let stdout' = "Simulation succeeded. View output in `simulation`. "
-        Ok stdout'
+            let stdout' = stdout +@ "Simulation succeeded. View output in `simulation`. "
+            Ok stdout'
+        | Error x -> Error x
     | Error x -> Error x
