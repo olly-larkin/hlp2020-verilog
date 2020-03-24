@@ -75,8 +75,9 @@ and ExponentParser inp =
 /// << >> <<< >>>
 and ShiftParser inp =
     let operator = buildParser [
-        Symbol.ArithmaticLeftShift
-        Symbol.ArithmaticRightShift
+        // Decided to not implement as there are issues down the line with how we designd busses
+        // Symbol.ArithmaticLeftShift
+        // Symbol.ArithmaticRightShift
         Symbol.LogicalLeftShift
         Symbol.LogicalRightShift
     ]
@@ -97,8 +98,9 @@ and RelationalParser inp =
 /// == != === !==
 and RelationalEqualityParser inp =
     let operator = buildParser [
-        Symbol.CaseEqual
-        Symbol.CaseNotEqual
+        // Decided not to include these operators (don't apply to our functionality)
+        // Symbol.CaseEqual
+        // Symbol.CaseNotEqual
         Symbol.LogicalEqual
         Symbol.LogicalNotEqual
     ]
