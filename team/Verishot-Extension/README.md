@@ -63,8 +63,6 @@ Outputs `.svg` visualisation for all modules defined in the project.
 ### Verishot: Simulate
 Simulates the top-level module and outputs `.svg` waveform output. Inputs and cycles can be specified via a `.vin` file created by `Verishot`.
 
-### Verishot:
-
 ## Requirements
 
 Please make sure `verishot` is installed. You can check by typing `verishot` in any command line.
