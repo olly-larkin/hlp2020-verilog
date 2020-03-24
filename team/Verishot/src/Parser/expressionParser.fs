@@ -34,12 +34,13 @@ and UnaryOpParser inp =
         Symbol.UnaryMinus
         Symbol.Bang
         Symbol.BitwiseNegation
-        Symbol.ReductionAnd
-        Symbol.ReductionOr
-        Symbol.ReductionXor
-        Symbol.ReductionNand
-        Symbol.ReductionNor
-        Symbol.ReductionXnor
+        // Decided that these are unsupported expressions as they & is difficult to handle down the line
+        // Symbol.ReductionAnd
+        // Symbol.ReductionOr
+        // Symbol.ReductionXor
+        // Symbol.ReductionNand
+        // Symbol.ReductionNor
+        // Symbol.ReductionXnor
     ]
     inp |> buildParser [
         operator >=> UnaryOpParser <&> ExprUnary
