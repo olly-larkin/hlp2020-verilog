@@ -172,7 +172,16 @@ let getNetlistsAndDecls vProjFilePath =
         |> getModuleFilePaths
         |> List.map getAST
 
-    let decls = asts |> List.map (ASTToDecl)
+    let megaDecl = 
+        megafunctions
+        |> Map.toList
+        |> List.map (fun (_, func) ->
+            match func with
+            | NetlistInstance _ -> failwith "Unexpected netlist in megafunction map"
+            | Megafunction (Stateful mf) -> mf.declaration
+            | Megafunction (Combinational mf) -> mf.declaration)
+
+    let decls = asts |> List.map (ASTToDecl) |> (@) megaDecl
 
     let netlists = asts |> List.map (moduleNetlist decls)
 
