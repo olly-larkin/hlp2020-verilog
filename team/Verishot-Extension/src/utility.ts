@@ -146,3 +146,14 @@ export const ensureDirectoryExists = (filePath: string) => {
 		fs.mkdirSync(dirName, { recursive: true });
 	}
 };
+
+/// returns true if `verishot` executable or PATH variable exists
+export const verishotExists = (): boolean => {
+	try {
+		cp.execSync(binName); 
+	}
+	catch (err) {
+		return false; // does not exist
+	}
+	return true;
+};
