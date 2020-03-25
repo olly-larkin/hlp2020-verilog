@@ -6,8 +6,8 @@
 
 ## Installation
 There are two components in this application:
-   * CLI: `team/Verishot`
-   * VSCode Extension: `team/Verishot-Extension`
+   * CLI: [`team/Verishot`](team/Verishot)
+   * VSCode Extension: [`team/Verishot-Extension`](team/Verishot-Extension)
 
 Installation guides are detailed in `README.md` files in both directories.
 
