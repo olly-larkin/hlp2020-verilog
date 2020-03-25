@@ -137,7 +137,12 @@ let fullModuleTests =
                 test "Connect expression to submodule" {
                     let decls =
                         [ { name = StringIdentifier "B"
-                            ports = [ (Input, "bIn", Single) ] } ]
+                            ports = [ (Input, "bIn", Single) ] }
+                          { name = BOpIdentifier BOpBitwiseAnd
+                            ports =
+                                [ (Input, "left", Single)
+                                  (Input, "right", Single)
+                                  (Output, "output", Single) ] } ]
 
                     let moduleAST =
                         { name = "A"
@@ -188,7 +193,12 @@ let fullModuleTests =
                 }
 
                 test "Assign binary expression to output pin" {
-                    let decls = []
+                    let decls =
+                        [ { name = BOpIdentifier BOpBitwiseAnd
+                            ports =
+                                [ (Input, "left", Single)
+                                  (Input, "right", Single)
+                                  (Output, "output", Single) ] } ]
 
                     let moduleAST =
                         { name = "A"
@@ -235,7 +245,11 @@ let fullModuleTests =
                 }
 
                 test "Assign unary expression to output pin" {
-                    let decls = []
+                    let decls =
+                        [ { name = UOpIdentifier UOpBitwiseNegation
+                            ports =
+                                [ (Input, "input", Single)
+                                  (Output, "output", Single) ] } ]
 
                     let moduleAST =
                         { name = "A"
@@ -275,7 +289,12 @@ let fullModuleTests =
                 }
 
                 test "Use same operator twice gives 2 instances" {
-                    let decls = []
+                    let decls =
+                        [ { name = BOpIdentifier BOpBitwiseAnd
+                            ports =
+                                [ (Input, "left", Single)
+                                  (Input, "right", Single)
+                                  (Output, "output", Single) ] } ]
 
                     let moduleAST =
                         { name = "A"
@@ -500,7 +519,7 @@ let fullModuleTests =
                                                    targetRange = Single
                                                    target =
                                                        InstanceTarget
-                                                           ("C2", "cIn") }] ] })
+                                                           ("C2", "cIn") } ] ] })
                                 ModuleInstance
                                     ({ moduleName = StringIdentifier "C"
                                        instanceName = "C1"
@@ -598,9 +617,12 @@ let fullModuleTests =
                         { name = "A"
                           ports = []
                           items =
-                              [ ItemPort(Input, Range(5,0), "in")
-                                ItemPort(Output, Range(3,0), "out")
-                                ItemAssign("out", ExprIndex(ExprIdentifier "in", IndexRange(5, 2))) ] }
+                              [ ItemPort(Input, Range(5, 0), "in")
+                                ItemPort(Output, Range(3, 0), "out")
+                                ItemAssign
+                                    ("out",
+                                     ExprIndex
+                                         (ExprIdentifier "in", IndexRange(5, 2))) ] }
 
                     let expectedNetlist =
                         { moduleName = "A"
@@ -626,7 +648,10 @@ let fullModuleTests =
                           items =
                               [ ItemPort(Input, Range(5, 0), "aIn")
                                 ItemInstantiation
-                                    ("B", "theB", [ ExprIndex((ExprIdentifier "aIn"), IndexRange(5, 2))  ]) ] }
+                                    ("B", "theB",
+                                     [ ExprIndex
+                                         ((ExprIdentifier "aIn"),
+                                          IndexRange(5, 2)) ]) ] }
 
                     let expectedNetlist =
                         { moduleName = "A"
@@ -644,6 +669,58 @@ let fullModuleTests =
                     expectNetlist decls moduleAST expectedNetlist
                 }
 
+                test "Mismatched connections" {
+                    let decls =
+                        [ { name = BOpIdentifier BOpMod
+                            ports =
+                                [ (Input, "left", Range(63, 0))
+                                  (Input, "left", Range(63, 0))
+                                  (Output, "output", Range(63, 0)) ] } ]
+
+                    let moduleAST =
+                        { name = "test"
+                          ports = [ "in"; "out" ]
+                          items =
+                              [ ItemPort(Input, Range(63, 0), "in")
+                                ItemPort(Output, Range(1, 0), "out")
+                                ItemAssign
+                                    ("out",
+                                     ExprBinary
+                                         (ExprIdentifier "in", BOpMod,
+                                          ExprNumber(Some 3, 4))) ] }
+
+                    let expectedNetlist =
+                        { nodes =
+                              [ OutputPin("out")
+                                InputPin
+                                    ("in",
+                                     [ { target =
+                                             InstanceTarget("BOpMod-0", "left")
+                                         srcRange = Range(63, 0)
+                                         targetRange = Range(63, 0) } ])
+                                Constant
+                                    {| width = 3
+                                       value = 4
+                                       connections =
+                                           [ { srcRange = Range(2, 0)
+                                               targetRange = Range(2, 0)
+                                               target =
+                                                   InstanceTarget
+                                                       ("BOpMod-0", "right") } ] |}
+                                ModuleInstance
+                                    { moduleName = BOpIdentifier BOpMod
+                                      instanceName = "BOpMod-0"
+                                      connections =
+                                          Map
+                                              [ ("output",
+                                                 [ { target = PinTarget("out")
+                                                     srcRange = Range(1, 0)
+                                                     targetRange = Range(1, 0) } ]) ] } ]
+                          moduleName = "test" }
+
+                    expectNetlist decls moduleAST expectedNetlist
+                }
+
                 test "Connect if-then-else to output" {
                     let decls = []
 
@@ -653,7 +730,12 @@ let fullModuleTests =
                           items =
                               [ ItemPort(Input, Single, "aIn")
                                 ItemPort(Output, Range(2, 0), "aOut")
-                                ItemAssign("aOut", ExprIfThenElse(ExprIdentifier "aIn", ExprNumber(Some 3, 5), ExprNumber(Some 3, 1))) ] }
+                                ItemAssign
+                                    ("aOut",
+                                     ExprIfThenElse
+                                         (ExprIdentifier "aIn",
+                                          ExprNumber(Some 3, 5),
+                                          ExprNumber(Some 3, 1))) ] }
 
                     let expectedNetlist =
                         { moduleName = "A"
@@ -664,19 +746,23 @@ let fullModuleTests =
                                        targetRange = Single
                                        target = InstanceTarget("mux2-0", "cond") } ])
                                 Constant
-                                    {| width=3
-                                       value=5
-                                       connections=
-                                        [ { srcRange = Range(2, 0)
-                                            targetRange = Range(2, 0)
-                                            target = InstanceTarget("mux2-0", "true") } ] |}
+                                    {| width = 3
+                                       value = 5
+                                       connections =
+                                           [ { srcRange = Range(2, 0)
+                                               targetRange = Range(2, 0)
+                                               target =
+                                                   InstanceTarget
+                                                       ("mux2-0", "true") } ] |}
                                 Constant
-                                    {| width=3
-                                       value=1
-                                       connections=
-                                        [ { srcRange = Range(2, 0)
-                                            targetRange = Range(2, 0)
-                                            target = InstanceTarget("mux2-0", "false") } ] |}
+                                    {| width = 3
+                                       value = 1
+                                       connections =
+                                           [ { srcRange = Range(2, 0)
+                                               targetRange = Range(2, 0)
+                                               target =
+                                                   InstanceTarget
+                                                       ("mux2-0", "false") } ] |}
                                 ModuleInstance
                                     ({ moduleName = StringIdentifier "Mux2"
                                        instanceName = "mux2-0"
@@ -695,21 +781,34 @@ let fullModuleTests =
                 test "LH's fail" {
                     let decls =
                         [ { name = StringIdentifier "test"
-                            ports = [ (Output, "testout", Single)
-                                      (Input, "testin1", Single)
-                                      (Input, "testin2", Single) ] } ]
+                            ports =
+                                [ (Output, "testout", Single)
+                                  (Input, "testin1", Single)
+                                  (Input, "testin2", Single) ] }
+                          { name = BOpIdentifier BOpPlus
+                            ports =
+                                [ (Input, "left", Range(63, 0))
+                                  (Input, "right", Range(63, 0))
+                                  (Output, "output", Range(63, 0)) ] } ]
 
                     let moduleAST =
                         { name = "testproj"
-                          ports = ["out1"; "out2"; "a"; "b"]
+                          ports = [ "out1"; "out2"; "a"; "b" ]
                           items =
-                                  [ItemPort (Input,Single,"a"); ItemPort (Input,Single,"b")
-                                   ItemPort (Output,Single,"out1"); ItemPort (Output,Single,"out2")
-                                   ItemInstantiation
-                                      ("test","re",
-                                      [ExprIdentifier "out2"; ExprIdentifier "a"; ExprIdentifier "b"])
-                                   ItemAssign
-                                      ("out1",ExprBinary (ExprIdentifier "a",BOpPlus,ExprIdentifier "b"))] }
+                              [ ItemPort(Input, Single, "a")
+                                ItemPort(Input, Single, "b")
+                                ItemPort(Output, Single, "out1")
+                                ItemPort(Output, Single, "out2")
+                                ItemInstantiation
+                                    ("test", "re",
+                                     [ ExprIdentifier "out2"
+                                       ExprIdentifier "a"
+                                       ExprIdentifier "b" ])
+                                ItemAssign
+                                    ("out1",
+                                     ExprBinary
+                                         (ExprIdentifier "a", BOpPlus,
+                                          ExprIdentifier "b")) ] }
 
                     let expectedNetlist =
                         { moduleName = "testproj"
@@ -721,15 +820,19 @@ let fullModuleTests =
                                        target = InstanceTarget("re", "testin1") }
                                      { srcRange = Single
                                        targetRange = Single
-                                       target = InstanceTarget("BOpPlus-0", "left") }])
+                                       target =
+                                           InstanceTarget("BOpPlus-0", "left") } ])
                                 InputPin
-                                  ("b",
-                                   [ { srcRange = Single
-                                       targetRange = Single
-                                       target = InstanceTarget("re", "testin2") }
-                                     { srcRange = Single
-                                       targetRange = Single
-                                       target = InstanceTarget("BOpPlus-0", "right") }])
+                                    ("b",
+                                     [ { srcRange = Single
+                                         targetRange = Single
+                                         target =
+                                             InstanceTarget("re", "testin2") }
+                                       { srcRange = Single
+                                         targetRange = Single
+                                         target =
+                                             InstanceTarget
+                                                 ("BOpPlus-0", "right") } ])
                                 OutputPin("out1")
                                 OutputPin("out2")
                                 ModuleInstance
@@ -749,14 +852,11 @@ let fullModuleTests =
                                                [ "output",
                                                  [ { srcRange = Single
                                                      targetRange = Single
-                                                     target = PinTarget "out1" } ] ] })
-
-                                 ] }
+                                                     target = PinTarget "out1" } ] ] }) ] }
 
 
                     expectNetlist decls moduleAST expectedNetlist
-                }
-                ]
+                } ]
 
           testList "Unification of connections"
               [ testProperty "Has no effect if there are no named endpoints"
@@ -775,13 +875,12 @@ let fullModuleTests =
 
                 testProperty "Is commutative"
                 <| Prop.forAll MyArbitraries.connectionList
-                    (fun conns ->
-                        Prop.forAll (permutationsOf conns)
-                            (fun shuffledCons ->
-                                isPermutationOf
-                                    (Internal.unifyConnections conns)
-                                    (Internal.unifyConnections shuffledCons)))
-                ] ]
+                       (fun conns ->
+                           Prop.forAll (permutationsOf conns)
+                               (fun shuffledCons ->
+                                   isPermutationOf
+                                       (Internal.unifyConnections conns)
+                                       (Internal.unifyConnections shuffledCons))) ] ]
 
 let private permutationsOf lst =
     Arb.fromGen (Gen.map List.ofArray <| Gen.shuffle lst)

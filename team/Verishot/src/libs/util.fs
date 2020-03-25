@@ -21,6 +21,9 @@ let moveRangeToBase range =
     | Single -> Single
     | _ -> Range(rangeWidth range - 1, 0)
 
+/// The number of bits required to represent a certain *positive* value
+let valueWidth value = int(Math.Log(float value, 2.)) + 1
+
 module List =
     let catOptions (xs: 'a option list): 'a list =
         xs
