@@ -135,8 +135,7 @@ module Internal =
                            nodes = state.nodes @ newNodes |}
 
                 | AST.ItemWireDecl(size, name) ->
-                    {| state with netRanges =
-                           Map.add name size state.netRanges |})
+                    {| state with netRanges = Map.add name size state.netRanges |})
         |> fun state -> state.connections, state.nodes
 
     let unifyConnections (connections: IntermediateConnection list): IntermediateConnection list =
