@@ -7,7 +7,7 @@ This application provides a CLI for `Verishot`. It is designed to be accompanied
 ## Getting Started
 
 ### Pre-built Windows 64-bit binary
-* A pre-built `win-x64` executable is located in `.\bin\release\netcoreapp3.1\win-x64\Verishot.exe`.
+* A pre-built `win-x64` executable is located in [`.\bin\release\netcoreapp3.1\win-x64\Verishot.exe`](.\bin\release\netcoreapp3.1\win-x64\Verishot.exe).
 * You should add the folder containing the built `Verishot.exe` to your `PATH` variables.
 
 ### Setup
@@ -38,6 +38,6 @@ Run `verishot --help` for list of available commands.
 
 
 ## VSCode Extension
-It is recommended to develop `verishot` projects with VSCode and the supplied VSCode extension located in `../Verishot-Extension`. See the corresponding `README.md` for installation and usage instructions.
+It is recommended to develop `verishot` projects with VSCode and the supplied VSCode extension located in [`../Verishot-Extension`](../Verishot-Extension). See the corresponding `README.md` for installation and usage instructions.
 
 <!-- TODO: ALL, feats -->

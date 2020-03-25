@@ -11,7 +11,7 @@ This VSCode extension is made to accompany the `Verishot` Verilog Simulator and 
 *IMPORTANT*: Please ensure that a fully working `Verishot` CLI is installed. This extension *WILL NOT WORK* without working `Verishot` CLI.
 
 To check, run `verishot` on any command line. 
-See `README.md ` in `../Verishot` for a complete installation guide.
+See [`../Verishot/README.md`](../Verishot/README.md) for a complete installation guide.
 
 ### Installing
 A pre-packaged extension (`verishot-0.0.1.vsix`) is included for easy installation.
@@ -28,7 +28,7 @@ A pre-packaged extension (`verishot-0.0.1.vsix`) is included for easy installati
 * Press `F5` to launch an extension development host on VSCode.
 
 ### Testing
-* Run `npm run test` to test. Tests are defined in `src/test`.
+* Run `npm run test` to test. Tests are defined in [`src/test`](src/test).
 * To fix `"Running extension tests from the command line is currently only supported if no other instance of Code is running."` VSCode error, run `npm run test` in a command line with all VSCode instances closed. See [here](https://code.visualstudio.com/api/working-with-extensions/testing-extension).
 
 ## Features
@@ -62,10 +62,6 @@ Outputs `.svg` visualisation for all modules defined in the project.
 
 ### Verishot: Simulate
 Simulates the top-level module and outputs `.svg` waveform output. Inputs and cycles can be specified via a `.vin` file created by `Verishot`.
-
-## Requirements
-
-Please make sure `verishot` is installed. You can check by typing `verishot` in any command line.
 
 ## Known Issues
 
