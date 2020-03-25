@@ -254,14 +254,6 @@ let expressionTestsList =
                 List.ofSeq "5 >> 6" |> ShiftParser,
                     Ok (ExprBinary (ExprNumber (None,5), BOpLogicRightShift, ExprNumber (None,6)), [])
 
-            "shift parser arithmatic left",
-                List.ofSeq "5 <<< 6" |> ShiftParser,
-                    Ok (ExprBinary (ExprNumber (None,5), BOpArithmeticLeftShift, ExprNumber (None,6)), [])
-
-            "shift parser arithmatic right",
-                List.ofSeq "5 >>> 6" |> ShiftParser,
-                    Ok (ExprBinary (ExprNumber (None,5), BOpArithmeticRightShift, ExprNumber (None,6)), [])
-
             "relational parser >=",
                 List.ofSeq "5 >= 6" |> RelationalParser,
                     Ok (ExprBinary (ExprNumber (None,5), BOpGreaterThanEqual, ExprNumber (None,6)), [])
@@ -277,14 +269,6 @@ let expressionTestsList =
             "relational parser <",
                 List.ofSeq "5 < 6" |> RelationalParser,
                     Ok (ExprBinary (ExprNumber (None,5), BOpLessThan, ExprNumber (None,6)), [])
-
-            "relational equality parser ===",
-                List.ofSeq "5 === 6" |> RelationalEqualityParser,
-                    Ok (ExprBinary (ExprNumber (None,5), BOpTripleEquals, ExprNumber (None,6)), [])
-
-            "relational equality parser !==",
-                List.ofSeq "5 !== 6" |> RelationalEqualityParser,
-                    Ok (ExprBinary (ExprNumber (None,5), BOpBangTripleEquals, ExprNumber (None,6)), [])
 
             "relational equality parser ==",
                 List.ofSeq "5 == 6" |> RelationalEqualityParser,
