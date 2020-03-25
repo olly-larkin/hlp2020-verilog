@@ -1,5 +1,7 @@
 module rec Verishot.Netlist
 
+open System
+
 open Verishot.CoreTypes
 open Verishot.CoreTypes.Netlist
 open Verishot.Util
@@ -44,10 +46,8 @@ module Internal =
 
     /// Gather IntermediateNode's from a module AST in a single pass. The output of
     /// this needs to be processed further to get the final list of nodes
-    let getIntermediateNodes
-            (allModules: ModuleDecl list)
-            (thisModule: AST.Module)
-            : IntermediateConnection list * Node list =
+    let getIntermediateNodes (allModules: ModuleDecl list)
+        (thisModule: AST.Module): IntermediateConnection list * Node list =
         // See documentation of exprNodesWithOutput for a rationale behind using a ref
         let operatorIdx = ref 0
 
@@ -80,7 +80,9 @@ module Internal =
                     // which port each expression connects to
                     let ports =
                         allModules
-                        |> List.tryFind (fun decl -> decl.name = StringIdentifier moduleName)
+                        |> List.tryFind
+                            (fun decl ->
+                                decl.name = StringIdentifier moduleName)
                         |> Option.defaultWith
                             (fun () ->
                                 failwithf "Module %s does not exist" moduleName)
@@ -91,7 +93,8 @@ module Internal =
                         |> List.map
                             (function
                             | (Input, portName, range), expr ->
-                                exprNodesWithOutput operatorIdx expr None
+                                exprNodesWithOutput allModules state.netRanges
+                                    operatorIdx expr
                                     (PortEndpoint(instanceName, portName), range)
                             | (Output, portName, portRange),
                               AST.ExprIdentifier targetName ->
@@ -123,7 +126,8 @@ module Internal =
                                     targetNodeName)
 
                     let newConnections, newNodes =
-                        exprNodesWithOutput operatorIdx expression None
+                        exprNodesWithOutput allModules state.netRanges
+                            operatorIdx expression
                             (NameEndpoint targetNodeName, targetRange)
 
                     {| state with
@@ -135,9 +139,7 @@ module Internal =
                            Map.add name size state.netRanges |})
         |> fun state -> state.connections, state.nodes
 
-    let unifyConnections
-            (connections: IntermediateConnection list)
-            : IntermediateConnection list =
+    let unifyConnections (connections: IntermediateConnection list): IntermediateConnection list =
         // Detect wire driven by multiple sources
         let drivers = connections |> List.groupBy (fun c -> c.target)
 
@@ -205,10 +207,8 @@ module Internal =
                             dc)
                 finalConns @ newConns)
 
-    let applyConnections
-            (intermediateConnections: IntermediateConnection list)
-            (intermediateNodes: Node list)
-            : Node list =
+    let applyConnections (intermediateConnections: IntermediateConnection list)
+        (intermediateNodes: Node list): Node list =
         (intermediateNodes, intermediateConnections)
         ||> List.fold (fun intermediateNodes intermediateConnection ->
                 let connection: Netlist.Connection =
@@ -267,10 +267,6 @@ module Internal =
 
     /// Generate a list of nodes and connections according to an expression
     ///
-    /// srcRangeSelect and target allow for control of the final, outgoing connection.
-    /// srcRangeSelect (if not None) is the srcRange on that connection. target is
-    /// its target
-    ///
     /// We use an int ref to give unique names to multiple instances of expression
     /// blocks. It would be possible to do this by threading an int parameter
     /// around the various functions that need it. Simply pass in the current value
@@ -278,116 +274,187 @@ module Internal =
     /// This was deemed to be both cumbersome and error-prone. You could very easily
     /// pass in a stale version of operatorIdx without noticing and the compiler would
     /// not be able to know.
-    let exprNodesWithOutput
-            (operatorIdx: int ref)
-            (expr: AST.Expr)
-            (srcRangeSelect: Range option)
-            (target: RangedEndpoint)
-            : IntermediateConnection list * Node list =
-        let targetEndpoint, targetRange = target
-        let srcRange =
-            srcRangeSelect |> Option.defaultValue (moveRangeToBase targetRange)
 
-        match expr with
-        | AST.ExprIdentifier name ->
-            ([ { src = NameEndpoint(name)
-                 srcRange = srcRange
-                 target = targetEndpoint
-                 targetRange = targetRange } ], [])
+    let exprNodesWithOutput (moduleDecls: ModuleDecl list)
+        (netRanges: Map<Identifier, Range>) (operatorIdx: int ref)
+        (expr: AST.Expr) (target: RangedEndpoint): IntermediateConnection list * Node list =
+        let rec subExprNodes (expr: AST.Expr) =
+            match expr with
+            | AST.ExprNumber(specifiedWidth, value) ->
+                let width =
+                    specifiedWidth
+                    |> Option.defaultValue
+                        (if value = 0 then 1 else (valueWidth value))
 
-        | AST.ExprBinary(left, op, right) ->
-            let operatorNodeName = sprintf "%A-%d" op !operatorIdx
-            operatorIdx := !operatorIdx + 1
+                {| nodes = []
+                   connections = []
+                   outputEndpoint = ConstantEndpoint(width, value)
+                   outputRange = Range(width - 1, 0) |}
 
-            let operatorNode =
-                (ModuleInstance
-                    { instanceName = operatorNodeName
-                      moduleName = BOpIdentifier op
-                      connections = Map.empty })
-            let outputConnection =
-                { src = PortEndpoint(operatorNodeName, "output")
-                  srcRange = srcRange
-                  target = targetEndpoint
-                  targetRange = targetRange }
+            | AST.ExprIdentifier(name) ->
+                let range =
+                    netRanges
+                    |> Map.tryFind name
+                    |> Option.defaultWith
+                        (fun () ->
+                            failwithf "Identifier %s is not declared" name)
 
-            let leftConnections, leftNodes =
-                exprNodesWithOutput operatorIdx left None
-                    (PortEndpoint(operatorNodeName, "left"), srcRange)
-            let rightConnections, rightNodes =
-                exprNodesWithOutput operatorIdx right None
-                    (PortEndpoint(operatorNodeName, "right"), srcRange)
+                {| nodes = []
+                   connections = []
+                   outputEndpoint = NameEndpoint(name)
+                   outputRange = range |}
 
-            (outputConnection :: leftConnections @ rightConnections,
-             operatorNode :: leftNodes @ rightNodes)
-        | AST.ExprUnary(op, expr) ->
-            let operatorNodeName = sprintf "%A-%d" op !operatorIdx
-            operatorIdx := !operatorIdx + 1
+            | AST.ExprIfThenElse(cond, trueCase, falseCase) ->
+                let muxNodeName = sprintf "mux2-%d" !operatorIdx
+                operatorIdx := !operatorIdx + 1
 
-            let operatorNode =
-                ModuleInstance
-                    { instanceName = operatorNodeName
-                      moduleName = UOpIdentifier op
-                      connections = Map.empty }
-            let outputConnection =
-                { src = PortEndpoint(operatorNodeName, "output")
-                  srcRange = srcRange
-                  target = targetEndpoint
-                  targetRange = targetRange }
+                let condResult = subExprNodes cond
+                let trueResult = subExprNodes trueCase
+                let falseResult = subExprNodes falseCase
 
-            let exprConnections, exprNodes =
-                exprNodesWithOutput operatorIdx expr None
-                    (PortEndpoint(operatorNodeName, "input"), srcRange)
+                let muxNode =
+                    (ModuleInstance
+                        { instanceName = muxNodeName
+                          moduleName = StringIdentifier "Mux2"
+                          connections = Map.empty })
 
-            (outputConnection :: exprConnections, operatorNode :: exprNodes)
-        | AST.ExprNumber(givenWidth, value) ->
-            let width =
-                givenWidth |> Option.defaultValue (rangeWidth targetRange)
+                let outputRange =
+                    let size =
+                        Math.Max
+                            (rangeWidth trueResult.outputRange,
+                             rangeWidth trueResult.outputRange)
+                    Range(size - 1, 0)
 
-            let connection =
-                { src = ConstantEndpoint(width, value)
-                  srcRange = srcRange
-                  target = targetEndpoint
-                  targetRange = targetRange }
-            ([ connection ], [])
+                let inputConnections =
+                    [ { src = condResult.outputEndpoint
+                        srcRange = condResult.outputRange
+                        target = PortEndpoint(muxNodeName, "cond")
+                        targetRange = moveRangeToBase condResult.outputRange }
+                      { src = trueResult.outputEndpoint
+                        srcRange = trueResult.outputRange
+                        target = PortEndpoint(muxNodeName, "true")
+                        targetRange = moveRangeToBase trueResult.outputRange }
+                      { src = falseResult.outputEndpoint
+                        srcRange = falseResult.outputRange
+                        target = PortEndpoint(muxNodeName, "false")
+                        targetRange = moveRangeToBase falseResult.outputRange } ]
 
-        | AST.ExprIndex(subExpr, index) ->
-            match index with
-            | AST.IndexNum n ->
-                exprNodesWithOutput operatorIdx subExpr (Some(Range(n, n)))
-                    target
-            | AST.IndexRange(high, low) ->
-                exprNodesWithOutput operatorIdx subExpr
-                    (Some(Range(high, low))) target
-        | AST.ExprIfThenElse(cond, tExpr, fExpr) ->
-            // An if-then-else expression is essentially a 2-way mux
-            // with the condition being the selector
-            let muxNodeName = sprintf "mux2-%d" !operatorIdx
-            operatorIdx := !operatorIdx + 1
+                {| nodes =
+                       muxNode
+                       :: List.concat
+                           [ condResult.nodes; trueResult.nodes; falseResult.nodes ]
+                   connections =
+                       List.concat
+                           [ inputConnections
+                             condResult.connections
+                             trueResult.connections
+                             falseResult.connections ]
+                   outputEndpoint = PortEndpoint(muxNodeName, "output")
+                   outputRange = outputRange |}
 
-            let muxNode =
-                (ModuleInstance
-                    { instanceName = muxNodeName
-                      moduleName = StringIdentifier "Mux2"
-                      connections = Map.empty })
-            let outputConnection =
-                { src = PortEndpoint(muxNodeName, "output")
-                  srcRange = srcRange
-                  target = targetEndpoint
-                  targetRange = targetRange }
+            | AST.ExprBinary(left, op, right) ->
+                let operatorNodeName = sprintf "%A-%d" op !operatorIdx
+                operatorIdx := !operatorIdx + 1
 
-            let condConnections, condNodes =
-                exprNodesWithOutput operatorIdx cond None
-                    (PortEndpoint(muxNodeName, "cond"), Single)
-            let leftConnections, leftNodes =
-                exprNodesWithOutput operatorIdx tExpr None
-                    (PortEndpoint(muxNodeName, "true"), srcRange)
-            let rightConnections, rightNodes =
-                exprNodesWithOutput operatorIdx fExpr None
-                    (PortEndpoint(muxNodeName, "false"), srcRange)
+                let operatorOutputRange =
+                    findOutputRange (BOpIdentifier op) moduleDecls
 
-            (outputConnection
-             :: List.concat
-                 [ condConnections; leftConnections; rightConnections ],
-             muxNode :: List.concat [ condNodes; leftNodes; rightNodes ])
-        | AST.ExprConcateneation _ ->
-            failwith "Not yet implemented (concatenation expressions)"
+                let leftResult = subExprNodes left
+                let rightResult = subExprNodes right
+
+                let operatorNode =
+                    ModuleInstance
+                        { instanceName = operatorNodeName
+                          moduleName = BOpIdentifier op
+                          connections = Map.empty }
+
+                let inputConnections =
+                    [ { src = leftResult.outputEndpoint
+                        srcRange = leftResult.outputRange
+                        target = PortEndpoint(operatorNodeName, "left")
+                        targetRange = leftResult.outputRange }
+                      { src = rightResult.outputEndpoint
+                        srcRange = rightResult.outputRange
+                        target = PortEndpoint(operatorNodeName, "right")
+                        targetRange = rightResult.outputRange } ]
+
+                {| nodes =
+                       operatorNode
+                       :: List.concat [ leftResult.nodes; rightResult.nodes ]
+                   connections =
+                       List.concat
+                           [ inputConnections
+                             leftResult.connections
+                             rightResult.connections ]
+                   outputEndpoint = PortEndpoint(operatorNodeName, "output")
+                   outputRange = operatorOutputRange |}
+            | AST.ExprUnary(op, subExpr) ->
+                let operatorNodeName = sprintf "%A-%d" op !operatorIdx
+                operatorIdx := !operatorIdx + 1
+
+                let subExprResult = subExprNodes subExpr
+
+                let operatorNode =
+                    ModuleInstance
+                        { instanceName = operatorNodeName
+                          moduleName = UOpIdentifier op
+                          connections = Map.empty }
+
+                let operatorOutputRange =
+                    findOutputRange (UOpIdentifier op) moduleDecls
+
+                let inputConnections =
+                    [ { src = subExprResult.outputEndpoint
+                        srcRange = subExprResult.outputRange
+                        target = PortEndpoint(operatorNodeName, "input")
+                        targetRange = subExprResult.outputRange } ]
+
+                {| nodes = operatorNode :: subExprResult.nodes
+                   connections =
+                       List.concat
+                           [ inputConnections; subExprResult.connections ]
+                   outputEndpoint = PortEndpoint(operatorNodeName, "output")
+                   outputRange = operatorOutputRange |}
+            | AST.ExprConcateneation _ ->
+                failwith "Not yet implemented: Expression concatenation"
+            | AST.ExprIndex(subExpr, AST.IndexNum n) ->
+                {| subExprNodes subExpr with outputRange = Range(n, n) |}
+            | AST.ExprIndex(subExpr, AST.IndexRange(high, low)) ->
+                {| subExprNodes subExpr with outputRange = Range(high, low) |}
+
+
+        let targetEndpoint, requestedRange = target
+        let result = subExprNodes expr
+
+        let srcRange, targetRange =
+            match result.outputRange, requestedRange with
+            | _, Single -> Single, Single
+            | Single, _ -> Single, Single
+            | Range(srcHigh, srcLow), Range(targetHigh, targetLow) ->
+                let targetWidth = rangeWidth (Range(targetHigh, targetLow))
+                Range(Math.Min(srcHigh, srcLow + targetWidth - 1), srcLow),
+                Range
+                    (Math.Min(targetHigh, targetLow + targetWidth - 1),
+                     targetLow)
+
+        let outConnection =
+            { src = result.outputEndpoint
+              srcRange = srcRange
+              target = targetEndpoint
+              targetRange = targetRange }
+
+        outConnection :: result.connections, result.nodes
+
+    let findOutputRange op moduleDecls =
+        moduleDecls
+        |> List.tryFind (fun decl -> decl.name = op)
+        |> Option.defaultWith
+            (fun () -> failwithf "There is no implementation for %A" op)
+        |> (fun decl -> decl.ports)
+        |> List.tryFind (fun (dir, name, _) -> dir = Output && name = "output")
+        |> Option.defaultWith
+            (fun () ->
+                failwithf
+                    "The declaration of %A does not have a valid \"output\" port"
+                    op)
+        |> (fun (_, _, outRange) -> outRange)
