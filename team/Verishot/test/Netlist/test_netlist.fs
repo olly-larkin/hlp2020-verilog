@@ -581,6 +581,46 @@ let fullModuleTests =
                     expectNetlist decls moduleAST expectedNetlist
                 }
 
+                ftest "Mismatched connections" {
+                    let decls = []
+
+                    let moduleAST =
+                        { name = "test"
+                          ports = [ "in"; "out" ]
+                          items =
+                              [ ItemPort(Input, Range(63, 0), "in")
+                                ItemPort(Output, Range(1, 0), "out")
+                                ItemAssign("out", ExprBinary(ExprIdentifier "in", BOpMod, ExprNumber(Some 3, 4))) ] }
+
+                    let expectedNetlist =
+                        { nodes =
+                              [ OutputPin("out")
+                                InputPin
+                                    ("in",
+                                     [ { target = InstanceTarget("BOpMod-0", "left")
+                                         srcRange = Range(63, 0)
+                                         targetRange = Range(63, 0) } ])
+                                Constant
+                                    {| width = 3
+                                       value = 4
+                                       connections =
+                                           [ { srcRange = Range(2, 0)
+                                               targetRange = Range(2, 0)
+                                               target = InstanceTarget("BOpMod-0", "right") } ] |}
+                                ModuleInstance
+                                    { moduleName = BOpIdentifier BOpMod
+                                      instanceName = "BOpMod-0"
+                                      connections =
+                                          Map
+                                              [ ("out",
+                                                 [ { target = PinTarget("out")
+                                                     srcRange = Range(1, 0)
+                                                     targetRange = Range(1, 0) } ]) ] } ]
+                          moduleName = "test" }
+
+                    expectNetlist decls moduleAST expectedNetlist
+                }
+
                 test "Connect if-then-else to output" {
                     let decls = []
 
