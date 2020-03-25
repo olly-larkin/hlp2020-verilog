@@ -160,12 +160,12 @@ let simulatorTests =
                                          [ "in",
                                            [ { srcRange = Range(63, 0)
                                                targetRange = Range(63, 0)
-                                               source = PinEndpoint "modin" } ] 
-                                               
+                                               source = PinEndpoint "modin" } ]
+
                                            "enable",
                                            [ { srcRange = Single
                                                targetRange = Single
-                                               source = ConstantEndpoint 1UL } ]] })
+                                               source = ConstantEndpoint 1UL } ] ] })
                           OutputPin
                               ("modout",
                                [ { source = InstanceEndpoint("flipflip", "out")
@@ -199,7 +199,7 @@ let simulatorTests =
                                    targetRange = Range(63, 0) } ]) ] }
 
               let actual =
-                  simulateCycles (uint64 cycles) netlistIn megafunctions Map.empty
-                      Map.empty
+                  simulateCycles (uint64 cycles) netlistIn megafunctions
+                      Map.empty Map.empty
 
               actual.Head.["modout"] = uint64 (cycles - 1) ]
