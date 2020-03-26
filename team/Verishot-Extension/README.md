@@ -10,14 +10,15 @@ This VSCode extension is made to accompany the `Verishot` Verilog Simulator and 
 
 *IMPORTANT*: Please ensure that a fully working `Verishot` CLI is installed. This extension *WILL NOT WORK* without working `Verishot` CLI.
 
-To check, run `verishot` on any command line. 
+To check, run `verishot` on any command line.
 See `../Verishot/README.md` for a complete installation guide.
 
 ### Installing
 A pre-packaged extension (`verishot-0.0.1.vsix`) is included for easy installation.
-* Alternative 1: Double click the `verishot-0.0.1.vsix` file.
-* Alternative 2: In this directory, run `code --install-extension verishot-0.0.1.vsix`.
-* Alternative 3: 
+
+1. Double click the `verishot-0.0.1.vsix` file.
+2. In this directory, run `code --install-extension verishot-0.0.1.vsix`.
+3.
     * Select Extensions (Ctrl + Shift + X)
     * Open “More Actions...” menu (ellipsis on the top) and click “Install from VSIX…”
     * Locate VSIX file and select
@@ -43,7 +44,7 @@ Create and manage `Verishot` Verilog projects and modules.
 Commands in command palette allow for *linting*, *simulation*, *visualisation* etc.
 
 ## Available Commands
-You may access these via the VSCode Command Palette 
+You may access these via the VSCode Command Palette
 
 ### Verishot: New Project
 Creates a new `Verishot` project.
