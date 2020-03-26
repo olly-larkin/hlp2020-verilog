@@ -3,7 +3,7 @@ module Verishot.Waveform
 open Verishot.SVG
 open Verishot.Simulator.Types
 open WaveTypes
-open Verishot.VisualiseStyles
+open Verishot.WaveformStyles
 
    
 let addXY (inp:Coord) (x:float) (y:float) = 
@@ -222,6 +222,6 @@ let SimOutputToWaveform (inp:SimulatorPort list) =
 /// TOP Level main func, take simulator output, returns string of outputSVG
 let waveformMain (inp: SimulatorPort list) = 
     let svg = inp |> SimOutputToWaveform
-    let styles = None
+    let styles = Some <| loadStyles unitPx
     let script = None
-    output svg styles script true
+    output svg styles script false

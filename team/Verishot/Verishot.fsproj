@@ -21,6 +21,14 @@
     <!-- NETLIST -->
     <Compile Include="src/Netlist/netlist.fs" />
 
+    <!-- SIMULATOR -->
+    <Compile Include="src/Simulator/types.fs" />
+    <Compile Include="src/Simulator/simulatorNetlist.fs" />
+    <Compile Include="src/Simulator/Megafunctions/types.fs" />
+    <Compile Include="src/Simulator/Megafunctions/builtins.fs" />
+    <Compile Include="src/Simulator/Megafunctions/registry.fs" />
+    <Compile Include="src/Simulator/simulator.fs" />
+
     <!-- VISUALISER -->
     <Compile Include="src/Visualiser/assets/styles.fs" />
     <Compile Include="src/Visualiser/maps.fs" />
@@ -32,16 +40,9 @@
     <Compile Include="src/Visualiser/connection/types/moduleinstance.fs" />
     <Compile Include="src/Visualiser/connection/types/pin.fs" />
     <Compile Include="src/Visualiser/visualise.fs" />
-
-    <!-- SIMULATOR -->
-    <Compile Include="src/Simulator/types.fs" />
-    <Compile Include="src/Simulator/simulatorNetlist.fs" />
-    <Compile Include="src/Simulator/Megafunctions/types.fs" />
-    <Compile Include="src/Simulator/Megafunctions/builtins.fs" />
-    <Compile Include="src/Simulator/Megafunctions/registry.fs" />
-    <Compile Include="src/Simulator/simulator.fs" />
     
     <!-- WAVEFORM -->
+    <Compile Include="src/Waveform/assets/styles.fs" />
     <Compile Include="src/Waveform/wave_types.fs" />
     <Compile Include="src/Waveform/waveform.fs" />
 
