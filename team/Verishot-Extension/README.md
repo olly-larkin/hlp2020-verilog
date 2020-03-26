@@ -16,9 +16,9 @@ See `../Verishot/README.md` for a complete installation guide.
 ### Installing
 A pre-packaged extension (`verishot-0.0.1.vsix`) is included for easy installation.
 
-1. Double click the `verishot-0.0.1.vsix` file.
-2. In this directory, run `code --install-extension verishot-0.0.1.vsix`.
-3.
+* Option 1: Double click the `verishot-0.0.1.vsix` file.
+* Option 2: In this directory, run `code --install-extension verishot-0.0.1.vsix`.
+* Option 3:
     * Select Extensions (Ctrl + Shift + X)
     * Open “More Actions...” menu (ellipsis on the top) and click “Install from VSIX…”
     * Locate VSIX file and select
