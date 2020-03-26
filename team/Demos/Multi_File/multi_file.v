@@ -1,9 +1,9 @@
 module multi_file (
-    out1
+    out
 );
 
-output[2:0] out1;
+output[2:0] out;
 
-CustomCount3 count(out1);
+CustomCount3 count(out);
 
 endmodule
