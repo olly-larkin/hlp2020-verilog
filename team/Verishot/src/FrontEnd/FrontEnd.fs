@@ -376,9 +376,9 @@ let private simulateHelper vProjFilePath (varMap: VarMapType) =
     let otherModulesAndMegafunctions = Map.joinLeft megafunctions otherModules
     let initialState = Map.empty
 
+    // we do not need to remove __CYCLES__ or other params, even the output, because the varMap is used on demand
     let inputs =
         varMap
-        |> Map.remove ("__CYCLES__", Single) // need to remove __CYCLES__
         |> Map.mapKeys (fun (id, _) -> id)
         |> Map.mapValues (fun x -> x.wireVal)
 
@@ -389,8 +389,14 @@ let private simulateHelper vProjFilePath (varMap: VarMapType) =
 let wireValToSimPort
     (wireValMaps: WireValMap list)
     (outputPorts: list<Identifier * Range>)
+    (varMap: VarMapType) // varMap is used to see if we need to actually visualise that waveform
     : SimulatorPort list
     =
+
+    // we get the actually needed ports
+    let neededOutputs = 
+        outputPorts
+        |> List.filter (fun x -> varMap.[x].wireVal <> 0UL)
 
     // in a wireValMap list, each elem in a list is a clock cycle
     // we now mutate the structure to be a map containing the identifier of the port
@@ -412,7 +418,7 @@ let wireValToSimPort
                       range = a - b + 1
                       output = wireValLst })
 
-    mapToSimPorts outputPorts
+    mapToSimPorts neededOutputs
 
 let simulate vProjFilePath =
     // first we need to parse the top level module
@@ -430,8 +436,10 @@ let simulate vProjFilePath =
             // do the necessary processing and then pass it to Simulate API
 
             let wireValMaps = simulateHelper vProjFilePath varMap
-            let simPorts = wireValToSimPort wireValMaps outputPorts
-            let waveOut = simPorts |> waveformMain
+            let simPorts = wireValToSimPort wireValMaps outputPorts varMap
+
+            let props = { breakDownBusses=varMap.[("__BREAK_DOWN_BUSSES__", Single)].wireVal <> 0UL }
+            let waveOut = waveformMain simPorts props
 
             let workspacePath = Directory.GetParent(vProjFilePath).FullName
             let waveOutputPath = workspacePath +/ "simulation" +/ "output.svg"
