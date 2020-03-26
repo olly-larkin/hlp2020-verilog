@@ -1,0 +1,6 @@
+// ===== Verishot Simulation File =====
+// Specify the number of clock cycles to simulate below:
+
+__CYCLES__=12;
+
+// Specify each input on a new line (you may use Verilog style numeric constants)

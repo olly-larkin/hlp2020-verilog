@@ -345,7 +345,7 @@ let dFlipFlop =
 
           initialState = WireValState 0UL
 
-          getNextState = fun _ inputs -> if inputs.["enable"] <> 0UL then WireValState(inputs.["in"]) else WireValState(0UL)
+          getNextState = fun state inputs -> if inputs.["enable"] <> 0UL then WireValState(inputs.["in"]) else state
           getOutput =
               function
               | WireValState v -> Map [ ("out", v) ]
