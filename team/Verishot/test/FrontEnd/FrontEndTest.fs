@@ -103,8 +103,6 @@ __CYCLES__=10;
 // Specify (0 or 1) if you would like busses to be broken down
 __BREAK_DOWN_BUSSES__=0;
 
-// Specify (0 or 1) whether to view these outputs in the waveform
-
 
 // Specify each input on a new line (you may use Verilog style numeric constants)
 foo=;
@@ -126,8 +124,6 @@ __CYCLES__=10;
 
 // Specify (0 or 1) if you would like busses to be broken down
 __BREAK_DOWN_BUSSES__=0;
-
-// Specify (0 or 1) whether to view these outputs in the waveform
 
 
 // Specify each input on a new line (you may use Verilog style numeric constants)
@@ -154,8 +150,6 @@ __CYCLES__=120;
 // Specify (0 or 1) if you would like busses to be broken down
 __BREAK_DOWN_BUSSES__=1;
 
-// Specify (0 or 1) whether to view these outputs in the waveform
-
 
 // Specify each input on a new line (you may use Verilog style numeric constants)
 foo=1;
@@ -179,8 +173,6 @@ __CYCLES__=10;
 
 // Specify (0 or 1) if you would like busses to be broken down
 __BREAK_DOWN_BUSSES__=0;
-
-// Specify (0 or 1) whether to view these outputs in the waveform
 
 
 // Specify each input on a new line (you may use Verilog style numeric constants)
