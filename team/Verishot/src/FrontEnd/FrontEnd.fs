@@ -298,22 +298,28 @@ let getVinContent (inputPorts: (Identifier * Range) list) (outputPorts: (Identif
 
     // this is to let user specify if they want to see an output or not
     let outputContent = 
-        "\n// Specify (0 or 1) whether to view these outputs in the waveform" +@
-        (outputPorts
-        |> List.map (fun (id, rng) -> 
-            match getStr (id, rng) with
-            | Some str -> str
-            | _ -> sprintf "%s%s=1;" id (getRangeStr rng))
-        |> String.concat "\n")
+        match outputPorts.IsEmpty with
+        | true -> ""
+        | _ -> 
+            "\n// Specify (0 or 1) whether to view these outputs in the waveform" +@
+            (outputPorts
+            |> List.map (fun (id, rng) -> 
+                match getStr (id, rng) with
+                | Some str -> str
+                | _ -> sprintf "%s%s=1;" id (getRangeStr rng))
+            |> String.concat "\n")
           
     let inputContent =
-        "\n// Specify each input on a new line (you may use Verilog style numeric constants)" +@ 
-        (inputPorts
-        |> List.map (fun (id, rng) -> 
-            match getStr (id, rng) with
-            | Some str -> str
-            | _ -> sprintf "%s%s=;" id (getRangeStr rng))
-        |> String.concat "\n")
+        match inputPorts.IsEmpty with 
+        | true -> ""
+        | _ -> 
+            "\n// Specify each input on a new line (you may use Verilog style numeric constants)" +@ 
+            (inputPorts
+            |> List.map (fun (id, rng) -> 
+                match getStr (id, rng) with
+                | Some str -> str
+                | _ -> sprintf "%s%s=;" id (getRangeStr rng))
+            |> String.concat "\n")
 
     header +@ paramsContent +@ outputContent +@ inputContent
 
