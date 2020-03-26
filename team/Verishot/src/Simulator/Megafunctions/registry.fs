@@ -56,3 +56,13 @@ let megafunctions: Map<ModuleIdentifier, StateVar SimulationObject> =
         shiftRegister8
         
     ]
+
+/// Names of built-in modules that are not bOp or uOp.
+/// This is to prevent linking (in visualiser) modules that are built-in
+let builtinNames = 
+    megafunctions
+    |> Map.toList
+    |> List.map (fst)
+    |> List.choose (function
+    | StringIdentifier x -> Some x
+    | _ -> None)

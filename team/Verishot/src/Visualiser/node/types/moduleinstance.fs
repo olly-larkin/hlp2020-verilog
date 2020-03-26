@@ -13,6 +13,7 @@ open Verishot.VisualiserUtil
 open Verishot.VisualiserUtil.Functions
 open Verishot.VisualiserUtil.ModuleInstance
 open Verishot.Util
+open Verishot.Megafunctions.Registry
 
 let defaultGraphicsProps =
     {| maxTitleLen = 16
@@ -109,6 +110,9 @@ let getHeight inPorts outPorts =
     defaultGraphicsProps.titleHeight + max (List.length inPorts) (List.length outPorts) + 1 |> float
 
 let visualiseDeclaredModuleInstance (elem: ModuleInstance) (modName: string) (declMap: Map<Identifier, ModuleDecl>) (nodeMap: NodeMap) idx xy: NodeMap * int * Coord =
+    /// whether the declaredModuleInstance is actually a builtin Module
+    let builtIn = List.contains modName builtinNames
+    
     let decl = getDeclFromDeclMap declMap modName
     
     let inputPorts = decl.ports |> List.filter (fun (x, _, _)-> x = Input) |> List.map (fun (_, x, y) -> (x, y))
@@ -120,8 +124,8 @@ let visualiseDeclaredModuleInstance (elem: ModuleInstance) (modName: string) (de
             height=getHeight inputPorts outputPorts
             marginLeft=float <| List.length inputPorts + 5 (* space to let connections bend *) }
 
-    let borderBox = getBorderBox xy props "node-bord"
-    let actualBox = getActualBox xy props "node-actual"
+    let borderBox = getBorderBox xy props <| if builtIn then "node-builtin-bord" else "node-bord"
+    let actualBox = getActualBox xy props <| if builtIn then "node-builtin-actual" else "node-actual"
 
     let getPortHelper = getPortTextsAndProps xy props
     let inPortTextsPC = getPortHelper inputPorts Input
@@ -136,9 +140,17 @@ let visualiseDeclaredModuleInstance (elem: ModuleInstance) (modName: string) (de
 
     let outPortTexts = outPortTextsPC |> List.map fst |> groupSVG [] None
 
+    let unlinkedSVGs = [borderBox; actualBox; title; inPortTexts; outPortTexts] 
+
+    // link user-declared modules only
     let svgElem = 
-        [borderBox; actualBox; title; inPortTexts; outPortTexts] 
-        |> linkSVG (sprintf "%s.svg" modName) [] (Some <| sprintf "Module: %s" modName)
+        match builtIn with
+        | true -> 
+            unlinkedSVGs 
+            |> groupSVG [] None
+        | _ -> 
+            unlinkedSVGs
+            |> linkSVG (sprintf "%s.svg" modName) [] (Some <| sprintf "Module: %s" modName)
 
     let visualisedNode =
         { node=ModuleInstance elem

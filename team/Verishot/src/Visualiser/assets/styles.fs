@@ -6,6 +6,7 @@ let loadStyles (unitPx: float) =
     }
     * {
         font-family: Consolas, 'Courier New', monospace;
+        background-color: white;
     }
     .node-bord {
         fill: none;

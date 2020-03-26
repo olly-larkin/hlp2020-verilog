@@ -24,7 +24,11 @@ let visualiseNodes (inputPins, moduleInstances, outputPins, _) declMap currDecl 
     let inputPinsIds = inputPins |> List.map fst
     
     let nodeMap0, idx0, _      = visualisePins currDecl inputPinsIds Input Map.empty 0 (0., 0.5)
-    let nodeMap1, idx1, coord1 = visualiseModuleInstances moduleInstances declMap nodeMap0 idx0 (defaultPinMargin + defaultPinProps.width, 0.)
+
+    /// if there are inputs, shift it to the right, otherwise, render on the left 
+    let modInstStartX = if inputPinsIds.Length <> 0 then defaultPinMargin + defaultPinProps.width else 0.
+    
+    let nodeMap1, idx1, coord1 = visualiseModuleInstances moduleInstances declMap nodeMap0 idx0 (modInstStartX, 0.)
     let nodeMap, _, _          = visualisePins currDecl outputPins Output nodeMap1 idx1 (fst coord1, 0.5)
     
     nodeMap
