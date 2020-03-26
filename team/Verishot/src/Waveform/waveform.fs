@@ -155,7 +155,7 @@ let GenWireWaveform (portName:string) (vals) =
 
 
 /// This function handles creating and formatting the waveforms for a bus. Vals is a list of values the bus takes at each cycle.
-let GenBusWaveform (portName:string) (portRange: int) (vals: WireVal list) =
+let GenBusWaveform (portName:string) (portRange: int) (vals: WireVal list) props =
     let pinName pinNo = portName + "[" + string pinNo + "]"
     let singlePortWaveform = GenPortWireWaveform initWireState
     let decToBinary (dec:WireVal) (idx:int) = (idx, dec%2UL), dec/2UL  //mapFolding function which returns a list of index, value tuples
@@ -185,13 +185,15 @@ let GenBusWaveform (portName:string) (portRange: int) (vals: WireVal list) =
                 |> translateSVG (9.0,0.0)]
             |> (@) [textBox portName]
         Group(svgList,[], None)
-    // let blockList =
-    //     List.mapFold individualPortWaveform 1.0 decToWaveformList
-    //     |> fst
-    //     |> (@) [busBox]
-    // Group(blockList,[], None)
-    busBox
 
+    let blockList =
+        match props.breakDownBusses with
+        | true -> 
+            List.mapFold individualPortWaveform 1.0 decToWaveformList
+            |> fst
+            |> (@) [busBox]
+        | _ -> [busBox]
+    Group(blockList,[], None)
 
 
 let clkCycle (state: SVGElement) (iteration: int) = 
@@ -210,18 +212,18 @@ let GenClock (waveformList:SVGElement) =
     translateSVG (0.0,snd(snd(viewerDimensions))) (Group([textBox "clk"; translateSVG (9.0,0.0) (wrappedWave clkWaveform)],[], None))
 
 ///Main function of the module. Take in the simulator output and returns an SVG element with all waveforms formatted and ready to be printed.
-let SimOutputToWaveform (inp:SimulatorPort list) =
+let SimOutputToWaveform (inp:SimulatorPort list) props =
     let portToWaveform (prt:SimulatorPort) =
         match prt with
         | SimWire wire -> GenWireWaveform wire.portName wire.output
-        | SimBus bus   -> GenBusWaveform bus.portName bus.range bus.output
+        | SimBus bus   -> GenBusWaveform bus.portName bus.range bus.output props
     let waveformList = List.map portToWaveform inp
     let groupedWaveforms = Group(fst(List.mapFold setPortPosition 0.0 waveformList),[], None)
     Group([groupedWaveforms ; GenClock groupedWaveforms], [], None)
     
 /// TOP Level main func, take simulator output, returns string of outputSVG
-let waveformMain (inp: SimulatorPort list) = 
-    let svg = inp |> SimOutputToWaveform
+let waveformMain (inp: SimulatorPort list) props = 
+    let svg = SimOutputToWaveform inp props
     let styles = Some <| loadStyles unitPx
     let script = None
     output svg styles script false

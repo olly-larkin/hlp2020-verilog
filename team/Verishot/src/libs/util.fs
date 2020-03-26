@@ -6,6 +6,10 @@ open Verishot.CoreTypes
 
 let print x = printfn "%A" x
 
+let fst3 = fun (x, _, _) -> x
+let snd3 = fun (_, x, _) -> x
+let thd3 = fun (_, _, x) -> x
+
 /// concats two string with a new line
 let (+@) strA strB = sprintf "%s\n%s" strA strB 
 

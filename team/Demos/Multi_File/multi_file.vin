@@ -1,6 +1,12 @@
 // ===== Verishot Simulation File =====
-// Specify the number of clock cycles to simulate below:
 
+// Specify how many cycles to simulate below
 __CYCLES__=12;
+
+// Specify (0 or 1) if you would like busses to be broken down
+__BREAK_DOWN_BUSSES__=1;
+
+// Specify (0 or 1) whether to view these outputs in the waveform
+out[2:0]=1;
 
 // Specify each input on a new line (you may use Verilog style numeric constants)

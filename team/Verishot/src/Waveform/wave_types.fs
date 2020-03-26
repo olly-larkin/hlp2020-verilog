@@ -21,3 +21,6 @@ type SimulatorBus =
 type SimulatorPort =
     | SimBus of SimulatorBus
     | SimWire of SimulatorWire //temporay output for simulator
+
+type WaveformProps = 
+    { breakDownBusses: bool }

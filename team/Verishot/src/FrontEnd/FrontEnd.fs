@@ -238,25 +238,36 @@ let parseAndMap (vars: string list): VarMapType =
     |> List.choose id
     |> Map.ofList
 
+/// Params for vIn. (port * defualtValue * top comment)
+let vInParams =
+    [
+        ("__CYCLES__", Single), 10, "// Specify how many cycles to simulate below"
+        ("__BREAK_DOWN_BUSSES__", Single), 0, "// Specify (0 or 1) if you would like busses to be broken down"
+    ]
+
 let matchMapWithInputPorts
     (varMap: VarMapType)
     (inputPorts: (Identifier * Range) list)
+    outputPorts
     =
-    // add in __CYCLES__
-    let inputPortsWithCycles = ("__CYCLES__", Single) :: inputPorts
+    // add in required params and outputPorts
 
-    let folder (passed, stdout) (inputPort: Identifier * Range) =
-        match varMap.ContainsKey(inputPort) with
+    let inputPortsWithCycles = (vInParams |> List.map (fst3)) @ outputPorts @ inputPorts
+
+    let folder (passed, stdout) (port: Identifier * Range) =
+        match varMap.ContainsKey port with
         | true -> passed, stdout
         | _ ->
-            let stdout2 =
-                sprintf "Simulator input `%s%s` invalid or not found."
-                    (inputPort |> fst)
-                    (inputPort
-                     |> snd
-                     |> getRangeStr)
-            let stdout' = stdout +@ stdout2
-            false, stdout'
+            /// this is not helpful - just prompting the user to check .vin is more succinctly descriptive
+
+            // let stdout2 =
+            //     sprintf "Simulator input `%s%s` invalid or not found."
+            //         (inputPort |> fst)
+            //         (inputPort
+            //          |> snd
+            //          |> getRangeStr)
+            // let stdout' = stdout +@ stdout2
+            false, stdout
 
     ((true, ""), inputPortsWithCycles)
     ||> List.fold (folder)
@@ -264,40 +275,49 @@ let matchMapWithInputPorts
     | true, stdout -> Ok stdout
     | false, stdout -> Error(exitCodes.vInError, stdout)
 
-let getVinContent (inputPorts: (Identifier * Range) list) (varMap: VarMapType) =
+
+let getVinContent (inputPorts: (Identifier * Range) list) (outputPorts: (Identifier * Range) list) (varMap: VarMapType) =
     let getStr x =
         match varMap.ContainsKey(x) with
         | true -> Some varMap.[x].str
         | _ -> None
 
-    let cycleStr =
-        match getStr ("__CYCLES__", Single) with 
-        | Some str -> str
-        | None -> "__CYCLES__=;"
+    let header = "// ===== Verishot Simulation File =====\n"
 
-    // sprintf doesnt work for multilines
-    let vInFileHeaderA = "// ===== Verishot Simulation File =====
-// Specify the number of clock cycles to simulate below:
+    /// get the params lines
+    let paramsContent = 
+        vInParams
+        |> List.map ((fun (port, defaultVal, comment) -> 
+            let outStr = 
+                match getStr port with 
+                | Some str -> str
+                | None -> sprintf "%s=%d;" (fst port) defaultVal
+            comment +@ outStr)
+        )
+        |> String.concat "\n\n"
 
-"
-    let vInFileHeaderB = "
-
-// Specify each input on a new line (you may use Verilog style numeric constants)
-" 
-
-    let vInFileHeader = vInFileHeaderA + cycleStr + vInFileHeaderB
-
+    // this is to let user specify if they want to see an output or not
+    let outputContent = 
+        "\n// Specify (0 or 1) whether to view these outputs in the waveform" +@
+        (outputPorts
+        |> List.map (fun (id, rng) -> 
+            match getStr (id, rng) with
+            | Some str -> str
+            | _ -> sprintf "%s%s=1;" id (getRangeStr rng))
+        |> String.concat "\n")
+          
     let inputContent =
-        inputPorts
+        "\n// Specify each input on a new line (you may use Verilog style numeric constants)" +@ 
+        (inputPorts
         |> List.map (fun (id, rng) -> 
             match getStr (id, rng) with
             | Some str -> str
             | _ -> sprintf "%s%s=;" id (getRangeStr rng))
-        |> String.concat "\n"
+        |> String.concat "\n")
 
-    vInFileHeader + inputContent
+    header +@ paramsContent +@ outputContent +@ inputContent
 
-let checkVInFile vProjFilePath (inputPorts: (Identifier * Range) list) =
+let checkVInFile vProjFilePath (inputPorts: (Identifier * Range) list) outputPorts =
     let workspacePath = Directory.GetParent(vProjFilePath).FullName
     let projectName = Path.GetFileNameWithoutExtension vProjFilePath
     let vInFilePath = workspacePath +/ projectName + ".vin"
@@ -307,11 +327,11 @@ let checkVInFile vProjFilePath (inputPorts: (Identifier * Range) list) =
         |> readVFile
         |> parseAndMap
 
-    match matchMapWithInputPorts varMap inputPorts with
+    match matchMapWithInputPorts varMap inputPorts outputPorts with
     | Ok _ -> Ok varMap
     | Error(exitCode, stdout) ->
         // create the .vin file
-        getVinContent inputPorts varMap
+        getVinContent inputPorts outputPorts varMap
         |> writeStringToFile vInFilePath
 
         let stdout2 =
@@ -356,9 +376,9 @@ let private simulateHelper vProjFilePath (varMap: VarMapType) =
     let otherModulesAndMegafunctions = Map.joinLeft megafunctions otherModules
     let initialState = Map.empty
 
+    // we do not need to remove __CYCLES__ or other params, even the output, because the varMap is used on demand
     let inputs =
         varMap
-        |> Map.remove ("__CYCLES__", Single) // need to remove __CYCLES__
         |> Map.mapKeys (fun (id, _) -> id)
         |> Map.mapValues (fun x -> x.wireVal)
 
@@ -369,8 +389,14 @@ let private simulateHelper vProjFilePath (varMap: VarMapType) =
 let wireValToSimPort
     (wireValMaps: WireValMap list)
     (outputPorts: list<Identifier * Range>)
+    (varMap: VarMapType) // varMap is used to see if we need to actually visualise that waveform
     : SimulatorPort list
     =
+
+    // we get the actually needed ports
+    let neededOutputs = 
+        outputPorts
+        |> List.filter (fun x -> varMap.[x].wireVal <> 0UL)
 
     // in a wireValMap list, each elem in a list is a clock cycle
     // we now mutate the structure to be a map containing the identifier of the port
@@ -392,7 +418,7 @@ let wireValToSimPort
                       range = a - b + 1
                       output = wireValLst })
 
-    mapToSimPorts outputPorts
+    mapToSimPorts neededOutputs
 
 let simulate vProjFilePath =
     // first we need to parse the top level module
@@ -405,13 +431,15 @@ let simulate vProjFilePath =
     | Ok stdout ->
         let inputPorts, outputPorts = getTopLevelPorts vProjFilePath
 
-        match checkVInFile vProjFilePath inputPorts with
+        match checkVInFile vProjFilePath inputPorts outputPorts with
         | Ok varMap ->
             // do the necessary processing and then pass it to Simulate API
 
             let wireValMaps = simulateHelper vProjFilePath varMap
-            let simPorts = wireValToSimPort wireValMaps outputPorts
-            let waveOut = simPorts |> waveformMain
+            let simPorts = wireValToSimPort wireValMaps outputPorts varMap
+
+            let props = { breakDownBusses=varMap.[("__BREAK_DOWN_BUSSES__", Single)].wireVal <> 0UL }
+            let waveOut = waveformMain simPorts props
 
             let workspacePath = Directory.GetParent(vProjFilePath).FullName
             let waveOutputPath = workspacePath +/ "simulation" +/ "output.svg"
