@@ -16,6 +16,7 @@ Requirements:
 #### Windows 
 * Option 1: `cmd`: Run, _as administrator_, `setup.bat` in this directory
 * Option 2: `Powershell`: Run, _as administrator_, `Setup-Verishot.ps1` in this directory
+NOTE: For PATH variables to take effect, please log out and log in.
 
 #### Linux
 * Run `setup.sh` in this directory
