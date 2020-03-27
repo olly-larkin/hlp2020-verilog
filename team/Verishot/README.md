@@ -21,7 +21,7 @@ NOTE: For PATH variables to take effect, please log out and log in.
 #### Linux
 * Run `setup.sh` in this directory
 
-### Mac OS X
+#### Mac OS X
 * Not tested
 
 ### Debugging
