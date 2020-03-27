@@ -19,11 +19,11 @@ wire[63:0] countVal;
 Counter64 count(0, countVal);
 Mux4 mux(select, mult, bitwiseOr, bitwiseAnd, logicalAnd, result);
 
+assign select = countVal % 4;
+
 assign mult = in1 * in2;
 assign bitwiseOr = in1 | in2;
 assign bitwiseAnd = in1 & in2;
 assign logicalAnd = in1 && in2;
-
-assign select = countVal % 4;
 
 endmodule

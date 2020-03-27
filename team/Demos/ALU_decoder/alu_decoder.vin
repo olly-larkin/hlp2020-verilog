@@ -4,7 +4,7 @@
 __CYCLES__=10;
 
 // Specify (0 or 1) if you would like busses to be broken down
-__BREAK_DOWN_BUSSES__=1;
+__BREAK_DOWN_BUSSES__=0;
 
 // Specify (0 or 1) whether to view these outputs in the waveform
 result[7:0]=1;
