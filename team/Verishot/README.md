@@ -8,22 +8,19 @@ This application provides a CLI for `Verishot`. It is designed to be accompanied
 
 ### Pre-built Windows 64-bit binary
 * A pre-built `win-x64` executable is located in [`.\bin\release\netcoreapp3.1\win-x64\Verishot.exe`](.\bin\release\netcoreapp3.1\win-x64\Verishot.exe).
-* You should add the folder containing the built `Verishot.exe` to your `PATH` variables.
+* Add the folder containing the built `Verishot.exe` to your `PATH` variables to use the VSCode Extension
 
 ### Setup
 Requirements:
 * [.NET Core SDK](https://dotnet.microsoft.com/download)
 #### Windows 
-* Run `setup.bat` in this directory
-* Add the folder containing the built `Verishot.exe` to your `PATH` variables (folder is usually `.\bin\release\netcoreapp3.1\win-x64`)
+* Run, _as administrator_, `setup.bat` in this directory
 
 #### Linux
 * Run `setup.sh` in this directory
-* Add the folder containing the built `Verishot` executable to your `PATH` variables (folder is usually `./bin/release/netcoreapp3.1/linux-x64`)
 
 ### Mac OS X
 * Not tested
-
 
 ### Debugging
 * Run `dotnet run` in this directory.
