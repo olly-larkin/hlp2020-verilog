@@ -14,7 +14,8 @@ This application provides a CLI for `Verishot`. It is designed to be accompanied
 Requirements:
 * [.NET Core SDK](https://dotnet.microsoft.com/download)
 #### Windows 
-* Run, _as administrator_, `setup.bat` in this directory
+* Option 1: `cmd`: Run, _as administrator_, `setup.bat` in this directory
+* Option 2: `Powershell`: Run, _as administrator_, `Setup-Verishot.ps1` in this directory
 
 #### Linux
 * Run `setup.sh` in this directory
