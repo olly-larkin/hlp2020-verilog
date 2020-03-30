@@ -20,7 +20,7 @@ let ParseSource inp =
     |> ParseModuleDefinition
     |> function
     | Ok (res, tl, _) -> 
-        if tl |> TokTools.removeComments |> TokTools.removeWhitespace |> List.isEmpty
+        if tl |> TokTools.whiteSpaceAndComments |> List.isEmpty
         then Ok (res)
         else Error ("There should be only 1 module declaration per file.", inp |> trim (List.length tl) |> lineCalc)
     | Error (msg, lst) -> Error (msg, inp |> trim (List.length lst) |> lineCalc)

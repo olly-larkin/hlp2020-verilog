@@ -12,12 +12,21 @@ module TokTools =
         List.skipWhile (fun elem -> List.contains elem whiteSpaceLst)
 
     /// Remove all characters that are part of a comment
+    /// True if comments were removed
     let removeComments = 
-        removeWhitespace
-        >> function
-        | hd1 :: hd2 :: tl when hd1 = '/' && hd2 = '/' -> tl |> List.skipWhile ((<>) '\n') |> List.safeSkip 1
-        | hd1 :: hd2 :: tl when hd1 = '/' && hd2 = '*' -> tl |> List.skipWhile2 (fun h1 h2 -> (h1 <> '*') && (h2 <> '/')) |> List.safeSkip 2
-        | lst -> lst
+        function
+        | hd1 :: hd2 :: tl when hd1 = '/' && hd2 = '/' -> true, tl |> List.skipWhile ((<>) '\n') |> List.safeSkip 1
+        | hd1 :: hd2 :: tl when hd1 = '/' && hd2 = '*' -> true, tl |> List.skipWhile2 (fun h1 h2 -> (h1 <> '*') && (h2 <> '/')) |> List.safeSkip 2
+        | lst -> false, lst
+
+    /// Remove all whitespace and comments
+    let rec whiteSpaceAndComments lst =
+        let lst' = lst |> removeWhitespace
+        lst'
+        |> removeComments
+        |> function
+        | true, lst'' -> whiteSpaceAndComments lst''
+        | false, lst'' -> lst''
 
     /// Match exact string passed in
     let stringParse pattern : Parser<string> =
@@ -28,13 +37,13 @@ module TokTools =
                 | hd1::tl1, hd2::tl2 when hd1 = hd2 -> takeWhile tl1 tl2
                 | [], remaining -> Ok (pattern, remaining, None)
                 | _ -> Error (sprintf "Could not match. Expected \'%s\'." pattern, cLst)
-            cLst |> removeComments |> removeWhitespace |> takeWhile pat
+            cLst |> whiteSpaceAndComments |> takeWhile pat
 
     /// Match regex expression passed in
     let regParse pattern : Parser<string> =
         let reg = Regex("^" + pattern)  // make once use many times
         fun cLst ->
-            let cLst = cLst |> removeComments |> removeWhitespace
+            let cLst = cLst |> whiteSpaceAndComments
             let regMatch =
                 cLst
                 |> List.toArray
